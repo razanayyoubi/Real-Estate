@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>LebEstates | Timeless Prestige in Lebanese Real Estate</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/homepage.css">
+    <script src="/static/js/homepage.js"></script>
+</head>
+
+<body>
+    <!-- TopNavBar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="headline-md text-primary">
+                LebEstates
+            </div>
+            <!-- Hamburger Icon -->
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+
+            <!-- Navigation Menu -->
+            <div class="nav-menu" id="nav-menu">
+                <!-- Desktop Links -->
+                <div class="nav-links">
+                    <a class="nav-link label-md active" href="homepage.html">Home</a>
+                    <a class="nav-link label-md" href="#">Properties</a>
+                    <a class="nav-link label-md" href="#">Sell/Rent</a>
+                    <a class="nav-link label-md" href="consultation.html">Consultations</a>
+                    <a class="nav-link label-md" href="about.html">About</a>
+                    <a class="nav-link label-md" href="#">Contact</a>
+                </div>
+                <!-- Actions -->
+                <div class="nav-actions">
+                    <button class="btn btn-primary-outline label-md">
+                        Login
+                    </button>
+                    <button class="btn btn-secondary label-md">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero-section">
+        <div class="hero-bg">
+            <div class="hero-bg-slideshow">
+                <div class="hero-slide" style="background-image: url('../static/Images/Hero/home1.webp');">
+                </div>
+                <div class="hero-slide"
+                    style="background-image: url('../static/Images/Hero/home2.webp'); animation-delay: 6s;">
+                </div>
+                <div class="hero-slide"
+                    style="background-image: url('../static/Images/Hero/home3.webp'); animation-delay: 12s;">
+                </div>
+            </div>
+            <div class="hero-overlay"></div>
+        </div>
+
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1 class="display-lg text-shadow-hero utility-mb-6">
+                    Find, Sell, and Manage Properties Across Lebanon
+                </h1>
+                <p class="body-lg utility-mb-6">
+                    LebEstates connects customers with trusted real estate services, bringing architectural weight and
+                    modern luxury to your doorstep.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-lg btn-secondary luxury-shadow">
+                        Browse Properties
+                        <span class="material-symbols-outlined" data-icon="arrow_forward"
+                            style="margin-left:8px; font-size:20px;">arrow_forward</span>
+                    </button>
+                    <button class="btn btn-lg btn-hero-outline">
+                        List Your Property
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Overlay -->
+            <div class="search-overlay luxury-shadow">
+                <div class="form-group">
+                    <label class="label-md">Property Type</label>
+                    <select class="form-control">
+                        <option>Apartment</option>
+                        <option>Villa</option>
+                        <option>Commercial</option>
+                        <option>Land</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label-md">Action</label>
+                    <select class="form-control">
+                        <option>Buy</option>
+                        <option>Rent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label-md">Location</label>
+                    <div class="input-with-icon">
+                        <span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+                        <input class="form-control" placeholder="Beirut, Batroun..." type="text" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="label-md">Price Range</label>
+                    <select class="form-control">
+                        <option>$100k - $300k</option>
+                        <option>$300k - $700k</option>
+                        <option>$700k+</option>
+                    </select>
+                </div>
+                <button class="btn btn-search">
+                    <span class="material-symbols-outlined" data-icon="search">search</span>
+                    Search
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Services Section -->
+    <section class="section container relative overflow-hidden">
+        <div class="mashrabiya-pattern" style="right:0; top:0; width:256px; height:256px; z-index:-10;"></div>
+
+        <div class="section-header">
+            <span class="section-subtitle label-md">Excellence</span>
+            <h2 class="headline-lg text-primary utility-mt-2">Real Estate Services Made Simple</h2>
+        </div>
+
+        <div class="services-grid">
+            <!-- Buy -->
+            <div class="service-card luxury-shadow">
+                <div class="service-icon">
+                    <span class="material-symbols-outlined" data-icon="house"
+                        style="font-variation-settings: 'FILL' 1;">house</span>
+                </div>
+                <h3 class="headline-md utility-mb-6">Buy a Property</h3>
+                <p>Explore the finest residential and commercial spaces across the country.</p>
+                <a class="service-link" href="#">
+                    Learn More <span class="material-symbols-outlined text-sm"
+                        data-icon="arrow_forward">arrow_forward</span>
+                </a>
+            </div>
+            <!-- Rent -->
+            <div class="service-card luxury-shadow">
+                <div class="service-icon">
+                    <span class="material-symbols-outlined" data-icon="key"
+                        style="font-variation-settings: 'FILL' 1;">key</span>
+                </div>
+                <h3 class="headline-md utility-mb-6">Rent a Property</h3>
+                <p>From luxury summer villas to urban penthouses, find your temporary home.</p>
+                <a class="service-link" href="#">
+                    Learn More <span class="material-symbols-outlined text-sm"
+                        data-icon="arrow_forward">arrow_forward</span>
+                </a>
+            </div>
+            <!-- Sell -->
+            <div class="service-card luxury-shadow">
+                <div class="service-icon">
+                    <span class="material-symbols-outlined" data-icon="sell"
+                        style="font-variation-settings: 'FILL' 1;">sell</span>
+                </div>
+                <h3 class="headline-md utility-mb-6">Sell Your Property</h3>
+                <p>Expert valuation and marketing to reach high-net-worth investors globally.</p>
+                <a class="service-link" href="#">
+                    Learn More <span class="material-symbols-outlined text-sm"
+                        data-icon="arrow_forward">arrow_forward</span>
+                </a>
+            </div>
+            <!-- Consultation -->
+            <div class="service-card luxury-shadow">
+                <div class="service-icon">
+                    <span class="material-symbols-outlined" data-icon="forum"
+                        style="font-variation-settings: 'FILL' 1;">forum</span>
+                </div>
+                <h3 class="headline-md utility-mb-6">Consultation</h3>
+                <p>Professional guidance on investment strategies and market trends.</p>
+                <a class="service-link" href="#">
+                    Learn More <span class="material-symbols-outlined text-sm"
+                        data-icon="arrow_forward">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Properties -->
+    <section class="section bg-surface-container">
+        <div class="container">
+            <div class="properties-header">
+                <div>
+                    <span class="section-subtitle label-md">Featured</span>
+                    <h2 class="headline-lg text-primary utility-mt-2">Curated Listings</h2>
+                </div>
+                <a class="link-underline" href="#">View All Properties</a>
+            </div>
+
+            <div class="properties-grid">
+                <!-- Property 1 -->
+                <div class="property-card luxury-shadow">
+                    <div class="property-img-wrapper">
+                        <img class="property-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO59E-PTBLbeMeiQe2tIEr2fJv0gmneOc7N57H_5t3C-IMAHJKFVGfCs6HIK5tinXro4Y1Pec2vZN4Fnx02_MoNep7By6d4rt12uhhvSHLMGqIuWtxCuUX4fhJAHU_UnW_wm0d7pUbQ9Z1BdYKzZUNXpbygCCqIzefAL3RDyfzcnwvHYnjPoedhXdCVskqsXctC40Dmqhrka79BAkYZ-fysNy2Cm4ygU0alevKvimDK8kr0pEqA5WmnNL-3acMW1LRANKwXgH8Xm4"
+                            alt="Apartment" />
+                        <span class="property-badge badge-sale caption">For Sale</span>
+                    </div>
+                    <div class="property-content">
+                        <div class="property-info">
+                            <div>
+                                <p class="text-secondary label-md" style="margin-bottom:4px;">Apartment</p>
+                                <h3 class="headline-md">Modern Apartment in Beirut</h3>
+                            </div>
+                            <p class="property-price">$450,000</p>
+                        </div>
+                        <div class="property-features">
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="bed">bed</span> 3 Beds</span>
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="bathtub">bathtub</span> 2 Baths</span>
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="square_foot">square_foot</span> 180 m²</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Property 2 -->
+                <div class="property-card luxury-shadow">
+                    <div class="property-img-wrapper">
+                        <img class="property-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEi7jqxrsUH5BbMM6KCq1P73OxzWYOaTZpMM0OdVvbZmvb5rCbHC9p9YJaNqoI55DxaLWCiMedNclvLiqRJZW6DknnRQvEtIeL61Aal3svRnfKGwiaYq5YnE6zv0ypzM0OQKFXLDORJlMZOJd5X0KEruOwA88qkQFLPowMPcTWnQ9mmve_QF3-2EzbEoO2J35Kju0Q0WyCRAsYH98qEwoTY7eaTUcnN-Dw1m2ZPWN_UHAKAenryLzkB65Pa1XGECqCCKmYE9ns4XY"
+                            alt="Villa" />
+                        <span class="property-badge badge-sale caption">For Sale</span>
+                    </div>
+                    <div class="property-content">
+                        <div class="property-info">
+                            <div>
+                                <p class="text-secondary label-md" style="margin-bottom:4px;">Villa</p>
+                                <h3 class="headline-md">Luxury Villa in Mount Lebanon</h3>
+                            </div>
+                            <p class="property-price">$1,200,000</p>
+                        </div>
+                        <div class="property-features">
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="bed">bed</span> 5 Beds</span>
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="bathtub">bathtub</span> 4 Baths</span>
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="square_foot">square_foot</span> 450 m²</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Property 3 -->
+                <div class="property-card luxury-shadow">
+                    <div class="property-img-wrapper">
+                        <img class="property-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPs2FobMfx5YYRjIw7PpWgEAwAZ_0RbTcebItPFATx6wooMZTSBRVKyncqJM7HfjFVl5q1ptnom3eewAB9PkYZfDitdMopzNoTCu9CwqDbkhheOFj7QQ_YoxsUTztJLHv_1xIrlZhMFndo3n5wSOeTbOEVus9gtTnH1Od_CU6R23CZa6oYgpwTcb-CfUuXpCUEImzno3TgnlxQWNAyCHpiR03yJDUu95dfaeXtaso8AveHf13RFjWnv530Wd1-9BtPwYqMA6o9Rkg"
+                            alt="Commercial" />
+                        <span class="property-badge badge-rent caption">For Rent</span>
+                    </div>
+                    <div class="property-content">
+                        <div class="property-info">
+                            <div>
+                                <p class="text-secondary label-md" style="margin-bottom:4px;">Commercial</p>
+                                <h3 class="headline-md">Commercial Shop in Hamra</h3>
+                            </div>
+                            <p class="property-price">$2,500/mo</p>
+                        </div>
+                        <div class="property-features">
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="domain">domain</span> Retail Space</span>
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
+                                    data-icon="square_foot">square_foot</span> 85 m²</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section container">
+        <div class="section-header">
+            <span class="section-subtitle label-md">Process</span>
+            <h2 class="headline-lg text-primary utility-mt-2">How It Works</h2>
+        </div>
+
+        <div class="process-wrapper">
+            <div class="process-line"></div>
+
+            <div class="process-step">
+                <div class="step-number step-primary">1</div>
+                <h4 class="headline-md utility-mt-2">Browse/Submit</h4>
+                <p class="text-on-surface-variant utility-mt-2">Find your dream home or submit your property details to
+                    our expert team.</p>
+            </div>
+
+            <div class="process-step">
+                <div class="step-number step-primary">2</div>
+                <h4 class="headline-md utility-mt-2">Request Visit</h4>
+                <p class="text-on-surface-variant utility-mt-2">Schedule a viewing or book a consultation at your
+                    convenience.</p>
+            </div>
+
+            <div class="process-step">
+                <div class="step-number step-secondary">3</div>
+                <h4 class="headline-md utility-mt-2">Expert Follow-up</h4>
+                <p class="text-on-surface-variant utility-mt-2">Our dedicated agents handle the paperwork and close the
+                    deal for you.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="section bg-primary-section">
+        <div class="mashrabiya-pattern" style="left:0; bottom:0; width:100%; height:100%;"></div>
+        <div class="container why-grid">
+            <div style="z-index: 10; position: relative;">
+                <span class="section-subtitle text-secondary-fixed label-md">Commitment</span>
+                <h2 class="headline-lg utility-mt-2" style="margin-bottom: 32px;">Why Choose LebEstates?</h2>
+
+                <div class="why-features">
+                    <div class="why-feature">
+                        <div class="why-icon">
+                            <span class="material-symbols-outlined" data-icon="verified">verified</span>
+                        </div>
+                        <div>
+                            <h5>Trusted Office</h5>
+                            <p>Decades of experience in the Lebanese market with a legacy of trust.</p>
+                        </div>
+                    </div>
+
+                    <div class="why-feature">
+                        <div class="why-icon">
+                            <span class="material-symbols-outlined" data-icon="language">language</span>
+                        </div>
+                        <div>
+                            <h5>Hybrid Service</h5>
+                            <p>Enjoy seamless online tracking or visit us in our premium office spaces.</p>
+                        </div>
+                    </div>
+
+                    <div class="why-feature">
+                        <div class="why-icon">
+                            <span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+                        </div>
+                        <div>
+                            <h5>Visit Scheduling</h5>
+                            <p>Real-time booking system for property visits and expert meetings.</p>
+                        </div>
+                    </div>
+
+                    <div class="why-feature">
+                        <div class="why-icon">
+                            <span class="material-symbols-outlined" data-icon="insights">insights</span>
+                        </div>
+                        <div>
+                            <h5>Request Tracking</h5>
+                            <p>Monitor your transaction status every step of the way via our portal.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="why-image-wrapper">
+                <div class="why-image-box">
+                    <img src="../static/Images/Hero/homepage-villa.webp" alt="Why Choose Us" />
+                </div>
+                <div class="why-stats">
+                    <p class="headline-md stats-number">2.5k+</p>
+                    <p class="caption stats-label">Properties Sold</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section container">
+        <div class="cta-box">
+            <div style="position: relative; z-index: 10;">
+                <h2 class="display-lg text-on-primary utility-mb-6">Ready to find your next property?</h2>
+                <p class="body-lg">Whether you're looking for an investment or a dream home, our experts are here to
+                    guide you.</p>
+                <div class="cta-buttons">
+                    <button class="btn btn-lg btn-secondary luxury-shadow">
+                        Browse Properties
+                    </button>
+                    <button class="btn btn-lg btn-primary-outline"
+                        style="border-color: var(--secondary-fixed); color: var(--secondary-fixed);">
+                        Request Consultation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-grid section">
+            <div class="footer-info">
+                <div class="headline-md utility-mb-6">LebEstates</div>
+                <p class="body-md">
+                    Defining luxury and stability in the Lebanese real estate market. Timeless prestige for modern
+                    living.
+                </p>
+                <div class="social-links">
+                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
+                            data-icon="public">public</span></a>
+                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
+                            data-icon="mail">mail</span></a>
+                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
+                            data-icon="phone">phone</span></a>
+                </div>
+            </div>
+
+            <div class="footer-links-grid">
+                <div>
+                    <h6 class="footer-heading">Quick Links</h6>
+                    <ul class="footer-links label-md">
+                        <li><a href="#">Properties</a></li>
+                        <li><a href="#">Sell/Rent</a></li>
+                        <li><a href="#">Consultations</a></li>
+                        <li><a href="#">About Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="footer-heading">Services</h6>
+                    <ul class="footer-links label-md">
+                        <li><a href="#">Valuation</a></li>
+                        <li><a href="#">Property Mgmt</a></li>
+                        <li><a href="#">Legal Support</a></li>
+                        <li><a href="#">Investments</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="footer-heading">Contact</h6>
+                    <ul class="footer-links label-md">
+                        <li style="display:flex; align-items:flex-start; gap:8px;">
+                            <span class="material-symbols-outlined" style="font-size:20px;"
+                                data-icon="location_on">location_on</span>
+                            Ashrafieh, Beirut, Lebanon
+                        </li>
+                        <li style="display:flex; align-items:flex-start; gap:8px;">
+                            <span class="material-symbols-outlined" style="font-size:20px;" data-icon="call">call</span>
+                            +961 1 234 567
+                        </li>
+                        <li style="display:flex; align-items:flex-start; gap:8px;">
+                            <span class="material-symbols-outlined" style="font-size:20px;"
+                                data-icon="alternate_email">alternate_email</span>
+                            contact@lebestates.com
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright Bar -->
+        <div class="container footer-bottom">
+            <p class="caption">
+                © 2024 LebEstates. Timeless Prestige in Lebanese Real Estate.
+            </p>
+            <div class="footer-bottom-links caption">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Cookie Policy</a>
+            </div>
+        </div>
+    </footer>
+
+
+</body>
+
+</html>
