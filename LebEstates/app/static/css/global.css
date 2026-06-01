@@ -47,6 +47,9 @@
   --on-error-container: #93000a;
   --on-tertiary-fixed-variant: #474744;
 
+  --navbar-bg: rgba(248, 249, 255, 0.9);
+  --footer-bg: #00081e;
+
   --margin-desktop: 64px;
   --margin-mobile: 20px;
   --container-max: 1280px;
@@ -55,6 +58,60 @@
 
   --font-headline: 'Montserrat', sans-serif;
   --font-body: 'Inter', sans-serif;
+}
+
+/* Premium Dark Mode Variables */
+.dark-mode {
+  --surface-tint: #b4c6f4;
+  --surface-dim: #0a1124;
+  --surface: #0a0f1d;
+  --tertiary-fixed: #1e293b;
+  --on-surface: #f1f5f9;
+  --surface-container: #0f172a;
+  --on-tertiary-fixed: #f1f5f9;
+  --outline: #475569;
+  --secondary: #fed65b;
+  --on-primary-container: #f1f5f9;
+  --on-secondary: #0a0f1d;
+  --tertiary-container: #e4e2dd;
+  --inverse-surface: #f8f9ff;
+  --on-error: #ffffff;
+  --inverse-on-surface: #121c2a;
+  --tertiary: #ffffff;
+  --inverse-primary: #00081e;
+  --secondary-container: #735c00;
+  --surface-bright: #121e36;
+  --surface-variant: #1e293b;
+  --background: #060b18;
+  --secondary-fixed: #ffe088;
+  --on-primary-fixed: #f1f5f9;
+  --primary-fixed-dim: #4c5e86;
+  --primary-fixed: #1e293b;
+  --on-secondary-container: #ffe088;
+  --outline-variant: #334155;
+  --on-tertiary: #0a0f1d;
+  --on-primary-fixed-variant: #cbd5e1;
+  --primary-container: #1e293b;
+  --surface-container-lowest: #030712;
+  --primary: #ffffff;
+  --on-secondary-fixed-variant: #ffe088;
+  --on-primary: #0a0f1d;
+  --tertiary-fixed-dim: #474744;
+  --on-tertiary-container: #cbd5e1;
+  --error-container: #93000a;
+  --surface-container-high: #17223b;
+  --surface-container-low: #080e1b;
+  --error: #ffdad6;
+  --on-background: #f1f5f9;
+  --surface-container-highest: #202e4c;
+  --on-surface-variant: #cbd5e1;
+  --secondary-fixed-dim: #fed65b;
+  --on-secondary-fixed: #ffe088;
+  --on-error-container: #ffdad6;
+  --on-tertiary-fixed-variant: #cbd5e1;
+
+  --navbar-bg: rgba(10, 15, 29, 0.9);
+  --footer-bg: #030712;
 }
 
 * {
@@ -79,7 +136,7 @@
 
 /* Navbar */
 .navbar {
-  background-color: rgba(248, 249, 255, 0.9);
+  background-color: var(--navbar-bg);
   backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
@@ -147,10 +204,16 @@
   .nav-actions {
     flex-direction: column;
     width: 100%;
+    gap: 16px;
   }
 
   .nav-actions .btn {
     width: 100%;
+  }
+
+  .nav-actions .theme-toggle {
+    align-self: center;
+    margin-bottom: 8px;
   }
 }
 
@@ -158,6 +221,14 @@
   display: flex;
   align-items: center;
   gap: 32px;
+}
+
+@media (min-width: 1025px) {
+  .nav-links {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 .nav-link {
@@ -181,6 +252,39 @@
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--outline-variant);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  outline: none;
+}
+
+.theme-toggle:hover {
+  background-color: var(--surface-variant);
+  color: var(--primary);
+  transform: scale(1.08);
+  border-color: var(--primary);
+}
+
+.theme-toggle:active {
+  transform: scale(0.92);
+}
+
+.theme-toggle .material-symbols-outlined {
+  font-size: 20px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
 }
 
 
@@ -249,7 +353,7 @@
 
 /* Footer */
 .footer {
-  background-color: var(--primary);
+  background-color: var(--footer-bg);
   color: var(--on-primary);
 }
 
@@ -437,4 +541,28 @@
 
 .text-on-secondary-container {
   color: var(--on-secondary-container);
+}
+
+/* Maintain premium dark backdrops and light text on all hero sections in dark mode */
+.dark-mode .hero-section,
+.dark-mode .consult-hero,
+.dark-mode .about-hero {
+  background-color: var(--background) !important;
+  color: #ffffff;
+}
+
+.dark-mode .hero-section *,
+.dark-mode .consult-hero *,
+.dark-mode .about-hero * {
+  --on-primary: #ffffff;
+  --primary: #ffffff;
+  --on-surface: #f1f5f9;
+}
+
+/* Dropdown Item hover */
+.dropdown-item {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.dropdown-item:hover {
+  background-color: var(--surface-variant);
 }

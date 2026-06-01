@@ -7,10 +7,10 @@ def homepage():
     return render_template('homepage.html')
 
 
-@main_bp.route('/about.html')
+@main_bp.route('/about')
 def about():
     return render_template('about.html')
 
-@main_bp.route('/consultation.html')
+@main_bp.route('/consultation')
 def consultation():
     return render_template('consultation.html')

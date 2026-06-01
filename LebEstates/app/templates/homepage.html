@@ -1,56 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>LebEstates | Timeless Prestige in Lebanese Real Estate</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap"
-        rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/global.css">
-    <link rel="stylesheet" href="/static/css/homepage.css">
-    <script src="/static/js/homepage.js"></script>
-</head>
+{% block styles %}
+<link rel="stylesheet" href="/static/css/homepage.css">
+{% endblock %}
 
-<body>
-    <!-- TopNavBar -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="headline-md text-primary">
-                LebEstates
-            </div>
-            <!-- Hamburger Icon -->
-            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
+{% block head_scripts %}
+<script src="/static/js/homepage.js"></script>
+{% endblock %}
 
-            <!-- Navigation Menu -->
-            <div class="nav-menu" id="nav-menu">
-                <!-- Desktop Links -->
-                <div class="nav-links">
-                    <a class="nav-link label-md active" href="homepage.html">Home</a>
-                    <a class="nav-link label-md" href="#">Properties</a>
-                    <a class="nav-link label-md" href="#">Sell/Rent</a>
-                    <a class="nav-link label-md" href="consultation.html">Consultations</a>
-                    <a class="nav-link label-md" href="about.html">About</a>
-                    <a class="nav-link label-md" href="#">Contact</a>
-                </div>
-                <!-- Actions -->
-                <div class="nav-actions">
-                    <button class="btn btn-primary-outline label-md">
-                        Login
-                    </button>
-                    <button class="btn btn-secondary label-md">
-                        Get Started
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
+{% block content %}
 
     <!-- Hero Section -->
     <header class="hero-section">
@@ -405,80 +363,4 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container footer-grid section">
-            <div class="footer-info">
-                <div class="headline-md utility-mb-6">LebEstates</div>
-                <p class="body-md">
-                    Defining luxury and stability in the Lebanese real estate market. Timeless prestige for modern
-                    living.
-                </p>
-                <div class="social-links">
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
-                            data-icon="public">public</span></a>
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
-                            data-icon="mail">mail</span></a>
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
-                            data-icon="phone">phone</span></a>
-                </div>
-            </div>
-
-            <div class="footer-links-grid">
-                <div>
-                    <h6 class="footer-heading">Quick Links</h6>
-                    <ul class="footer-links label-md">
-                        <li><a href="#">Properties</a></li>
-                        <li><a href="#">Sell/Rent</a></li>
-                        <li><a href="#">Consultations</a></li>
-                        <li><a href="#">About Us</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h6 class="footer-heading">Services</h6>
-                    <ul class="footer-links label-md">
-                        <li><a href="#">Valuation</a></li>
-                        <li><a href="#">Property Mgmt</a></li>
-                        <li><a href="#">Legal Support</a></li>
-                        <li><a href="#">Investments</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h6 class="footer-heading">Contact</h6>
-                    <ul class="footer-links label-md">
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;"
-                                data-icon="location_on">location_on</span>
-                            Ashrafieh, Beirut, Lebanon
-                        </li>
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;" data-icon="call">call</span>
-                            +961 1 234 567
-                        </li>
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;"
-                                data-icon="alternate_email">alternate_email</span>
-                            contact@lebestates.com
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Copyright Bar -->
-        <div class="container footer-bottom">
-            <p class="caption">
-                © 2024 LebEstates. Timeless Prestige in Lebanese Real Estate.
-            </p>
-            <div class="footer-bottom-links caption">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">Cookie Policy</a>
-            </div>
-        </div>
-    </footer>
-
-
-</body>
-
-</html>
+{% endblock %}
