@@ -60,59 +60,7 @@
   --font-body: 'Inter', sans-serif;
 }
 
-/* Premium Dark Mode Variables */
-.dark-mode {
-  --surface-tint: #b4c6f4;
-  --surface-dim: #0a1124;
-  --surface: #0a0f1d;
-  --tertiary-fixed: #1e293b;
-  --on-surface: #f1f5f9;
-  --surface-container: #0f172a;
-  --on-tertiary-fixed: #f1f5f9;
-  --outline: #475569;
-  --secondary: #fed65b;
-  --on-primary-container: #f1f5f9;
-  --on-secondary: #0a0f1d;
-  --tertiary-container: #e4e2dd;
-  --inverse-surface: #f8f9ff;
-  --on-error: #ffffff;
-  --inverse-on-surface: #121c2a;
-  --tertiary: #ffffff;
-  --inverse-primary: #00081e;
-  --secondary-container: #735c00;
-  --surface-bright: #121e36;
-  --surface-variant: #1e293b;
-  --background: #060b18;
-  --secondary-fixed: #ffe088;
-  --on-primary-fixed: #f1f5f9;
-  --primary-fixed-dim: #4c5e86;
-  --primary-fixed: #1e293b;
-  --on-secondary-container: #ffe088;
-  --outline-variant: #334155;
-  --on-tertiary: #0a0f1d;
-  --on-primary-fixed-variant: #cbd5e1;
-  --primary-container: #1e293b;
-  --surface-container-lowest: #030712;
-  --primary: #ffffff;
-  --on-secondary-fixed-variant: #ffe088;
-  --on-primary: #0a0f1d;
-  --tertiary-fixed-dim: #474744;
-  --on-tertiary-container: #cbd5e1;
-  --error-container: #93000a;
-  --surface-container-high: #17223b;
-  --surface-container-low: #080e1b;
-  --error: #ffdad6;
-  --on-background: #f1f5f9;
-  --surface-container-highest: #202e4c;
-  --on-surface-variant: #cbd5e1;
-  --secondary-fixed-dim: #fed65b;
-  --on-secondary-fixed: #ffe088;
-  --on-error-container: #ffdad6;
-  --on-tertiary-fixed-variant: #cbd5e1;
 
-  --navbar-bg: rgba(10, 15, 29, 0.9);
-  --footer-bg: #030712;
-}
 
 * {
   margin: 0;
@@ -730,21 +678,7 @@
   color: var(--on-secondary-container);
 }
 
-/* Maintain premium dark backdrops and light text on all hero sections in dark mode */
-.dark-mode .hero-section,
-.dark-mode .consult-hero,
-.dark-mode .about-hero {
-  background-color: var(--background) !important;
-  color: #ffffff;
-}
 
-.dark-mode .hero-section *,
-.dark-mode .consult-hero *,
-.dark-mode .about-hero * {
-  --on-primary: #ffffff;
-  --primary: #ffffff;
-  --on-surface: #f1f5f9;
-}
 
 /* Dropdown Item hover */
 .dropdown-item {

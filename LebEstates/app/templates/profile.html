@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile | LebEstates{% endblock %}
+
+{% block styles %}
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 80px auto;
+        padding: 40px;
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--outline-variant);
+        text-align: center;
+    }
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--surface-container);
+        box-shadow: var(--shadow-md);
+        margin: 0 auto 24px;
+    }
+    .profile-title {
+        font-family: var(--font-headline);
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 8px;
+    }
+    .profile-role-badge {
+        display: inline-block;
+        background-color: var(--surface-container);
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 6px 16px;
+        border-radius: 20px;
+        margin-bottom: 32px;
+    }
+    .profile-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        text-align: left;
+        margin-bottom: 40px;
+    }
+    @media (max-width: 600px) {
+        .profile-details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .profile-detail-card {
+        background-color: var(--surface-container-low);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(197, 198, 207, 0.2);
+    }
+    .profile-detail-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--on-surface-variant);
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .profile-detail-val {
+        font-size: 15px;
+        color: var(--primary);
+        font-weight: 500;
+    }
+    .profile-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: var(--primary);
+        color: #ffffff;
+        padding: 14px 28px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-family: var(--font-headline);
+        font-weight: 600;
+        font-size: 14px;
+        transition: background-color 0.2s, transform 0.2s;
+    }
+    .profile-back-btn:hover {
+        background-color: var(--primary-container);
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-container">
+        <img alt="User Avatar" class="profile-avatar-large" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiimWHshUXMAjiH8nKzuPYsXHmSvEcWEM3skiVAShyUeGn3XmgIYICmfmeisZwPSL7v9KwpeEBWcO4SZVh0jDuN3M5aeHNJdJSpS6SxMgyXzY-a9Q8udJxTSPvKeLMHojuQvnv0ROg01Qo5Bb5lsGeq8fA1DIbCegBcP-MOCUbqMz-LHTM8OaO-H3sQ5boGfLq9dwA8paoJiTGsYP5-UgQEj3JFLDeaWTKXXC3bVTutZ9VEB3dj-Hkpp_M6E6RkFci1-io9AhsuIk">
+        <h2 class="profile-title">{{ user.fullName }}</h2>
+        <span class="profile-role-badge">{{ user.role.roleName }}</span>
+        
+        <div class="profile-details-grid">
+            <div class="profile-detail-card">
+                <p class="profile-detail-label">Email Address</p>
+                <p class="profile-detail-val">{{ user.email }}</p>
+            </div>
+            <div class="profile-detail-card">
+                <p class="profile-detail-label">Access Privilege</p>
+                <p class="profile-detail-val">{{ user.role.roleName }} (Full Access)</p>
+            </div>
+            <div class="profile-detail-card">
+                <p class="profile-detail-label">Phone Number</p>
+                <p class="profile-detail-val">{{ user.phoneNumber or 'N/A' }}</p>
+            </div>
+            <div class="profile-detail-card">
+                <p class="profile-detail-label">Registered Since</p>
+                <p class="profile-detail-val">{{ user.createdAt.strftime('%B %d, %Y') }}</p>
+            </div>
+        </div>
+        
+        <a href="/dashboard" class="profile-back-btn">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

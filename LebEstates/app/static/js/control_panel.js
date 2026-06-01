@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------
-   LEBESTATES ADMIN DASHBOARD CUSTOM JAVASCRIPT
+   LEBESTATES ADMIN CONTROL PANEL CUSTOM JAVASCRIPT
    ------------------------------------------------------------- */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sideNav');
     const hamburgerButton = document.getElementById('hamburgerButton');
     const sidebarOverlay = document.getElementById('dashboardSidebarOverlay');
-    const toggleButton = document.getElementById('toggleButton'); // Optional inner close button
+    const toggleButton = document.getElementById('toggleButton'); // Inner toggle close button
 
     function openSidebar() {
         if (sidebar) sidebar.classList.add('sidebar--open');
@@ -137,14 +137,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // SIMULATED KPI ANIMATIONS ON PAGE LOAD
-    const chartBars = document.querySelectorAll('.chart-bar');
-    chartBars.forEach(bar => {
-        const originalHeight = bar.style.height || bar.parentElement.style.getPropertyValue('--bar-height') || '50%';
-        bar.style.height = '0%';
-        setTimeout(() => {
-            bar.style.height = originalHeight;
-        }, 150);
-    });
 });
+
+/**
+ * Global Hierarchical Group Accordion Toggle Function
+ * Exposed on `window` to support declarative inline HTML `onclick` callbacks safely.
+ */
+window.toggleGroup = function(id) {
+    const groupElement = document.getElementById(id);
+    if (!groupElement) return;
+
+    if (groupElement.classList.contains('sidebar__group')) {
+        groupElement.classList.toggle('sidebar__group--expanded');
+    } else if (groupElement.classList.contains('sidebar__subgroup')) {
+        groupElement.classList.toggle('sidebar__subgroup--expanded');
+    }
+};
