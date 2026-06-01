@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>LebEstates Admin Dashboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Custom Style Sheet -->
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    
+    <!-- Custom Script (Deferred) -->
+    <script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</head>
+<body class="dashboard-body">
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sideNav">
+        <div class="sidebar__brand-container">
+            <div class="sidebar__brand" id="brandContent">
+                <div class="sidebar__brand-icon">
+                    <span class="material-symbols-outlined">domain</span>
+                </div>
+                <div class="sidebar__brand-text">
+                    <span class="sidebar__brand-title">LebEstates</span>
+                    <span class="sidebar__brand-subtitle">Prestige Admin</span>
+                </div>
+            </div>
+            <button class="sidebar__toggle" id="toggleButton" aria-label="Toggle Sidebar">
+                <span class="material-symbols-outlined" id="toggleIcon">menu_open</span>
+            </button>
+        </div>
+
+        <nav class="sidebar__nav">
+            <a class="sidebar__nav-item sidebar__nav-item--active" href="#">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="sidebar__nav-label">Dashboard</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">admin_panel_settings</span>
+                <span class="sidebar__nav-label">Control Panel</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">apartment</span>
+                <span class="sidebar__nav-label">Properties</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">group</span>
+                <span class="sidebar__nav-label">Users</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">chat_bubble</span>
+                <span class="sidebar__nav-label">Consultations</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">calendar_month</span>
+                <span class="sidebar__nav-label">Visits</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="sidebar__nav-label">Transactions</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar__nav-label">Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__cta-container">
+            <button class="sidebar__cta">
+                <span class="material-symbols-outlined">add_business</span>
+                <span class="sidebar__cta-label">Post New Property</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="mainContent">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="header__search">
+                <span class="material-symbols-outlined header__search-icon">search</span>
+                <input class="header__search-input" placeholder="Search for property, user ID, or transaction..." type="text">
+            </div>
+            
+            <div class="header__actions">
+                <div class="header__action-buttons">
+                    <button class="header__action-btn header__action-btn--badge" aria-label="Notifications">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="header__badge"></span>
+                    </button>
+                    <button class="header__action-btn" aria-label="Settings">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                </div>
+                
+                <div class="header__divider"></div>
+                
+                <div class="header__profile">
+                    <div class="header__profile-text">
+                        <p class="header__profile-name">Admin Profile</p>
+                        <p class="header__profile-role">Super Admin</p>
+                    </div>
+                    <img alt="Admin Profile Avatar" class="header__profile-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKZEaujOGNKQnvqzPtcaD3HpieeGDm_7G33993or5CAVfAeZJETcjjkmQWtpREoymeQl9fkRMjhc0CWOrddLp_Ju1FeL0FKpoWtJFWcIDdz1Joxbiig3Qva_GFKqb_6qPQJzhJaAyhncmVh9-SYdYOrf1DVWt4bSYjinqhS_p6tbZnbGxTUI0jdlnM8pqvDuG3gCpklRKUNVrr0s8ic3EJVtcMGL-F51W7Lmm5Kthm1xb2FTFQaV-i5SCLF4J4G70QWSQNTKFUfnk">
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <div class="dashboard-body__content">
+            
+            <!-- Page Heading -->
+            <div class="page-heading">
+                <div class="page-heading__info">
+                    <h1 class="page-heading__title">Overview</h1>
+                    <p class="page-heading__subtitle">Welcome back, Admin. Here is what's happening today.</p>
+                </div>
+                <div class="page-heading__actions">
+                    <span class="date-badge">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        Oct 24, 2024
+                    </span>
+                </div>
+            </div>
+
+            <!-- KPI Cards Grid -->
+            <section class="kpi-grid">
+                <!-- KPI Card 1 -->
+                <div class="kpi-card">
+                    <div class="kpi-card__background-decorator"></div>
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__icon-container">
+                            <span class="material-symbols-outlined">apartment</span>
+                        </div>
+                        <span class="badge badge--success">+4.2%</span>
+                    </div>
+                    <div class="kpi-card__bottom">
+                        <p class="kpi-card__label">Total Properties</p>
+                        <h3 class="kpi-card__value">124</h3>
+                    </div>
+                </div>
+
+                <!-- KPI Card 2 -->
+                <div class="kpi-card">
+                    <div class="kpi-card__background-decorator"></div>
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__icon-container">
+                            <span class="material-symbols-outlined">group</span>
+                        </div>
+                        <span class="badge badge--success">+12%</span>
+                    </div>
+                    <div class="kpi-card__bottom">
+                        <p class="kpi-card__label">Total Users</p>
+                        <h3 class="kpi-card__value">1,450</h3>
+                    </div>
+                </div>
+
+                <!-- KPI Card 3 -->
+                <div class="kpi-card">
+                    <div class="kpi-card__background-decorator"></div>
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__icon-container">
+                            <span class="material-symbols-outlined">chat_bubble</span>
+                        </div>
+                        <span class="badge badge--success">+8 today</span>
+                    </div>
+                    <div class="kpi-card__bottom">
+                        <p class="kpi-card__label">Consultations</p>
+                        <h3 class="kpi-card__value">82</h3>
+                    </div>
+                </div>
+
+                <!-- KPI Card 4 -->
+                <div class="kpi-card">
+                    <div class="kpi-card__background-decorator"></div>
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__icon-container">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                        </div>
+                        <span class="badge badge--neutral">Stable</span>
+                    </div>
+                    <div class="kpi-card__bottom">
+                        <p class="kpi-card__label">Scheduled Visits</p>
+                        <h3 class="kpi-card__value">45</h3>
+                    </div>
+                </div>
+
+                <!-- KPI Card 5 -->
+                <div class="kpi-card">
+                    <div class="kpi-card__background-decorator"></div>
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__icon-container">
+                            <span class="material-symbols-outlined">payments</span>
+                        </div>
+                        <span class="badge badge--success">+15%</span>
+                    </div>
+                    <div class="kpi-card__bottom">
+                        <p class="kpi-card__label">Transactions</p>
+                        <h3 class="kpi-card__value">12</h3>
+                    </div>
+                </div>
+
+                <!-- KPI Card 6 (Urgent/Error) -->
+                <div class="kpi-card kpi-card--urgent">
+                    <div class="kpi-card__background-decorator"></div>
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__icon-container">
+                            <span class="material-symbols-outlined">pending_actions</span>
+                        </div>
+                        <span class="badge badge--urgent animate-pulse">URGENT</span>
+                    </div>
+                    <div class="kpi-card__bottom">
+                        <p class="kpi-card__label">Pending Requests</p>
+                        <h3 class="kpi-card__value">8</h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Visualization Row -->
+            <section class="visual-row">
+                <!-- Revenue & Growth Card -->
+                <div class="visual-card visual-card--large">
+                    <div class="visual-card__header">
+                        <div class="visual-card__title-area">
+                            <h3 class="visual-card__title">Revenue & Growth</h3>
+                            <p class="visual-card__subtitle">Transaction volume (Last 30 Days)</p>
+                        </div>
+                        <div class="visual-card__toggle-group">
+                            <button class="toggle-btn toggle-btn--active">Volume</button>
+                            <button class="toggle-btn">Value</button>
+                        </div>
+                    </div>
+                    
+                    <!-- CSS Custom Chart Grid -->
+                    <div class="custom-chart">
+                        <div class="custom-chart__bars">
+                            <div class="chart-bar-container group" style="--bar-height: 40%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 1: $120k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 65%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 2: $195k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 45%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 3: $135k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 85%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 4: $255k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 55%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 5: $165k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 95%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 6: $285k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 30%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 7: $90k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 70%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 8: $210k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 50%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 9: $150k</div>
+                                </div>
+                            </div>
+                            <div class="chart-bar-container group" style="--bar-height: 100%;">
+                                <div class="chart-bar">
+                                    <div class="chart-bar__tooltip">Week 10: $300k</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="custom-chart__axis">
+                            <span class="custom-chart__label">Oct 01</span>
+                            <span class="custom-chart__label">Oct 15</span>
+                            <span class="custom-chart__label">Oct 30</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribution Card -->
+                <div class="visual-card">
+                    <h3 class="visual-card__title">Distribution</h3>
+                    <p class="visual-card__subtitle visual-card__subtitle--spaced">Inventory by Type</p>
+                    
+                    <div class="donut-chart-container">
+                        <!-- Custom CSS / SVG Donut Chart -->
+                        <div class="donut-chart">
+                            <svg class="donut-chart__svg" viewBox="0 0 100 100">
+                                <!-- Background Circle -->
+                                <circle class="donut-chart__bg" cx="50" cy="50" r="40" />
+                                <!-- Apartment Segment (45%) -->
+                                <circle class="donut-chart__segment donut-chart__segment--apartments" cx="50" cy="50" r="40" />
+                                <!-- Villa Segment (25%) -->
+                                <circle class="donut-chart__segment donut-chart__segment--villas" cx="50" cy="50" r="40" />
+                                <!-- Commercial Segment (20%) -->
+                                <circle class="donut-chart__segment donut-chart__segment--commercial" cx="50" cy="50" r="40" />
+                                <!-- Land Segment (10%) -->
+                                <circle class="donut-chart__segment donut-chart__segment--land" cx="50" cy="50" r="40" />
+                            </svg>
+                            <div class="donut-chart__content">
+                                <span class="donut-chart__number">124</span>
+                                <span class="donut-chart__label">Total</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="donut-legend">
+                        <div class="donut-legend__item">
+                            <div class="donut-legend__indicator donut-legend__indicator--apartments"></div>
+                            <span class="donut-legend__text">Apartments (45%)</span>
+                        </div>
+                        <div class="donut-legend__item">
+                            <div class="donut-legend__indicator donut-legend__indicator--villas"></div>
+                            <span class="donut-legend__text">Villas (25%)</span>
+                        </div>
+                        <div class="donut-legend__item">
+                            <div class="donut-legend__indicator donut-legend__indicator--commercial"></div>
+                            <span class="donut-legend__text">Commercial (20%)</span>
+                        </div>
+                        <div class="donut-legend__item">
+                            <div class="donut-legend__indicator donut-legend__indicator--land"></div>
+                            <span class="donut-legend__text">Land (10%)</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Secondary Details Row -->
+            <section class="secondary-row">
+                <!-- Schedule Card -->
+                <div class="details-card details-card--large">
+                    <div class="details-card__header">
+                        <div class="details-card__title-area">
+                            <span class="material-symbols-outlined text-primary">event_note</span>
+                            <h3 class="details-card__title">Today's Schedule</h3>
+                        </div>
+                        <span class="badge badge--success-light">5 Appointments</span>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Property</th>
+                                    <th>Assigned Agent</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="schedule-table__time">10:00 AM</td>
+                                    <td>Luxury Penthouse #42</td>
+                                    <td>
+                                        <div class="agent-profile">
+                                            <div class="agent-profile__avatar"></div>
+                                            <span class="agent-profile__name">Marcelle T.</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-badge status-badge--confirmed">Confirmed</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="schedule-table__time">11:30 AM</td>
+                                    <td>Beachfront Villa Saida</td>
+                                    <td>
+                                        <div class="agent-profile">
+                                            <div class="agent-profile__avatar"></div>
+                                            <span class="agent-profile__name">George K.</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-badge status-badge--active">On Route</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="schedule-table__time">02:00 PM</td>
+                                    <td>Modern Office Beirut</td>
+                                    <td>
+                                        <div class="agent-profile">
+                                            <div class="agent-profile__avatar"></div>
+                                            <span class="agent-profile__name">Nadine S.</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-badge status-badge--pending">Pending</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="schedule-table__time">04:15 PM</td>
+                                    <td>Apartment 204 Downtown</td>
+                                    <td>
+                                        <div class="agent-profile">
+                                            <div class="agent-profile__avatar"></div>
+                                            <span class="agent-profile__name">Raymond S.</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-badge status-badge--confirmed">Confirmed</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Regions Performance Card -->
+                <div class="details-card">
+                    <h3 class="details-card__title details-card__title--spaced">Top Regions</h3>
+                    
+                    <div class="regions-list">
+                        <div class="region-item">
+                            <div class="region-item__info">
+                                <span class="region-item__name">Beirut Central District</span>
+                                <span class="region-item__percentage">42% Vol.</span>
+                            </div>
+                            <div class="region-item__progress-bar">
+                                <div class="region-item__progress" style="width: 42%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="region-item">
+                            <div class="region-item__info">
+                                <span class="region-item__name">Mount Lebanon</span>
+                                <span class="region-item__percentage">28% Vol.</span>
+                            </div>
+                            <div class="region-item__progress-bar">
+                                <div class="region-item__progress" style="width: 28%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="region-item">
+                            <div class="region-item__info">
+                                <span class="region-item__name">Saida</span>
+                                <span class="region-item__percentage">18% Vol.</span>
+                            </div>
+                            <div class="region-item__progress-bar">
+                                <div class="region-item__progress" style="width: 18%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="region-item">
+                            <div class="region-item__info">
+                                <span class="region-item__name">Tripoli</span>
+                                <span class="region-item__percentage">12% Vol.</span>
+                            </div>
+                            <div class="region-item__progress-bar">
+                                <div class="region-item__progress" style="width: 12%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="insight-box">
+                        <p class="insight-box__text">
+                            <span class="insight-box__title">Insight:</span> Beirut Central District continues to lead transaction volume, increasing by 5% this month.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activity & Health Row -->
+            <section class="activity-health-row">
+                <!-- Recent Activity Timeline Card -->
+                <div class="details-card">
+                    <div class="details-card__header">
+                        <div class="details-card__title-area">
+                            <span class="material-symbols-outlined text-primary">history</span>
+                            <h3 class="details-card__title">Recent Activity</h3>
+                        </div>
+                        <button class="logs-btn">Logs</button>
+                    </div>
+                    
+                    <div class="timeline">
+                        <div class="timeline__item">
+                            <div class="timeline__icon timeline__icon--home">
+                                <span class="material-symbols-outlined">add_home</span>
+                            </div>
+                            <div class="timeline__content">
+                                <p class="timeline__title">Listing Published</p>
+                                <p class="timeline__description">Downtown Luxury Apt #204 approved.</p>
+                            </div>
+                        </div>
+                        <div class="timeline__item">
+                            <div class="timeline__icon timeline__icon--calendar">
+                                <span class="material-symbols-outlined">event_available</span>
+                            </div>
+                            <div class="timeline__content">
+                                <p class="timeline__title">Viewing Scheduled</p>
+                                <p class="timeline__description">Villa #402 requested for tomorrow.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Health & Action Cards -->
+                <div class="health-actions-card">
+                    <div class="health-card">
+                        <div class="health-card__header">
+                            <div class="health-card__title-area">
+                                <h3 class="health-card__title">System Health</h3>
+                                <p class="health-card__subtitle">Real-time status</p>
+                            </div>
+                            <div class="health-badge">
+                                <span class="health-badge__pulse">
+                                    <span class="health-badge__pulse-dot"></span>
+                                    <span class="health-badge__pulse-ring"></span>
+                                </span>
+                                SECURE
+                            </div>
+                        </div>
+                        
+                        <div class="health-metrics">
+                            <div class="health-metric">
+                                <p class="health-metric__label">Uptime</p>
+                                <p class="health-metric__value">99.9%</p>
+                            </div>
+                            <div class="health-metric">
+                                <p class="health-metric__label">Latency</p>
+                                <p class="health-metric__value">42ms</p>
+                            </div>
+                        </div>
+                        
+                        <button class="health-card__btn">
+                            <span class="material-symbols-outlined">analytics</span>
+                            Diagnostics
+                        </button>
+                    </div>
+
+                    <div class="actions-grid">
+                        <button class="action-grid-btn action-grid-btn--gold">
+                            <span class="material-symbols-outlined">add_circle</span>
+                            <span class="action-grid-btn__label">New Property</span>
+                        </button>
+                        <button class="action-grid-btn">
+                            <span class="material-symbols-outlined">person_add</span>
+                            <span class="action-grid-btn__label">Add User</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p class="footer__copy">
+                &copy; 2024 LebEstates Prestige Admin. All rights reserved.
+            </p>
+            <div class="footer__links">
+                <a class="footer__link" href="#">Privacy Policy</a>
+                <a class="footer__link" href="#">Terms</a>
+                <a class="footer__link" href="#">Support</a>
+            </div>
+        </footer>
+    </main>
+
+</body>
+</html>

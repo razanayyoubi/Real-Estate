@@ -20,18 +20,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Hamburger Menu Toggle
-    const hamburger = document.getElementById('hamburger');
-    const navMenu = document.getElementById('nav-menu');
-    if (hamburger && navMenu) {
-        hamburger.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-            const icon = hamburger.querySelector('.material-symbols-outlined');
-            if (navMenu.classList.contains('active')) {
-                icon.textContent = 'close';
-            } else {
-                icon.textContent = 'menu';
-            }
-        });
-    }
 });

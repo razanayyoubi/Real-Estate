@@ -14,3 +14,7 @@ def about():
 @main_bp.route('/consultation')
 def consultation():
     return render_template('consultation.html')
+
+@main_bp.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
