@@ -984,7 +984,7 @@
 .consult-radio-option input[type="radio"]:checked+.consult-radio-box {
   border-color: var(--primary-container);
   background: var(--primary-container);
-  color: var(--on-primary);
+  color: var(--on-checked-text, #ffffff);
   box-shadow: 0 4px 14px rgba(10, 31, 68, 0.2);
 }
 

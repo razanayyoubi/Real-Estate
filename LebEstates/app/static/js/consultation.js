@@ -2,20 +2,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    /* ─────────────────────────────────────────────────────────
-       1. NAVBAR – Hamburger menu toggle (same pattern as all pages)
-    ───────────────────────────────────────────────────────── */
-    const hamburger = document.getElementById('hamburger');
-    const navMenu = document.getElementById('nav-menu');
-
-    if (hamburger && navMenu) {
-        hamburger.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-            const icon = hamburger.querySelector('.material-symbols-outlined');
-            icon.textContent = navMenu.classList.contains('active') ? 'close' : 'menu';
-        });
-    }
-
 
     /* ─────────────────────────────────────────────────────────
        2. SMOOTH SCROLL – Hero CTA → form section

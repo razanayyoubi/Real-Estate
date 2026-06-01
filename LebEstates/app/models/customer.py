@@ -5,7 +5,7 @@ class Customer(db.Model):
     __tablename__ = 'customer'
     customerID = db.Column(db.Integer, primary_key=True)
     userID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False, unique=True)
-    nationalID = db.Column(db.String(50), nullable=False, unique=True)
+    nationalID = db.Column(db.String(50), nullable=True, unique=False)
     address = db.Column(db.String(255))
     createdAt = db.Column(db.DateTime, default=datetime.utcnow)
 

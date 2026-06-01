@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Login | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/signup.css" /> <!-- Reusing signup styles for identical layout -->
+{% endblock %}
+
+{% block head_scripts %}
+{% endblock %}
+
+{% block content %}
+
+    <main class="signup-main">
+        <div class="signup-split-container">
+            
+            <section class="signup-left-panel">
+                <div class="signup-form-wrapper">
+                    <div class="signup-header">
+                        <h1 class="display-lg text-primary">Welcome Back</h1>
+                        <p class="body-md text-on-surface-variant">Log in to your account to manage your prestigious real estate portfolio.</p>
+                    </div>
+                    
+                    <div class="signup-alert-box" id="login-alert-box" aria-live="polite"></div>
+
+                    <form class="signup-form" id="login-form" novalidate>
+                        
+                        <div class="form-field-group">
+                            <label class="label-md uppercase-tracking" for="email">Email Address</label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined input-icon">mail</span>
+                                <input class="form-input" id="email" placeholder="example@lebestates.com" required type="email"/>
+                            </div>
+                            <span class="field-error-msg" id="err-email">Please enter a valid email address.</span>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label class="label-md uppercase-tracking" for="password">Password</label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined input-icon">lock</span>
+                                <input class="form-input" id="password" placeholder="••••••••" required type="password"/>
+                            </div>
+                            <span class="field-error-msg" id="err-password">Please enter your password.</span>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end;">
+                            <a class="terms-link caption" href="#">Forgot Password?</a>
+                        </div>
+
+                        <button class="btn btn-submit" type="submit" id="btn-submit">
+                            <span>Login to Dashboard</span>
+                            <span class="material-symbols-outlined arrow-icon">login</span>
+                        </button>
+                    </form>
+
+                    <div class="login-redirect">
+                        <p class="body-md text-on-surface-variant">
+                            Don't have an account yet? 
+                            <a class="login-link" href="/register">Register Here</a>
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="signup-right-panel bg-split-hero" style="background-image: url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=2000&auto=format&fit=crop');">
+                <div class="hero-gradient-overlay"></div>
+                <div class="hero-badge-overlay">
+                    <div class="glass-panel animate-fade-in-up">
+                        <div class="exclusive-badge">
+                            <span class="material-symbols-outlined fill-star">key</span>
+                            <span class="label-md uppercase-tracking gold-text">Secure Access</span>
+                        </div>
+                        <h2 class="display-lg panel-title">Your portfolio, masterfully managed.</h2>
+                        <p class="body-lg panel-description">
+                            Access your saved properties, track investments, and connect with your dedicated real estate concierge.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+        </div>
+    </main>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/login.js"></script>
+{% endblock %}

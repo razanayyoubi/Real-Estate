@@ -1,11 +1,11 @@
 import os
-from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(os.path.dirname(basedir), '.env'))
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'app.db')
+    SECRET_KEY = 'hard-to-guess-string'
+    # MySQL Connection configuration
+    # Format: mysql+pymysql://<username>:<password>@<host>:<port>/<database_name>
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:123@localhost:3306/lebestates'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
