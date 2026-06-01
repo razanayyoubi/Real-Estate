@@ -15,12 +15,7 @@
     <link rel="stylesheet" href="/static/css/global.css">
     {% block styles %}{% endblock %}
 
-    <script>
-        // Immediately set theme based on localStorage to avoid FOUC
-        if (localStorage.getItem('theme') === 'dark') {
-            document.documentElement.classList.add('dark-mode');
-        }
-    </script>
+
     <script src="/static/js/theme.js"></script>
     {% block head_scripts %}{% endblock %}
 </head>
@@ -38,7 +33,7 @@
                 </button>
                 <a class="headline-md text-primary brand-logo" href="/" style="text-decoration: none;">LebEstates</a>
             </div>
-            
+
             <div class="nav-menu" id="nav-menu">
                 <!-- Sidebar Header (Mobile/Tablet Only) -->
                 <div class="sidebar-header">
@@ -66,14 +61,10 @@
                         <span class="material-symbols-outlined nav-link-icon">chat</span>
                         Consultations
                     </a>
-                    <a class="nav-link label-md {% if request.path == '/about' %}active{% endif %}"
-                        href="/about">
-                        <span class="material-symbols-outlined nav-link-icon">info</span>
-                        About Us
-                    </a>
-                    <a class="nav-link label-md" href="#">
-                        <span class="material-symbols-outlined nav-link-icon">mail</span>
-                        Contact
+                    <a class="nav-link label-md {% if request.path == '/dashboard' %}active{% endif %}"
+                        href="/dashboard">
+                        <span class="material-symbols-outlined nav-link-icon">dashboard</span>
+                        Dashboard
                     </a>
                 </div>
                 <div class="nav-actions">
@@ -97,7 +88,7 @@
                         <!-- Dropdown Menu -->
                         <div id="profile-dropdown" class="profile-dropdown shadow-2xl glass-panel"
                             style="display: none; position: absolute; top: 120%; right: 0; min-width: 160px; border-radius: 8px; overflow: hidden; z-index: 1000; background-color: var(--surface); border: 1px solid var(--outline-variant);">
-                            <a href="#" class="dropdown-item label-md"
+                            <a href="/profile" class="dropdown-item label-md"
                                 style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; color: var(--on-surface); text-decoration: none;">
                                 <span class="material-symbols-outlined" style="font-size: 18px;">account_circle</span>
                                 Profile
@@ -130,9 +121,7 @@
                         Started</button>
                     {% endif %}
 
-                    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-                        <span class="material-symbols-outlined" id="theme-toggle-icon">dark_mode</span>
-                    </button>
+
                 </div>
             </div>
         </div>
@@ -143,76 +132,10 @@
     {% endblock %}
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container footer-grid section">
-            <div class="footer-info">
-                <div class="headline-md utility-mb-6">LebEstates</div>
-                <p class="body-md">
-                    Defining luxury and stability in the Lebanese real estate market. Timeless prestige for modern
-                    living.
-                </p>
-                <div class="social-links">
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
-                            data-icon="public">public</span></a>
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
-                            data-icon="mail">mail</span></a>
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;"
-                            data-icon="phone">phone</span></a>
-                </div>
-            </div>
-
-            <div class="footer-links-grid">
-                <div>
-                    <h6 class="footer-heading">Quick Links</h6>
-                    <ul class="footer-links label-md">
-                        <li><a href="#">Properties</a></li>
-                        <li><a href="#">Sell/Rent</a></li>
-                        <li><a href="/consultation">Consultations</a></li>
-                        <li><a href="/about">About Us</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h6 class="footer-heading">Services</h6>
-                    <ul class="footer-links label-md">
-                        <li><a href="#">Valuation</a></li>
-                        <li><a href="#">Property Mgmt</a></li>
-                        <li><a href="#">Legal Support</a></li>
-                        <li><a href="#">Investments</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h6 class="footer-heading">Contact</h6>
-                    <ul class="footer-links label-md">
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;"
-                                data-icon="location_on">location_on</span>
-                            Ashrafieh, Beirut, Lebanon
-                        </li>
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;" data-icon="call">call</span>
-                            +961 1 234 567
-                        </li>
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;"
-                                data-icon="alternate_email">alternate_email</span>
-                            contact@lebestates.com
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="container footer-bottom">
-            <p class="caption">© 2024 LebEstates. Timeless Prestige in Lebanese Real Estate.</p>
-            <div class="footer-bottom-links caption">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">Cookie Policy</a>
-            </div>
-        </div>
-    </footer>
+    {% include 'footer.html' %}
 
     {% block scripts %}{% endblock %}
+    
 </body>
 
 </html>

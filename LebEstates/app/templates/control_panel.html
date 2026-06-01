@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>LebEstates Admin Control Panel</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Global Style Sheet -->
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    
+    <!-- Custom Style Sheet -->
+    <link href="{{ url_for('static', filename='css/control_panel.css') }}" rel="stylesheet">
+    
+    <!-- Custom Script (Deferred) -->
+    <script defer src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+</head>
+<body class="control-panel-body">
+
+    <!-- Hierarchical Side Navigation Bar -->
+    <aside class="sidebar" id="sideNav">
+        <div class="sidebar__brand-container">
+            <div class="sidebar__brand">
+                <span class="sidebar__brand-title">LebEstates</span>
+                <span class="sidebar__brand-subtitle">Admin Portal</span>
+            </div>
+            <button class="sidebar__toggle" id="toggleButton" aria-label="Toggle Sidebar">
+                <span class="material-symbols-outlined" id="toggleIcon">menu_open</span>
+            </button>
+        </div>
+
+        <nav class="sidebar__nav custom-scrollbar">
+            <!-- Dashboard Link -->
+            <a class="sidebar__nav-item" href="/dashboard">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="sidebar__nav-label">Dashboard</span>
+            </a>
+
+            <!-- Expandable Administration Center (Active Parent by default) -->
+            <div class="sidebar__group sidebar__group--expanded active-parent" id="admin-center">
+                <button class="sidebar__group-btn" onclick="toggleGroup('admin-center')">
+                    <div class="sidebar__group-title">
+                        <span class="material-symbols-outlined">construction</span>
+                        <span class="sidebar__nav-label font-semibold">Administration Center</span>
+                    </div>
+                    <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                </button>
+
+                <!-- First Level Nested Menu -->
+                <div class="sidebar__submenu">
+                    <!-- Nested Section 1: People Management -->
+                    <div class="sidebar__subgroup" id="people-mgmt">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('people-mgmt')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">groups</span>
+                                <span class="sidebar__subgroup-label">People Management</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link" href="#">Users</a>
+                            <a class="sidebar__child-link" href="#">Employees</a>
+                            <a class="sidebar__child-link" href="#">Blacklist</a>
+                        </div>
+                    </div>
+
+                    <!-- Nested Section 2: Property Operations (Active by default) -->
+                    <div class="sidebar__subgroup sidebar__subgroup--expanded" id="property-ops">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('property-ops')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">holiday_village</span>
+                                <span class="sidebar__subgroup-label">Property Operations</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link sidebar__child-link--active" href="#">Properties</a>
+                            <a class="sidebar__child-link" href="#">Consultations</a>
+                            <a class="sidebar__child-link" href="#">Visits</a>
+                        </div>
+                    </div>
+
+                    <!-- Nested Section 3: Financial Management -->
+                    <div class="sidebar__subgroup" id="financial-mgmt">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('financial-mgmt')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">payments</span>
+                                <span class="sidebar__subgroup-label">Financial Management</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link" href="#">Transactions</a>
+                            <a class="sidebar__child-link" href="#">Salaries</a>
+                            <a class="sidebar__child-link" href="#">Commission Settings</a>
+                        </div>
+                    </div>
+
+                    <!-- Nested Section 4: System Administration -->
+                    <div class="sidebar__subgroup" id="system-admin">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('system-admin')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">settings_suggest</span>
+                                <span class="sidebar__subgroup-label">System Administration</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link" href="#">Audit Logs</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Link -->
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span class="sidebar__nav-label">Reports</span>
+            </a>
+
+            <!-- Settings Link -->
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar__nav-label">Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__footer">
+            <button class="sidebar__cta">
+                <span class="material-symbols-outlined">add</span>
+                <span class="sidebar__cta-label">New Property</span>
+            </button>
+            <a class="sidebar__logout-link" href="/logout">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="sidebar__logout-label">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Sidebar overlay backdrop -->
+    <div class="sidebar-overlay" id="dashboardSidebarOverlay"></div>
+
+    <!-- Main Dashboard Content Area -->
+    <main class="main-content" id="mainContent">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="header__left">
+                <button class="header__hamburger" id="hamburgerButton" aria-label="Toggle Sidebar">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <a href="/" class="header__logo">LebEstates</a>
+            </div>
+            
+            <div class="header__search-container">
+                <div class="header__search">
+                    <span class="material-symbols-outlined header__search-icon">search</span>
+                    <input class="header__search-input" id="searchInput" placeholder="Search operations..." type="text">
+                    <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="header__actions">
+                <button class="header__action-btn" aria-label="Notifications">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="header__badge"></span>
+                </button>
+                
+                <div class="header__divider"></div>
+                
+                <div class="header__profile" id="profileDropdownToggle">
+                    <div class="header__profile-text">
+                        <p class="header__profile-name">{{ user.fullName }}</p>
+                        <p class="header__profile-role">{{ user.role.roleName }}</p>
+                    </div>
+                    <img alt="Administrator Profile" class="header__profile-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiimWHshUXMAjiH8nKzuPYsXHmSvEcWEM3skiVAShyUeGn3XmgIYICmfmeisZwPSL7v9KwpeEBWcO4SZVh0jDuN3M5aeHNJdJSpS6SxMgyXzY-a9Q8udJxTSPvKeLMHojuQvnv0ROg01Qo5Bb5lsGeq8fA1DIbCegBcP-MOCUbqMz-LHTM8OaO-H3sQ5boGfLq9dwA8paoJiTGsYP5-UgQEj3JFLDeaWTKXXC3bVTutZ9VEB3dj-Hkpp_M6E6RkFci1-io9AhsuIk">
+                    
+                    <!-- User Profile Dropdown -->
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="/profile" class="profile-dropdown__item">
+                            <span class="material-symbols-outlined">account_circle</span>
+                            View Profile
+                        </a>
+                        <hr class="profile-dropdown__divider">
+                        <a href="/logout" class="profile-dropdown__item profile-dropdown__item--logout">
+                            <span class="material-symbols-outlined">logout</span>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-content__body">
+            
+            <!-- Breadcrumbs & Heading -->
+            <div class="page-heading">
+                <h2 class="page-heading__title">Admin Control Panel</h2>
+                <p class="page-heading__subtitle">Centralized management for all LebEstates system modules. Access specialized tools and administrative configurations.</p>
+            </div>
+
+            <!-- Section: Core Operations -->
+            <div class="modules-section">
+                <h3 class="modules-section__title">Core Operations</h3>
+                <div class="modules-grid">
+                    <!-- Property Management -->
+                    <div class="module-card" data-icon="real_estate_agent">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">real_estate_agent</span>
+                        </div>
+                        <h3 class="module-card__title">Property Management</h3>
+                        <p class="module-card__description">Oversee listings, pending approvals, and property media.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Visits Management -->
+                    <div class="module-card" data-icon="calendar_month">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                        </div>
+                        <h3 class="module-card__title">Visits Management</h3>
+                        <p class="module-card__description">Coordinate property tours between owners and prospective buyers.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Consultations -->
+                    <div class="module-card" data-icon="chat_bubble">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">chat_bubble</span>
+                        </div>
+                        <h3 class="module-card__title">Consultations</h3>
+                        <p class="module-card__description">Handle customer requests, agent assignments, and leads.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Transactions -->
+                    <div class="module-card" data-icon="payments">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">payments</span>
+                        </div>
+                        <h3 class="module-card__title">Transactions</h3>
+                        <p class="module-card__description">Track sales, rentals, payments, and financial reports.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: User & Role Administration -->
+            <div class="modules-section">
+                <h3 class="modules-section__title">User & Role Administration</h3>
+                <div class="modules-grid">
+                    <!-- Customer Management -->
+                    <div class="module-card" data-icon="groups">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">groups</span>
+                        </div>
+                        <h3 class="module-card__title">Customer Management</h3>
+                        <p class="module-card__description">View client profiles, history, and verification documents.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Employee Management -->
+                    <div class="module-card" data-icon="badge">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">badge</span>
+                        </div>
+                        <h3 class="module-card__title">Employee Management</h3>
+                        <p class="module-card__description">Manage staff accounts, internal roles, and permissions.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Role Management -->
+                    <div class="module-card" data-icon="admin_panel_settings">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                        </div>
+                        <h3 class="module-card__title">Role Management</h3>
+                        <p class="module-card__description">Elevate or adjust user privilege levels within the system.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: System Security & Audit -->
+            <div class="modules-section">
+                <h3 class="modules-section__title">System Security & Audit</h3>
+                <div class="modules-grid">
+                    <!-- Blacklists -->
+                    <div class="module-card" data-icon="block">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">block</span>
+                        </div>
+                        <h3 class="module-card__title">Blacklists</h3>
+                        <p class="module-card__description">Restrict access for problematic users and monitor violations.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Audit Logs -->
+                    <div class="module-card" data-icon="history">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">history</span>
+                        </div>
+                        <h3 class="module-card__title">Audit Logs</h3>
+                        <p class="module-card__description">Trace all admin actions, modifications, and access logs.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Footer -->
+        {% include 'footer.html' %}
+    </main>
+
+</body>
+</html>
