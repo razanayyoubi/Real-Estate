@@ -95,7 +95,7 @@
                     </div>
 
                     <!-- Employee Management -->
-                    <div class="module-card" data-icon="badge">
+                    <div class="module-card" data-icon="badge" onclick="window.location.href='{{ url_for('employees.index') }}'" style="cursor: pointer;">
                         <div class="module-card__icon-wrapper">
                             <span class="material-symbols-outlined">badge</span>
                         </div>
@@ -107,7 +107,7 @@
                     </div>
 
                     <!-- Role Management -->
-                    <div class="module-card" data-icon="admin_panel_settings">
+                    <div class="module-card" data-icon="admin_panel_settings" onclick="window.location.href='{{ url_for('roles.index') }}'" style="cursor: pointer;">
                         <div class="module-card__icon-wrapper">
                             <span class="material-symbols-outlined">admin_panel_settings</span>
                         </div>
