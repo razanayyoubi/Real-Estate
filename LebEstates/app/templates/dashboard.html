@@ -1,143 +1,20 @@
-<!DOCTYPE html>
-<html class="light" lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>LebEstates Admin Dashboard</title>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <!-- Global Style Sheet -->
-    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
-    
-    <!-- Custom Style Sheet -->
-    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
-    
-    <!-- Custom Script (Deferred) -->
-    <script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-</head>
-<body class="dashboard-body">
+{% extends "base.html" %}
 
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar" id="sideNav">
-        <div class="sidebar__brand-container">
-            <div class="sidebar__brand" id="brandContent">
-                <div class="sidebar__brand-icon">
-                    <span class="material-symbols-outlined">domain</span>
-                </div>
-                <div class="sidebar__brand-text">
-                    <span class="sidebar__brand-title">LebEstates</span>
-                    <span class="sidebar__brand-subtitle">Prestige Admin</span>
-                </div>
-            </div>
-            <button class="sidebar__toggle" id="toggleButton" aria-label="Toggle Sidebar">
-                <span class="material-symbols-outlined" id="toggleIcon">menu_open</span>
-            </button>
-        </div>
+{% block title %}LebEstates Admin Dashboard{% endblock %}
 
-        <nav class="sidebar__nav">
-            <a class="sidebar__nav-item sidebar__nav-item--active" href="#">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span class="sidebar__nav-label">Dashboard</span>
-            </a>
-            <a class="sidebar__nav-item" href="/control-panel">
-                <span class="material-symbols-outlined">admin_panel_settings</span>
-                <span class="sidebar__nav-label">Control Panel</span>
-            </a>
-            <a class="sidebar__nav-item" href="#">
-                <span class="material-symbols-outlined">apartment</span>
-                <span class="sidebar__nav-label">Properties</span>
-            </a>
-            <a class="sidebar__nav-item" href="#">
-                <span class="material-symbols-outlined">group</span>
-                <span class="sidebar__nav-label">Users</span>
-            </a>
-            <a class="sidebar__nav-item" href="#">
-                <span class="material-symbols-outlined">chat_bubble</span>
-                <span class="sidebar__nav-label">Consultations</span>
-            </a>
-            <a class="sidebar__nav-item" href="#">
-                <span class="material-symbols-outlined">calendar_month</span>
-                <span class="sidebar__nav-label">Visits</span>
-            </a>
-            <a class="sidebar__nav-item" href="#">
-                <span class="material-symbols-outlined">payments</span>
-                <span class="sidebar__nav-label">Transactions</span>
-            </a>
-            <a class="sidebar__nav-item" href="#">
-                <span class="material-symbols-outlined">settings</span>
-                <span class="sidebar__nav-label">Settings</span>
-            </a>
-        </nav>
+{% block styles %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
 
-        <div class="sidebar__cta-container">
-            <button class="sidebar__cta">
-                <span class="material-symbols-outlined">add_business</span>
-                <span class="sidebar__cta-label">Post New Property</span>
-            </button>
-        </div>
-    </aside>
+{% block head_scripts %}
+<script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
 
-    <!-- Sidebar overlay backdrop -->
-    <div class="sidebar-overlay" id="dashboardSidebarOverlay"></div>
+{% block content %}
 
     <!-- Main Content Area -->
     <main class="main-content" id="mainContent">
         
-        <!-- Header -->
-        <header class="header">
-            <div class="header__left">
-                <button class="header__hamburger" id="hamburgerButton" aria-label="Toggle Sidebar">
-                    <span class="material-symbols-outlined">menu</span>
-                </button>
-                <a href="/" class="header__logo">LebEstates</a>
-            </div>
-            
-            <div class="header__search-container">
-                <div class="header__search">
-                    <span class="material-symbols-outlined header__search-icon">search</span>
-                    <input class="header__search-input" id="searchInput" placeholder="Search for property, user ID, or transaction..." type="text">
-                    <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
-                </div>
-            </div>
-            
-            <div class="header__actions">
-                <div class="header__action-buttons">
-                    <button class="header__action-btn header__action-btn--badge" aria-label="Notifications">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span class="header__badge"></span>
-                    </button>
-                </div>
-                
-                <div class="header__divider"></div>
-                
-                <div class="header__profile" id="profileDropdownToggle">
-                    <div class="header__profile-text">
-                        <p class="header__profile-name">{{ user.fullName }}</p>
-                        <p class="header__profile-role">{{ user.role.roleName }}</p>
-                    </div>
-                    <img alt="Admin Profile Avatar" class="header__profile-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKZEaujOGNKQnvqzPtcaD3HpieeGDm_7G33993or5CAVfAeZJETcjjkmQWtpREoymeQl9fkRMjhc0CWOrddLp_Ju1FeL0FKpoWtJFWcIDdz1Joxbiig3Qva_GFKqb_6qPQJzhJaAyhncmVh9-SYdYOrf1DVWt4bSYjinqhS_p6tbZnbGxTUI0jdlnM8pqvDuG3gCpklRKUNVrr0s8ic3EJVtcMGL-F51W7Lmm5Kthm1xb2FTFQaV-i5SCLF4J4G70QWSQNTKFUfnk">
-                    
-                    <!-- User Profile Dropdown -->
-                    <div class="profile-dropdown" id="profileDropdown">
-                        <a href="/profile" class="profile-dropdown__item">
-                            <span class="material-symbols-outlined">account_circle</span>
-                            View Profile
-                        </a>
-                        <hr class="profile-dropdown__divider">
-                        <a href="/logout" class="profile-dropdown__item profile-dropdown__item--logout">
-                            <span class="material-symbols-outlined">logout</span>
-                            Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </header>
-
         <!-- Main Body -->
         <div class="dashboard-body__content">
             
@@ -555,5 +432,4 @@
         {% include 'footer.html' %}
     </main>
 
-</body>
-</html>
+{% endblock %}

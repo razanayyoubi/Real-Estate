@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+
+{% block title %}Customer Management | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customers.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="customer-container">
+    <!-- Header -->
+    <header class="customer-page-header">
+        <div>
+            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Customer Management</h2>
+            <p class="body-md text-on-surface-variant">Manage customer accounts, contact information, and account status</p>
+        </div>
+        <button class="btn-primary" onclick="openModal('addCustomerModal')">
+            <span class="material-symbols-outlined">person_add</span>
+            Add Customer
+        </button>
+    </header>
+
+    <!-- Stats Row -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper primary">
+                    <span class="material-symbols-outlined text-primary">groups</span>
+                </div>
+                <span class="stat-badge success">+12%</span>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Total Customers</h4>
+            <p class="headline-md text-primary">{{ stats.total }}</p>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper secondary">
+                    <span class="material-symbols-outlined text-secondary">person_check</span>
+                </div>
+                <span class="stat-badge success">+5%</span>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Active Customers</h4>
+            <p class="headline-md text-primary">{{ stats.active }}</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper error">
+                    <span class="material-symbols-outlined text-error">person_off</span>
+                </div>
+                <span class="stat-badge error">-2%</span>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Disabled Customers</h4>
+            <p class="headline-md text-primary">{{ stats.disabled }}</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper primary">
+                    <span class="material-symbols-outlined text-primary">new_releases</span>
+                </div>
+                <span class="stat-badge success">+{{ stats.new_this_month }}</span>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">New This Month</h4>
+            <p class="headline-md text-primary">{{ stats.new_this_month }}</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <section class="filter-section">
+        <div class="filter-row">
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input class="search-input" placeholder="Search by name, email, or ID..." type="text">
+            </div>
+            <div class="filter-actions">
+                <select class="filter-select">
+                    <option>All Status</option>
+                    <option>Active</option>
+                    <option>Disabled</option>
+                </select>
+                <select class="filter-select">
+                    <option>Date Created</option>
+                    <option>Last 30 Days</option>
+                    <option>Last 6 Months</option>
+                    <option>Last Year</option>
+                </select>
+                <button class="btn btn-secondary" style="height: 48px; border-radius: 8px;">
+                    <span class="material-symbols-outlined" style="margin-right: 8px;">filter_list</span>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Table -->
+    <section class="table-container">
+        <div class="table-responsive custom-scrollbar">
+            <table class="customer-table">
+                <thead>
+                    <tr class="table-header-row">
+                        <th class="table-th">Customer ID</th>
+                        <th class="table-th">Full Name</th>
+                        <th class="table-th">Email & Phone</th>
+                        <th class="table-th">Location</th>
+                        <th class="table-th">Status</th>
+                        <th class="table-th">Created At</th>
+                        <th class="table-th" style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                    {% for customer in customers %}
+                    <tr class="table-row">
+                        <td class="table-td body-md text-on-surface" style="font-weight: 500;">{{ customer.customer_id }}</td>
+                        <td class="table-td">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="customer-avatar">
+                                    <img alt="Customer Avatar" src="{{ customer.avatar_url }}">
+                                </div>
+                                <span class="body-md text-primary" style="font-weight: 600;">{{ customer.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="table-td">
+                            <p class="body-md text-on-surface">{{ customer.email }}</p>
+                            <p class="caption text-on-surface-variant">{{ customer.phone or 'N/A' }}</p>
+                        </td>
+                        <td class="table-td body-md text-on-surface-variant">{{ customer.location or 'Not provided' }}</td>
+                        <td class="table-td">
+                            {% if customer.status|lower == 'active' %}
+                            <span class="status-badge active">Active</span>
+                            {% elif customer.status|lower == 'blacklisted' %}
+                            <span class="status-badge blacklisted">Blacklisted</span>
+                            {% else %}
+                            <span class="status-badge disabled">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-td body-md text-on-surface-variant">{{ customer.created_at }}</td>
+                        <td class="table-td" style="text-align: right;">
+                            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                                <button class="btn-icon" onclick="openEditModal('{{ customer.full_name }}', '{{ customer.email }}')" title="Edit">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">edit</span>
+                                </button>
+                                <button class="btn-icon text-secondary" onclick="openModal('resetPasswordModal')" title="Reset Password">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">lock_reset</span>
+                                </button>
+                                <button class="btn-icon text-error" onclick="openModal('deleteCustomerModal')" title="Delete">
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr class="table-row">
+                        <td class="table-td" colspan="7" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
+                            No customers found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <span class="caption text-on-surface-variant">Showing {{ customers|length }} of {{ stats.total }} results</span>
+            <div class="pagination-controls">
+                <button class="pagination-btn" disabled>
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button class="pagination-btn active">1</button>
+                <button class="pagination-btn">2</button>
+                <button class="pagination-btn">3</button>
+                <button class="pagination-btn">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Modals Overlay -->
+<div class="modal-overlay" id="modalOverlay">
+    <!-- Add Customer Modal -->
+    <div class="modal-container" id="addCustomerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 class="headline-md text-primary">Add New Customer</h3>
+                    <p class="body-md text-on-surface-variant" style="margin-top: 4px;">Register a new client account to the heritage portal.</p>
+                </div>
+                <button class="btn-icon" onclick="closeModals()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input class="form-input" placeholder="Enter first name" type="text">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input class="form-input" placeholder="Enter last name" type="text">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input class="form-input" placeholder="email@example.com" type="email">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input class="form-input" placeholder="+961 XX XXX XXX" type="tel">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mailing Address</label>
+                    <textarea class="form-textarea" placeholder="Full residential or business address..."></textarea>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn-outline" onclick="closeModals()" type="button">Cancel</button>
+                    <button class="btn-primary" onclick="showToast('Customer added successfully!')" type="button">Register Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Customer Modal -->
+    <div class="modal-container" id="editCustomerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 class="headline-md text-primary">Edit Customer Details</h3>
+                    <p class="body-md text-on-surface-variant" style="margin-top: 4px;">Update contact and account information.</p>
+                </div>
+                <button class="btn-icon" onclick="closeModals()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input class="form-input" id="editCustomerName" type="text" value="">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input class="form-input" id="editCustomerEmail" type="email" value="">
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn-outline" onclick="closeModals()" type="button">Discard Changes</button>
+                    <button class="btn-primary" onclick="showToast('Customer updated successfully!')" type="button">Save Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div class="modal-container max-w-md" id="resetPasswordModal">
+        <div class="modal-content">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 64px; height: 64px; background-color: rgba(254, 214, 91, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                    <span class="material-symbols-outlined text-secondary" style="font-size: 32px;">lock_reset</span>
+                </div>
+                <h3 class="headline-md text-primary">Reset Password</h3>
+                <p class="body-md text-on-surface-variant" style="margin-top: 8px;">A password reset link will be sent to the customer. Are you sure you want to proceed?</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn-primary" style="width: 100%;" onclick="showToast('Reset email sent!')">Yes, Send Reset Link</button>
+                <button class="btn-outline" style="width: 100%; border: none; background-color: var(--surface-container-low);" onclick="closeModals()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal-container max-w-md" id="deleteCustomerModal">
+        <div class="modal-content">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 64px; height: 64px; background-color: rgba(255, 218, 214, 0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                    <span class="material-symbols-outlined text-error" style="font-size: 32px;">warning</span>
+                </div>
+                <h3 class="headline-md text-error">Delete Customer</h3>
+                <p class="body-md text-on-surface-variant" style="margin-top: 8px;">This action is irreversible. All records, transaction history, and access for this customer will be permanently removed from the Heritage Portal.</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn-primary" style="width: 100%; background-color: var(--error);" onclick="showToast('Customer deleted permanently', 'error')">Permanently Delete</button>
+                <button class="btn-outline" style="width: 100%; border: none; background-color: var(--surface-container-low);" onclick="closeModals()">Go Back</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-container" id="toast">
+    <div class="toast-inner" id="toastInner">
+        <span class="material-symbols-outlined" id="toastIcon">check_circle</span>
+        <span class="label-md" id="toastText">Action completed successfully</span>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openModal(modalId) {
+        const overlay = document.getElementById('modalOverlay');
+        const modals = overlay.querySelectorAll('.modal-container');
+        
+        overlay.classList.add('active');
+        modals.forEach(m => {
+            m.classList.remove('active', 'show');
+        });
+        
+        const target = document.getElementById(modalId);
+        target.classList.add('active');
+        setTimeout(() => {
+            target.classList.add('show');
+        }, 10);
+    }
+
+    function openEditModal(name, email) {
+        document.getElementById('editCustomerName').value = name;
+        document.getElementById('editCustomerEmail').value = email;
+        openModal('editCustomerModal');
+    }
+
+    function closeModals() {
+        const overlay = document.getElementById('modalOverlay');
+        const modals = overlay.querySelectorAll('.modal-container');
+        
+        modals.forEach(m => {
+            m.classList.remove('show');
+            setTimeout(() => {
+                m.classList.remove('active');
+            }, 300); // Wait for transition
+        });
+        
+        setTimeout(() => {
+            overlay.classList.remove('active');
+        }, 300);
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+        const toastInner = document.getElementById('toastInner');
+        const toastIcon = document.getElementById('toastIcon');
+
+        toastText.innerText = message;
+        
+        if(type === 'error') {
+            toastInner.classList.add('error');
+            toastIcon.innerText = 'error';
+        } else {
+            toastInner.classList.remove('error');
+            toastIcon.innerText = 'check_circle';
+        }
+
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            closeModals();
+        }, 3000);
+    }
+
+    // Close on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if(e.target === this) closeModals();
+    });
+</script>
+{% endblock %}
