@@ -1,18 +1,18 @@
-/* Customer Management Page Specific Styles */
+/* Employee Management Page Specific Styles */
 
-.customer-container {
+.employee-container {
     padding: var(--margin-desktop);
     background-color: var(--background);
     min-height: calc(100vh - 80px); /* Adjusting for header height */
 }
 
 @media (max-width: 768px) {
-    .customer-container {
+    .employee-container {
         padding: var(--margin-mobile);
     }
 }
 
-/* Primary Button (if not in global) */
+/* Primary Button */
 .btn-primary {
     background-color: var(--primary);
     color: var(--on-primary);
@@ -60,7 +60,7 @@
 }
 
 /* Page Layout */
-.customer-page-header {
+.employee-page-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -68,7 +68,7 @@
 }
 
 @media (max-width: 768px) {
-    .customer-page-header {
+    .employee-page-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
@@ -126,6 +126,10 @@
     background-color: rgba(254, 214, 91, 0.2);
 }
 
+.stat-icon-wrapper.warning {
+    background-color: rgba(254, 214, 91, 0.15);
+}
+
 .stat-icon-wrapper.error {
     background-color: rgba(255, 218, 214, 0.5);
 }
@@ -140,6 +144,11 @@
 .stat-badge.success {
     background-color: #dcfce7;
     color: #15803d;
+}
+
+.stat-badge.warning {
+    background-color: #fef9c3;
+    color: #a16207;
 }
 
 .stat-badge.error {
@@ -244,7 +253,7 @@
     overflow-x: auto;
 }
 
-.customer-table {
+.employee-table {
     width: 100%;
     text-align: left;
     border-collapse: collapse;
@@ -261,10 +270,6 @@
     font-size: 14px;
     color: var(--on-surface-variant);
     font-weight: 600;
-}
-
-.table-body {
-    /* divide-y implementation */
 }
 
 .table-row {
@@ -298,12 +303,17 @@
     color: #15803d;
 }
 
-.status-badge.disabled, .status-badge.inactive, .status-badge.blacklisted {
+.status-badge.onleave {
+    background-color: #fef9c3;
+    color: #a16207;
+}
+
+.status-badge.terminated, .status-badge.inactive {
     background-color: #fee2e2;
     color: #b91c1c;
 }
 
-.customer-avatar {
+.employee-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -314,7 +324,7 @@
     overflow: hidden;
 }
 
-.customer-avatar img {
+.employee-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -528,6 +538,11 @@
 
 /* Responsive Enhancements for Mobile Devices */
 
+/* Box sizing overrides to prevent form inputs from overflowing */
+.form-input, .form-textarea, .search-input, .filter-select {
+    box-sizing: border-box !important;
+}
+
 /* Mobile Filtering Wrap */
 @media (max-width: 768px) {
     .filter-actions {
@@ -544,30 +559,28 @@
 
 /* Mobile Table to Card Transformation */
 @media (max-width: 768px) {
-    /* Hide table header borders and container card styling */
     .table-container {
         border: none;
         box-shadow: none;
         background: transparent;
     }
 
-    .customer-table, 
-    .customer-table thead, 
-    .customer-table tbody, 
-    .customer-table th, 
-    .customer-table td, 
-    .customer-table tr { 
+    .employee-table, 
+    .employee-table thead, 
+    .employee-table tbody, 
+    .employee-table th, 
+    .employee-table td, 
+    .employee-table tr { 
         display: block; 
     }
     
-    /* Hide column headers */
-    .customer-table thead tr { 
+    .employee-table thead tr { 
         position: absolute;
         top: -9999px;
         left: -9999px;
     }
     
-    .customer-table tr { 
+    .employee-table tr { 
         border: 1px solid rgba(197, 198, 207, 0.2);
         border-radius: 16px;
         margin-bottom: 20px;
@@ -576,14 +589,14 @@
         box-shadow: 0px 8px 24px rgba(10, 31, 68, 0.04);
     }
     
-    .customer-table tr:hover {
+    .employee-table tr:hover {
         background-color: var(--surface-container-lowest);
         transform: translateY(-2px);
         box-shadow: 0px 12px 32px rgba(10, 31, 68, 0.08);
         transition: all 0.2s ease;
     }
     
-    .customer-table td { 
+    .employee-table td { 
         border: none;
         border-bottom: 1px solid rgba(197, 198, 207, 0.1); 
         position: relative;
@@ -596,17 +609,16 @@
         min-height: 48px;
     }
     
-    .customer-table td:last-child {
+    .employee-table td:last-child {
         border-bottom: none;
         padding-bottom: 0;
     }
     
-    .customer-table td:first-child {
+    .employee-table td:first-child {
         padding-top: 0;
     }
     
-    /* Inline data-label header tags */
-    .customer-table td::before { 
+    .employee-table td::before { 
         position: absolute;
         left: 8px;
         width: 40%; 
@@ -619,14 +631,9 @@
         content: attr(data-label);
     }
 
-    .customer-table td p {
+    .employee-table td p {
         margin: 0;
     }
-}
-
-/* Box sizing overrides to prevent form inputs from overflowing */
-.form-input, .form-textarea, .search-input, .filter-select {
-    box-sizing: border-box !important;
 }
 
 /* Mobile Modal Scrolling and Padding */

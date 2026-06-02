@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
 
-{% block title %}Customer Management | LebEstates{% endblock %}
+{% block title %}Employee Management | LebEstates{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/customers.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/employees.css') }}">
 {% endblock %}
 
 {% block content %}
-<main class="customer-container">
+<main class="employee-container">
     <!-- Header -->
-    <header class="customer-page-header">
+    <header class="employee-page-header">
         <div>
-            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Customer Management</h2>
-            <p class="body-md text-on-surface-variant">Manage customer accounts, contact information, and account status</p>
+            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Employee Management</h2>
+            <p class="body-md text-on-surface-variant">Oversee staff profiles, positions, basic salaries, and internal accounts.</p>
         </div>
-        <button class="btn-primary" onclick="openModal('addCustomerModal')">
-            <span class="material-symbols-outlined">person_add</span>
-            Add Customer
+        <button class="btn-primary" onclick="openModal('addEmployeeModal')">
+            <span class="material-symbols-outlined">badge</span>
+            Add Employee
         </button>
     </header>
 
@@ -27,9 +27,8 @@
                 <div class="stat-icon-wrapper primary">
                     <span class="material-symbols-outlined text-primary">groups</span>
                 </div>
-                <span class="stat-badge success">+12%</span>
             </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Total Customers</h4>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Total Staff</h4>
             <p class="headline-md text-primary">{{ stats.total }}</p>
         </div>
         
@@ -38,10 +37,19 @@
                 <div class="stat-icon-wrapper secondary">
                     <span class="material-symbols-outlined text-secondary">person_check</span>
                 </div>
-                <span class="stat-badge success">+5%</span>
             </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Active Customers</h4>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Active Staff</h4>
             <p class="headline-md text-primary">{{ stats.active }}</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper warning">
+                    <span class="material-symbols-outlined text-secondary" style="color: #a16207 !important;">flight_takeoff</span>
+                </div>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">On Leave</h4>
+            <p class="headline-md text-primary">{{ stats.on_leave }}</p>
         </div>
 
         <div class="stat-card">
@@ -49,21 +57,9 @@
                 <div class="stat-icon-wrapper error">
                     <span class="material-symbols-outlined text-error">person_off</span>
                 </div>
-                <span class="stat-badge error">-2%</span>
             </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Disabled Customers</h4>
-            <p class="headline-md text-primary">{{ stats.disabled }}</p>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper primary">
-                    <span class="material-symbols-outlined text-primary">new_releases</span>
-                </div>
-                <span class="stat-badge success">+{{ stats.new_this_month }}</span>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">New This Month</h4>
-            <p class="headline-md text-primary">{{ stats.new_this_month }}</p>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Terminated</h4>
+            <p class="headline-md text-primary">{{ stats.terminated }}</p>
         </div>
     </div>
 
@@ -72,16 +68,17 @@
         <div class="filter-row">
             <div class="search-wrapper">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input class="search-input" id="filterSearch" placeholder="Search by name, email, or ID..." type="text" onkeyup="applyFilters()">
+                <input class="search-input" id="filterSearch" placeholder="Search by name, email, or position..." type="text" onkeyup="applyFilters()">
             </div>
             <div class="filter-actions">
                 <select class="filter-select" id="filterStatus" onchange="applyFilters()">
                     <option>All Status</option>
                     <option>Active</option>
-                    <option>Disabled</option>
+                    <option>OnLeave</option>
+                    <option>Terminated</option>
                 </select>
                 <select class="filter-select" id="filterDate" onchange="applyFilters()">
-                    <option>Date Created</option>
+                    <option>Date Hired</option>
                     <option>Last 30 Days</option>
                     <option>Last 6 Months</option>
                     <option>Last Year</option>
@@ -97,54 +94,57 @@
     <!-- Data Table -->
     <section class="table-container">
         <div class="table-responsive custom-scrollbar">
-            <table class="customer-table">
+            <table class="employee-table">
                 <thead>
                     <tr class="table-header-row">
-                        <th class="table-th">Customer ID</th>
+                        <th class="table-th">Employee ID</th>
                         <th class="table-th">Full Name</th>
+                        <th class="table-th">Position & Salary</th>
                         <th class="table-th">Email & Phone</th>
-                        <th class="table-th">Location</th>
                         <th class="table-th">Status</th>
-                        <th class="table-th">Created At</th>
+                        <th class="table-th">Hire Date</th>
                         <th class="table-th" style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="table-body">
-                    {% for customer in customers %}
+                    {% for emp in employees %}
                     <tr class="table-row">
-                        <td class="table-td body-md text-on-surface" style="font-weight: 500;" data-label="Customer ID">{{ customer.customer_id }}</td>
+                        <td class="table-td body-md text-on-surface" style="font-weight: 500;" data-label="Employee ID">{{ emp.employee_id }}</td>
                         <td class="table-td" data-label="Full Name">
                             <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-                                <div class="customer-avatar">
-                                    <img alt="Customer Avatar" src="{{ customer.avatar_url }}">
+                                <div class="employee-avatar">
+                                    <img alt="Employee Avatar" src="{{ emp.avatar_url }}">
                                 </div>
-                                <span class="body-md text-primary" style="font-weight: 600;">{{ customer.full_name }}</span>
+                                <span class="body-md text-primary" style="font-weight: 600;">{{ emp.full_name }}</span>
                             </div>
                         </td>
-                        <td class="table-td" data-label="Email & Phone">
-                            <p class="body-md text-on-surface">{{ customer.email }}</p>
-                            <p class="caption text-on-surface-variant">{{ customer.phone or 'N/A' }}</p>
+                        <td class="table-td" data-label="Position & Salary">
+                            <p class="body-md text-on-surface" style="font-weight: 500;">{{ emp.position }}</p>
+                            <p class="caption text-on-surface-variant">${{ "{:,.2f}".format(emp.base_salary) }}</p>
                         </td>
-                        <td class="table-td body-md text-on-surface-variant" data-label="Location">{{ customer.location or 'Not provided' }}</td>
+                        <td class="table-td" data-label="Email & Phone">
+                            <p class="body-md text-on-surface">{{ emp.email }}</p>
+                            <p class="caption text-on-surface-variant">{{ emp.phone or 'N/A' }}</p>
+                        </td>
                         <td class="table-td" data-label="Status">
-                            {% if customer.status|lower == 'active' %}
+                            {% if emp.status|lower == 'active' %}
                             <span class="status-badge active">Active</span>
-                            {% elif customer.status|lower == 'blacklisted' %}
-                            <span class="status-badge blacklisted">Blacklisted</span>
+                            {% elif emp.status|lower == 'onleave' %}
+                            <span class="status-badge onleave">On Leave</span>
                             {% else %}
-                            <span class="status-badge disabled">Disabled</span>
+                            <span class="status-badge terminated">Terminated</span>
                             {% endif %}
                         </td>
-                        <td class="table-td body-md text-on-surface-variant" data-label="Created At">{{ customer.created_at }}</td>
+                        <td class="table-td body-md text-on-surface-variant" data-label="Hire Date">{{ emp.hire_date }}</td>
                         <td class="table-td" style="text-align: right;" data-label="Actions">
                             <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
-                                <button class="btn-icon" onclick="openEditModal('{{ customer.raw_customer.customerID }}', '{{ customer.full_name }}', '{{ customer.email }}', '{{ customer.phone or '' }}', '{{ customer.location or '' }}')" title="Edit">
+                                <button class="btn-icon" onclick="openEditModal('{{ emp.raw_employee.employeeID }}', '{{ emp.full_name }}', '{{ emp.email }}', '{{ emp.phone or '' }}', '{{ emp.position }}', '{{ emp.base_salary }}', '{{ emp.status }}')" title="Edit">
                                     <span class="material-symbols-outlined" style="font-size: 20px;">edit</span>
                                 </button>
-                                <button class="btn-icon text-secondary" onclick="openResetPasswordModal('{{ customer.full_name }}')" title="Reset Password">
+                                <button class="btn-icon text-secondary" onclick="openResetPasswordModal('{{ emp.full_name }}')" title="Reset Password">
                                     <span class="material-symbols-outlined" style="font-size: 20px;">lock_reset</span>
                                 </button>
-                                <button class="btn-icon text-error" onclick="confirmDelete('{{ customer.raw_customer.customerID }}')" title="Delete">
+                                <button class="btn-icon text-error" onclick="confirmDelete('{{ emp.raw_employee.employeeID }}')" title="Delete">
                                     <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
                                 </button>
                             </div>
@@ -153,7 +153,7 @@
                     {% else %}
                     <tr class="table-row">
                         <td class="table-td" colspan="7" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
-                            No customers found.
+                            No employees found.
                         </td>
                     </tr>
                     {% endfor %}
@@ -163,15 +163,13 @@
         
         <!-- Pagination -->
         <div class="pagination-container">
-            <span class="caption text-on-surface-variant">Showing {{ customers|length }} of {{ stats.total }} results</span>
+            <span class="caption text-on-surface-variant">Showing {{ employees|length }} of {{ stats.total }} results</span>
             <div class="pagination-controls">
                 <button class="pagination-btn" disabled>
                     <span class="material-symbols-outlined">chevron_left</span>
                 </button>
                 <button class="pagination-btn active">1</button>
-                <button class="pagination-btn">2</button>
-                <button class="pagination-btn">3</button>
-                <button class="pagination-btn">
+                <button class="pagination-btn" disabled>
                     <span class="material-symbols-outlined">chevron_right</span>
                 </button>
             </div>
@@ -181,86 +179,102 @@
 
 <!-- Modals Overlay -->
 <div class="modal-overlay" id="modalOverlay">
-    <!-- Add Customer Modal -->
-    <div class="modal-container" id="addCustomerModal">
+    <!-- Add Employee Modal -->
+    <div class="modal-container" id="addEmployeeModal">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
-                    <h3 class="headline-md text-primary">Add New Customer</h3>
-                    <p class="body-md text-on-surface-variant" style="margin-top: 4px;">Register a new client account to the heritage portal.</p>
+                    <h3 class="headline-md text-primary">Add New Employee</h3>
+                    <p class="body-md text-on-surface-variant" style="margin-top: 4px;">Register a new staff profile with basic credentials.</p>
                 </div>
                 <button class="btn-icon" onclick="closeModals()">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
             
-            <form style="display: flex; flex-direction: column; gap: 24px;" onsubmit="event.preventDefault(); submitAddCustomer();">
+            <form style="display: flex; flex-direction: column; gap: 24px;" onsubmit="event.preventDefault(); submitAddEmployee();">
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">First Name</label>
-                        <input class="form-input" id="addCustomerFirstName" placeholder="Enter first name" type="text" required>
+                        <input class="form-input" id="addEmployeeFirstName" placeholder="Enter first name" type="text" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Last Name</label>
-                        <input class="form-input" id="addCustomerLastName" placeholder="Enter last name" type="text" required>
+                        <input class="form-input" id="addEmployeeLastName" placeholder="Enter last name" type="text" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
-                        <input class="form-input" id="addCustomerEmail" placeholder="email@example.com" type="email" required>
+                        <input class="form-input" id="addEmployeeEmail" placeholder="email@example.com" type="email" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone Number</label>
-                        <input class="form-input" id="addCustomerPhone" placeholder="+961 XX XXX XXX" type="tel">
+                        <input class="form-input" id="addEmployeePhone" placeholder="+961 XX XXX XXX" type="tel">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input class="form-input" id="addCustomerPassword" placeholder="Min. 6 characters" type="password" required>
+                        <label class="form-label">Position / Role</label>
+                        <input class="form-input" id="addEmployeePosition" placeholder="e.g. Sales Agent" type="text" required>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Mailing Address (Location)</label>
-                    <textarea class="form-textarea" id="addCustomerAddress" placeholder="Full residential or business address..."></textarea>
+                    <div class="form-group">
+                        <label class="form-label">Base Salary ($)</label>
+                        <input class="form-input" id="addEmployeeSalary" placeholder="e.g. 2500" type="number" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">System Password</label>
+                        <input class="form-input" id="addEmployeePassword" placeholder="Min. 6 characters" type="password" required>
+                    </div>
                 </div>
                 
                 <div class="modal-footer">
                     <button class="btn-outline" onclick="closeModals()" type="button">Cancel</button>
-                    <button class="btn-primary" type="submit">Register Customer</button>
+                    <button class="btn-primary" type="submit">Register Employee</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Edit Customer Modal -->
-    <div class="modal-container" id="editCustomerModal">
+    <!-- Edit Employee Modal -->
+    <div class="modal-container" id="editEmployeeModal">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
-                    <h3 class="headline-md text-primary">Edit Customer Details</h3>
-                    <p class="body-md text-on-surface-variant" style="margin-top: 4px;">Update contact and account information.</p>
+                    <h3 class="headline-md text-primary">Edit Employee Details</h3>
+                    <p class="body-md text-on-surface-variant" style="margin-top: 4px;">Update details, role, and salary sheets.</p>
                 </div>
                 <button class="btn-icon" onclick="closeModals()">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
             
-            <form style="display: flex; flex-direction: column; gap: 24px;" onsubmit="event.preventDefault(); submitEditCustomer();">
-                <input type="hidden" id="editCustomerID">
+            <form style="display: flex; flex-direction: column; gap: 24px;" onsubmit="event.preventDefault(); submitEditEmployee();">
+                <input type="hidden" id="editEmployeeID">
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Full Name</label>
-                        <input class="form-input" id="editCustomerName" type="text" required>
+                        <input class="form-input" id="editEmployeeName" type="text" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
-                        <input class="form-input" id="editCustomerEmail" type="email" required>
+                        <input class="form-input" id="editEmployeeEmail" type="email" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone Number</label>
-                        <input class="form-input" id="editCustomerPhone" type="tel">
+                        <input class="form-input" id="editEmployeePhone" type="tel">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Location (Address)</label>
-                        <input class="form-input" id="editCustomerLocation" type="text">
+                        <label class="form-label">Position / Role</label>
+                        <input class="form-input" id="editEmployeePosition" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Base Salary ($)</label>
+                        <input class="form-input" id="editEmployeeSalary" type="number" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Employee Status</label>
+                        <select class="filter-select" id="editEmployeeStatus" style="background-color: var(--surface-container-low); width: 100%;">
+                            <option value="Active">Active</option>
+                            <option value="OnLeave">On Leave</option>
+                            <option value="Terminated">Terminated</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -280,7 +294,7 @@
                     <span class="material-symbols-outlined text-secondary" style="font-size: 32px;">lock_reset</span>
                 </div>
                 <h3 class="headline-md text-primary">Reset Password</h3>
-                <p class="body-md text-on-surface-variant" style="margin-top: 8px;">A password reset link will be sent to the customer. Are you sure you want to proceed?</p>
+                <p class="body-md text-on-surface-variant" style="margin-top: 8px;">A password reset link will be sent to the employee. Are you sure you want to proceed?</p>
             </div>
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <button class="btn-primary" style="width: 100%;" onclick="showToast('Reset email sent!')">Yes, Send Reset Link</button>
@@ -290,18 +304,18 @@
     </div>
 
     <!-- Delete Modal -->
-    <div class="modal-container max-w-md" id="deleteCustomerModal">
+    <div class="modal-container max-w-md" id="deleteEmployeeModal">
         <div class="modal-content">
             <div style="text-align: center; margin-bottom: 24px;">
                 <div style="width: 64px; height: 64px; background-color: rgba(255, 218, 214, 0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
                     <span class="material-symbols-outlined text-error" style="font-size: 32px;">warning</span>
                 </div>
-                <h3 class="headline-md text-error">Delete Customer</h3>
-                <p class="body-md text-on-surface-variant" style="margin-top: 8px;">This action is irreversible. All records, transaction history, and access for this customer will be permanently removed from the Heritage Portal.</p>
+                <h3 class="headline-md text-error">Remove Employee</h3>
+                <p class="body-md text-on-surface-variant" style="margin-top: 8px;">Are you sure you want to remove this employee? If they have history records, they will be soft-terminated. Otherwise, they will be hard-deleted.</p>
             </div>
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="btn-primary" style="width: 100%; background-color: var(--error);" onclick="submitDelete()">Permanently Delete</button>
-                <button class="btn-outline" style="width: 100%; border: none; background-color: var(--surface-container-low);" onclick="closeModals()">Go Back</button>
+                <button class="btn-primary" style="width: 100%; background-color: var(--error);" onclick="submitDelete()">Confirm Termination / Delete</button>
+                <button class="btn-outline" style="width: 100%; border: none; background-color: var(--surface-container-low);" onclick="closeModals()">Cancel</button>
             </div>
         </div>
     </div>
@@ -319,7 +333,7 @@
 
 {% block scripts %}
 <script>
-    let deleteCustomerID = null;
+    let deleteEmployeeID = null;
 
     function openModal(modalId) {
         const overlay = document.getElementById('modalOverlay');
@@ -337,13 +351,15 @@
         }, 10);
     }
 
-    function openEditModal(id, name, email, phone, location) {
-        document.getElementById('editCustomerID').value = id;
-        document.getElementById('editCustomerName').value = name;
-        document.getElementById('editCustomerEmail').value = email;
-        document.getElementById('editCustomerPhone').value = phone;
-        document.getElementById('editCustomerLocation').value = location;
-        openModal('editCustomerModal');
+    function openEditModal(id, name, email, phone, position, salary, status) {
+        document.getElementById('editEmployeeID').value = id;
+        document.getElementById('editEmployeeName').value = name;
+        document.getElementById('editEmployeeEmail').value = email;
+        document.getElementById('editEmployeePhone').value = phone;
+        document.getElementById('editEmployeePosition').value = position;
+        document.getElementById('editEmployeeSalary').value = salary;
+        document.getElementById('editEmployeeStatus').value = status;
+        openModal('editEmployeeModal');
     }
 
     function openResetPasswordModal(name) {
@@ -352,8 +368,8 @@
     }
 
     function confirmDelete(id) {
-        deleteCustomerID = id;
-        openModal('deleteCustomerModal');
+        deleteEmployeeID = id;
+        openModal('deleteEmployeeModal');
     }
 
     function closeModals() {
@@ -396,16 +412,17 @@
         }, 3000);
     }
 
-    // Submit Add Customer via AJAX
-    function submitAddCustomer() {
-        const first_name = document.getElementById('addCustomerFirstName').value.trim();
-        const last_name = document.getElementById('addCustomerLastName').value.trim();
-        const email = document.getElementById('addCustomerEmail').value.trim();
-        const phone = document.getElementById('addCustomerPhone').value.trim();
-        const address = document.getElementById('addCustomerAddress').value.trim();
-        const password = document.getElementById('addCustomerPassword').value;
+    // Submit Add Employee via AJAX
+    function submitAddEmployee() {
+        const first_name = document.getElementById('addEmployeeFirstName').value.trim();
+        const last_name = document.getElementById('addEmployeeLastName').value.trim();
+        const email = document.getElementById('addEmployeeEmail').value.trim();
+        const phone = document.getElementById('addEmployeePhone').value.trim();
+        const position = document.getElementById('addEmployeePosition').value.trim();
+        const salary = document.getElementById('addEmployeeSalary').value;
+        const password = document.getElementById('addEmployeePassword').value;
 
-        if (!first_name || !last_name || !email || !password) {
+        if (!first_name || !last_name || !email || !position || !salary || !password) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
@@ -420,11 +437,12 @@
             last_name: last_name,
             email: email,
             phone: phone,
-            address: address,
+            position: position,
+            base_salary: salary,
             password: password
         };
 
-        fetch('/customers/add', {
+        fetch('/employees/add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -436,7 +454,7 @@
             if (data.error) {
                 showToast(data.error, 'error');
             } else {
-                showToast('Customer added successfully!');
+                showToast('Employee registered successfully!');
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
@@ -448,15 +466,17 @@
         });
     }
 
-    // Submit Edit Customer via AJAX
-    function submitEditCustomer() {
-        const id = document.getElementById('editCustomerID').value;
-        const full_name = document.getElementById('editCustomerName').value.trim();
-        const email = document.getElementById('editCustomerEmail').value.trim();
-        const phone = document.getElementById('editCustomerPhone').value.trim();
-        const location = document.getElementById('editCustomerLocation').value.trim();
+    // Submit Edit Employee via AJAX
+    function submitEditEmployee() {
+        const id = document.getElementById('editEmployeeID').value;
+        const full_name = document.getElementById('editEmployeeName').value.trim();
+        const email = document.getElementById('editEmployeeEmail').value.trim();
+        const phone = document.getElementById('editEmployeePhone').value.trim();
+        const position = document.getElementById('editEmployeePosition').value.trim();
+        const salary = document.getElementById('editEmployeeSalary').value;
+        const status = document.getElementById('editEmployeeStatus').value;
 
-        if (!full_name || !email) {
+        if (!full_name || !email || !position || !salary) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
@@ -465,10 +485,12 @@
             full_name: full_name,
             email: email,
             phone: phone,
-            location: location
+            position: position,
+            base_salary: salary,
+            status: status
         };
 
-        fetch(`/customers/edit/${id}`, {
+        fetch(`/employees/edit/${id}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -480,7 +502,7 @@
             if (data.error) {
                 showToast(data.error, 'error');
             } else {
-                showToast('Customer updated successfully!');
+                showToast('Employee updated successfully!');
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
@@ -492,11 +514,11 @@
         });
     }
 
-    // Submit Delete Customer via AJAX
+    // Submit Delete/Terminate Employee via AJAX
     function submitDelete() {
-        if (!deleteCustomerID) return;
+        if (!deleteEmployeeID) return;
         
-        fetch(`/customers/delete/${deleteCustomerID}`, {
+        fetch(`/employees/delete/${deleteEmployeeID}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -507,7 +529,7 @@
             if (data.error) {
                 showToast(data.error, 'error');
             } else {
-                showToast(data.message || 'Customer deleted successfully!');
+                showToast(data.message || 'Employee deleted successfully!');
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
@@ -534,34 +556,32 @@
 
             const idText = row.cells[0].textContent.toLowerCase();
             const nameText = row.cells[1].querySelector('span.body-md').textContent.toLowerCase();
-            const emailText = row.cells[2].querySelector('p.body-md').textContent.toLowerCase();
-            const phoneText = row.cells[2].querySelector('p.caption').textContent.toLowerCase();
-            const locationText = row.cells[3].textContent.toLowerCase();
-            const statusText = row.cells[4].querySelector('.status-badge').textContent.trim().toLowerCase();
+            const positionText = row.cells[2].querySelector('p.body-md').textContent.toLowerCase();
+            const emailText = row.cells[3].querySelector('p.body-md').textContent.toLowerCase();
+            const phoneText = row.cells[3].querySelector('p.caption').textContent.toLowerCase();
+            const statusText = row.cells[4].querySelector('.status-badge').textContent.trim().toLowerCase().replace(' ', '');
             const dateText = row.cells[5].textContent.trim();
 
             // 1. Search Filter
             const matchesSearch = !searchVal || 
                 idText.includes(searchVal) || 
                 nameText.includes(searchVal) || 
+                positionText.includes(searchVal) || 
                 emailText.includes(searchVal) || 
-                phoneText.includes(searchVal) || 
-                locationText.includes(searchVal);
+                phoneText.includes(searchVal);
 
             // 2. Status Filter
             let matchesStatus = true;
-            if (statusVal === 'Active') {
-                matchesStatus = (statusText === 'active');
-            } else if (statusVal === 'Disabled') {
-                matchesStatus = (statusText === 'disabled' || statusText === 'blacklisted');
+            if (statusVal !== 'All Status') {
+                matchesStatus = (statusText === statusVal.toLowerCase());
             }
 
-            // 3. Date Created Filter
+            // 3. Date Hired Filter
             let matchesDate = true;
-            if (dateVal !== 'Date Created' && dateText !== 'N/A') {
-                const createdDate = new Date(dateText);
+            if (dateVal !== 'Date Hired' && dateText !== 'N/A') {
+                const hiredDate = new Date(dateText);
                 const now = new Date();
-                const diffTime = Math.abs(now - createdDate);
+                const diffTime = Math.abs(now - hiredDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 if (dateVal === 'Last 30 Days') {
@@ -596,7 +616,7 @@
                 emptyRow.className = 'table-row';
                 emptyRow.innerHTML = `
                     <td class="table-td" colspan="7" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
-                        No matching customers found.
+                        No matching employees found.
                     </td>
                 `;
                 document.querySelector('.table-body').appendChild(emptyRow);
