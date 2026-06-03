@@ -68,9 +68,9 @@
                             <span class="material-symbols-outlined chevron-icon">expand_more</span>
                         </button>
                         <div class="sidebar__child-menu">
-                            <a class="sidebar__child-link" href="#">Users</a>
-                            <a class="sidebar__child-link" href="#">Employees</a>
-                            <a class="sidebar__child-link" href="#">Blacklist</a>
+                            <a class="sidebar__child-link {% if request.blueprint == 'customers' %}sidebar__child-link--active{% endif %}" href="{{ url_for('customers.index') }}">Users</a>
+                            <a class="sidebar__child-link {% if request.blueprint == 'employees' %}sidebar__child-link--active{% endif %}" href="{{ url_for('employees.index') }}">Employees</a>
+                            <a class="sidebar__child-link {% if request.blueprint == 'blacklist' %}sidebar__child-link--active{% endif %}" href="{{ url_for('blacklist.index') }}">Blacklist</a>
                         </div>
                     </div>
 

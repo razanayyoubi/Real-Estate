@@ -30,4 +30,7 @@ def create_app(config_class=Config):
     from app.routes.roles import roles_bp
     app.register_blueprint(roles_bp)
 
+    from app.routes.blacklist import blacklist_bp
+    app.register_blueprint(blacklist_bp)
+
     return app

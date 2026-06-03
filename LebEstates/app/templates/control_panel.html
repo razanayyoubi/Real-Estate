@@ -125,7 +125,7 @@
                 <h3 class="modules-section__title">System Security & Audit</h3>
                 <div class="modules-grid">
                     <!-- Blacklists -->
-                    <div class="module-card" data-icon="block">
+                    <div class="module-card" data-icon="block" onclick="window.location.href='{{ url_for('blacklist.index') }}'" style="cursor: pointer;">
                         <div class="module-card__icon-wrapper">
                             <span class="material-symbols-outlined">block</span>
                         </div>
