@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/signup.css" />
+{% endblock %}
+
+{% block head_scripts %}
+{% endblock %}
+
+{% block content %}
+
+    <main class="signup-main">
+        <!-- Split Panel Layout -->
+        <div class="signup-split-container">
+            
+            <!-- Left Side: Registration Form -->
+            <section class="signup-left-panel">
+                <div class="signup-form-wrapper">
+                    <div class="signup-header">
+                        <h1 class="display-lg text-primary">Create Account</h1>
+                        <p class="body-md text-on-surface-variant">Enter your details to begin your journey with Lebanon's most prestigious real estate network.</p>
+                    </div>
+                    
+                    <!-- Alert Message Panel (hidden by default) -->
+                    <div class="signup-alert-box" id="signup-alert-box" aria-live="polite"></div>
+
+                    <form class="signup-form" id="signup-form" novalidate>
+                        
+                        <!-- Full Name & Phone Number (Side by Side) -->
+                        <div class="form-row">
+                            <div class="form-field-group">
+                                <label class="label-md uppercase-tracking" for="full_name">Full Name *</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined input-icon">person</span>
+                                    <input class="form-input" id="full_name" placeholder="John Doe" required type="text"/>
+                                </div>
+                                <span class="field-error-msg" id="err-full-name">Please enter your full name.</span>
+                            </div>
+                            <div class="form-field-group">
+                                <label class="label-md uppercase-tracking" for="phone_number">Phone Number</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined input-icon">phone</span>
+                                    <input class="form-input" id="phone_number" placeholder="+961 71 234 567" type="tel"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-field-group">
+                            <label class="label-md uppercase-tracking" for="email">Email Address *</label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined input-icon">mail</span>
+                                <input class="form-input" id="email" placeholder="example@lebestates.com" required type="email"/>
+                            </div>
+                            <span class="field-error-msg" id="err-email">Please enter a valid email address.</span>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="form-field-group">
+                            <label class="label-md uppercase-tracking" for="address">Address</label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined input-icon">home</span>
+                                <input class="form-input" id="address" placeholder="e.g., Ashrafieh, Beirut, Lebanon" type="text"/>
+                            </div>
+                        </div>
+
+                        <!-- Password & Confirm (Side by Side) -->
+                        <div class="form-row">
+                            <div class="form-field-group">
+                                <label class="label-md uppercase-tracking" for="password">Password *</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined input-icon">lock</span>
+                                    <input class="form-input" id="password" placeholder="••••••••" required type="password"/>
+                                </div>
+                                <span class="field-error-msg" id="err-password">Password must be at least 6 characters.</span>
+                            </div>
+                            <div class="form-field-group">
+                                <label class="label-md uppercase-tracking" for="confirm_password">Confirm *</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined input-icon">verified_user</span>
+                                    <input class="form-input" id="confirm_password" placeholder="••••••••" required type="password"/>
+                                </div>
+                                <span class="field-error-msg" id="err-confirm-password">Passwords do not match.</span>
+                            </div>
+                        </div>
+
+                        <!-- Terms & Conditions -->
+                        <div class="checkbox-container">
+                            <input class="form-checkbox" id="terms" required type="checkbox"/>
+                            <label class="caption cursor-pointer" for="terms">
+                                I agree to the <a class="terms-link" href="#">Terms and Conditions</a> and <a class="terms-link" href="#">Privacy Policy</a>.
+                            </label>
+                        </div>
+                        <span class="field-error-msg" id="err-terms" style="display:none; margin-top:-8px; margin-bottom:12px;">You must agree to the terms to continue.</span>
+
+                        <!-- Submit Button -->
+                        <button class="btn btn-submit" type="submit" id="btn-submit">
+                            <span>Create Account</span>
+                            <span class="material-symbols-outlined arrow-icon">arrow_forward</span>
+                        </button>
+                    </form>
+
+                    <div class="login-redirect">
+                        <p class="body-md text-on-surface-variant">
+                            Already have an account? 
+                            <a class="login-link" href="/login">Login Here</a>
+                        </p>
+                    </div>
+
+                    <!-- Subtle Trust Indicators -->
+                    <div class="trust-strip">
+                        <span class="trust-item caption">
+                            <span class="material-symbols-outlined text-sm">verified</span> Verified Estates
+                        </span>
+                        <span class="trust-item caption">
+                            <span class="material-symbols-outlined text-sm">shield</span> Secure Protocol
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Luxury Aesthetic Panel -->
+            <section class="signup-right-panel bg-split-hero">
+                <div class="hero-gradient-overlay"></div>
+                <div class="hero-badge-overlay">
+                    <div class="glass-panel animate-fade-in-up">
+                        <div class="exclusive-badge">
+                            <span class="material-symbols-outlined fill-star">star</span>
+                            <span class="label-md uppercase-tracking gold-text">Exclusive Selection</span>
+                        </div>
+                        <h2 class="display-lg panel-title">Architecture that defines a legacy.</h2>
+                        <p class="body-lg panel-description">
+                            Join an elite circle of homeowners and investors. From the historic streets of Achrafieh to the modern skyline of Beirut Central District, we provide access to Lebanon’s most coveted addresses.
+                        </p>
+                        
+                        <div class="social-proof">
+                            <div class="avatar-group">
+                                <div class="avatar border-white shadow-sm">
+                                    <img alt="User" class="avatar-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALijl7Ko7sghHOoyQYtvvlFRTCY8beZF0giWLxdZ0pW8tnwAe9f9QVBTFojj3dNQ2TaVrt8PdvpGQdaAcMbxspYH9bbX2KypNM68SS2AgFiNlLg2ROFkRo9--1UU7nzGTaFJwTuI76LjtGJvRKnQYSOKtpgiMlSJjKnGtD07onZvOWTIdJ0zkn1vrKGKcAsJ7aiLv42MpFq7IrB2PGtPbrG1_O5Iv8mzXTH3X-TllW_2Qw30f4S2N0TmmlB9iELbQInq8ac6NNtZc"/>
+                                </div>
+                                <div class="avatar border-white shadow-sm">
+                                    <img alt="User" class="avatar-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW84D3R2h_IUL0yrC8bujLu7eaOejRndMr-tu8lNiWoUFA5J_tp1JA5nh2eXQdmNEsJkL3B_wBc-iXdQqGdiL9xPJkP2pQXvZuLdwAJxE1nYgnRBAXzMEaNM8_AV_RlwpnJTN348iG61_y-RSVsZKsH7MBmh5S6puQMOfJJYs9uRDY4njSoeYdB_hDLig-09QmluAulf-f50S34JTXk6bHLdi1Z78rz2iZ-7uF6WzCWbG1TV9AgHteSktYNry0wicv3yZft1tyZfk"/>
+                                </div>
+                                <div class="avatar border-white shadow-sm">
+                                    <img alt="User" class="avatar-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZAQY8AdBHUs04527SURu1f2KQYEjX_Ms4z0v8Ikf4kEuufTTUVyo9901QumQmYsjQmFEIC5bJl36-NSWArYMFHnpcbtb0ibeH4suxVtEmj7STHwchMY9acGr7qGAxOtQ59xJVy0bP_NNAQSSOA_kNmXS8vj7pGqn42P7SjNaBGr3R-_sgJo87qlih3yUM46FBAxSoQr4ERae052NBQG7aQQsXnrHzHArFHts8_JLx_hkQvXf5Hc9H0BCE1oYy4w2SkWe9rWmn7rw"/>
+                                </div>
+                            </div>
+                            <span class="label-md font-semibold text-primary">Join 500+ elite investors</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floating Property Tag Micro-interaction -->
+                <div class="absolute-tag glass-panel float-bounce shadow-2xl">
+                    <span class="pulse-dot"></span>
+                    <span class="label-md font-bold text-primary">$2.4M USD • Central District</span>
+                </div>
+            </section>
+            
+        </div>
+    </main>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/signup.js"></script>
+{% endblock %}

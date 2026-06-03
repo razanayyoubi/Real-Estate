@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>{% block title %}LebEstates | Timeless Prestige{% endblock %}</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/static/css/global.css">
+    {% block styles %}{% endblock %}
+
+
+    <script src="/static/js/theme.js"></script>
+    {% block head_scripts %}{% endblock %}
+</head>
+
+<body
+    class="{% if request.path == '/dashboard' %}dashboard-body{% elif request.path == '/control-panel' %}control-panel-body{% endif %}">
+    <!-- Sidebar Dark Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
+    <!-- Sidebar Navigation for Admin/Employee globally on all pages -->
+    {% if request.path == '/control-panel' %}
+    <!-- Hierarchical Side Navigation Bar for Control Panel -->
+    <aside class="sidebar" id="sideNav">
+        <div class="sidebar__brand-container">
+            <div class="sidebar__brand">
+                <span class="sidebar__brand-title">LebEstates</span>
+                <span class="sidebar__brand-subtitle">Admin Portal</span>
+            </div>
+            <button class="sidebar__toggle" id="toggleButton" aria-label="Toggle Sidebar">
+                <span class="material-symbols-outlined" id="toggleIcon">menu_open</span>
+            </button>
+        </div>
+
+        <nav class="sidebar__nav custom-scrollbar">
+            <!-- Dashboard Link -->
+            <a class="sidebar__nav-item" href="/dashboard">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="sidebar__nav-label">Dashboard</span>
+            </a>
+
+            <!-- Expandable Administration Center (Active Parent by default) -->
+            <div class="sidebar__group sidebar__group--expanded active-parent" id="admin-center">
+                <button class="sidebar__group-btn" onclick="toggleGroup('admin-center')">
+                    <div class="sidebar__group-title">
+                        <span class="material-symbols-outlined">construction</span>
+                        <span class="sidebar__nav-label font-semibold">Administration Center</span>
+                    </div>
+                    <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                </button>
+
+                <!-- First Level Nested Menu -->
+                <div class="sidebar__submenu">
+                    <!-- Nested Section 1: People Management -->
+                    <div class="sidebar__subgroup" id="people-mgmt">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('people-mgmt')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">groups</span>
+                                <span class="sidebar__subgroup-label">People Management</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link" href="#">Users</a>
+                            <a class="sidebar__child-link" href="#">Employees</a>
+                            <a class="sidebar__child-link" href="#">Blacklist</a>
+                        </div>
+                    </div>
+
+                    <!-- Nested Section 2: Property Operations (Active by default) -->
+                    <div class="sidebar__subgroup sidebar__subgroup--expanded" id="property-ops">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('property-ops')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">holiday_village</span>
+                                <span class="sidebar__subgroup-label">Property Operations</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link sidebar__child-link--active" href="#">Properties</a>
+                            <a class="sidebar__child-link" href="#">Consultations</a>
+                            <a class="sidebar__child-link" href="#">Visits</a>
+                        </div>
+                    </div>
+
+                    <!-- Nested Section 3: Financial Management -->
+                    <div class="sidebar__subgroup" id="financial-mgmt">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('financial-mgmt')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">payments</span>
+                                <span class="sidebar__subgroup-label">Financial Management</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link" href="#">Transactions</a>
+                            <a class="sidebar__child-link" href="#">Salaries</a>
+                            <a class="sidebar__child-link" href="#">Commission Settings</a>
+                        </div>
+                    </div>
+
+                    <!-- Nested Section 4: System Administration -->
+                    <div class="sidebar__subgroup" id="system-admin">
+                        <button class="sidebar__subgroup-btn" onclick="toggleGroup('system-admin')">
+                            <div class="sidebar__subgroup-title">
+                                <span class="material-symbols-outlined">settings_suggest</span>
+                                <span class="sidebar__subgroup-label">System Administration</span>
+                            </div>
+                            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+                        </button>
+                        <div class="sidebar__child-menu">
+                            <a class="sidebar__child-link" href="#">Audit Logs</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Link -->
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span class="sidebar__nav-label">Reports</span>
+            </a>
+
+            <!-- Settings Link -->
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar__nav-label">Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__footer">
+            <button class="sidebar__cta">
+                <span class="material-symbols-outlined">add</span>
+                <span class="sidebar__cta-label">New Property</span>
+            </button>
+            <a class="sidebar__logout-link" href="/logout">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="sidebar__logout-label">Logout</span>
+            </a>
+        </div>
+    </aside>
+    <!-- Sidebar overlay backdrop -->
+    <div class="sidebar-overlay" id="dashboardSidebarOverlay"></div>
+    {% else %}
+    <!-- Standard Admin Sidebar for Dashboard and other pages (like Home, etc.) -->
+    <aside class="sidebar" id="sideNav">
+        <div class="sidebar__brand-container">
+            <div class="sidebar__brand" id="brandContent">
+                <div class="sidebar__brand-icon">
+                    <span class="material-symbols-outlined">domain</span>
+                </div>
+                <div class="sidebar__brand-text">
+                    <span class="sidebar__brand-title">LebEstates</span>
+                    <span class="sidebar__brand-subtitle">Prestige Admin</span>
+                </div>
+            </div>
+            <button class="sidebar__toggle" id="toggleButton" aria-label="Toggle Sidebar">
+                <span class="material-symbols-outlined" id="toggleIcon">menu_open</span>
+            </button>
+        </div>
+
+        <nav class="sidebar__nav">
+            <a class="sidebar__nav-item {% if request.path == '/dashboard' %}sidebar__nav-item--active{% endif %}"
+                href="/dashboard">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="sidebar__nav-label">Dashboard</span>
+            </a>
+            <a class="sidebar__nav-item {% if request.path == '/control-panel' %}sidebar__nav-item--active{% endif %}"
+                href="/control-panel">
+                <span class="material-symbols-outlined">admin_panel_settings</span>
+                <span class="sidebar__nav-label">Control Panel</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">apartment</span>
+                <span class="sidebar__nav-label">Properties</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">group</span>
+                <span class="sidebar__nav-label">Users</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">chat_bubble</span>
+                <span class="sidebar__nav-label">Consultations</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">calendar_month</span>
+                <span class="sidebar__nav-label">Visits</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="sidebar__nav-label">Transactions</span>
+            </a>
+            <a class="sidebar__nav-item" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar__nav-label">Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__cta-container">
+            <button class="sidebar__cta">
+                <span class="material-symbols-outlined">add_business</span>
+                <span class="sidebar__cta-label">Post New Property</span>
+            </button>
+        </div>
+    </aside>
+    <!-- Sidebar overlay backdrop -->
+    <div class="sidebar-overlay" id="dashboardSidebarOverlay"></div>
+    {% endif %}
+    {% endif %}
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="nav-menu" id="nav-menu">
+        <!-- Sidebar Header (Mobile/Tablet Only) -->
+        <div class="sidebar-header">
+            <div class="headline-md text-primary brand-logo">LebEstates</div>
+            <button class="sidebar-close" id="sidebar-close" aria-label="Close navigation">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="nav-links">
+            <a class="nav-link label-md {% if request.path == '/' %}active{% endif %}" href="/">
+                <span class="material-symbols-outlined nav-link-icon">home</span>
+                Home
+            </a>
+            <a class="nav-link label-md" href="#">
+                <span class="material-symbols-outlined nav-link-icon">apartment</span>
+                Properties
+            </a>
+            <a class="nav-link label-md" href="#">
+                <span class="material-symbols-outlined nav-link-icon">sell</span>
+                Sell/Rent
+            </a>
+            <a class="nav-link label-md {% if request.path == '/consultation' %}active{% endif %}" href="/consultation">
+                <span class="material-symbols-outlined nav-link-icon">chat</span>
+                Consultations
+            </a>
+            <a class="nav-link label-md {% if request.path == '/contact' %}active{% endif %}" href="/contact">
+                <span class="material-symbols-outlined nav-link-icon">contact_support</span>
+                Contact
+            </a>
+            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
+            <a class="nav-link label-md {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+                <span class="material-symbols-outlined nav-link-icon">dashboard</span>
+                Dashboard
+            </a>
+            {% endif %}
+        </div>
+        <div class="nav-actions">
+            {% if session.get('user_id') %}
+            <!-- Logged-in state on Mobile -->
+            <div class="user-profile-nav"
+                style="position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; justify-content: space-between; width: 100%;">
+                <div style="text-align: left; display: flex; flex-direction: column;">
+                    <span class="label-md text-primary" style="font-weight: 600;">{{ session.get('full_name') }}</span>
+                    <span class="caption text-on-surface-variant" style="text-transform: capitalize;">{{
+                        session.get('role_name', 'Customer') }}</span>
+                </div>
+                <div class="avatar border-white shadow-sm"
+                    style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: var(--primary-container); color: var(--on-primary-container);">
+                    {% if current_user and current_user.avatar %}
+                        <img src="{{ current_user.avatar_url }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <span class="material-symbols-outlined">person</span>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Mobile Logged-in Links -->
+            <div style="display: flex; flex-direction: column; width: 100%; margin-top: 8px;">
+                <a href="/profile" class="nav-link label-md" style="padding: 12px 16px;">
+                    <span class="material-symbols-outlined">account_circle</span> Profile
+                </a>
+                <a href="/logout" class="nav-link label-md text-error" style="padding: 12px 16px; color: var(--error);">
+                    <span class="material-symbols-outlined">logout</span> Sign Out
+                </a>
+            </div>
+            {% else %}
+            <button class="btn btn-primary-outline label-md" onclick="window.location.href='/login'">Login</button>
+            <button class="btn btn-secondary label-md" onclick="window.location.href='/register'">Get Started</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TopNavBar (Premium Header) -->
+    <header class="header">
+        <div class="header__left">
+            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
+            <!-- Always show hamburger button for admin/employee to toggle the aside sideNav -->
+            <button class="header__hamburger hamburger" id="hamburger" aria-label="Toggle navigation"
+                style="display: flex;">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            {% endif %}
+            <a class="header__logo" href="/" style="text-decoration: none;">LebEstates</a>
+        </div>
+
+        <div class="header__search-container">
+            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
+            <!-- Centered search bar for logged in Employee/Admin -->
+            <div class="header__search">
+                <span class="material-symbols-outlined header__search-icon">search</span>
+                <input class="header__search-input" id="searchInput"
+                    placeholder="Search for property, user ID, or transaction..." type="text">
+                <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+            </div>
+            {% else %}
+            <!-- Navigation links for guest or logged in Customer -->
+            <div class="header__links">
+                <a class="nav-link label-md {% if request.path == '/properties' or request.path == '#' %}active{% endif %}"
+                    href="#">
+                    <span class="material-symbols-outlined">apartment</span> Properties
+                </a>
+                <a class="nav-link label-md {% if request.path == '/sell-rent' %}active{% endif %}" href="#">
+                    <span class="material-symbols-outlined">sell</span> Sell/Rent
+                </a>
+                <a class="nav-link label-md {% if request.path == '/consultation' %}active{% endif %}"
+                    href="/consultation">
+                    <span class="material-symbols-outlined">chat</span> Consultations
+                </a>
+                <a class="nav-link label-md {% if request.path == '/contact' %}active{% endif %}"
+                    href="/contact">
+                    <span class="material-symbols-outlined">contact_support</span> Contact
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="header__actions">
+            {% if session.get('user_id') %}
+            <!-- Logged-in state (Admin, Employee, Customer) -->
+            <div class="header__action-buttons">
+                <!-- Notifications/Theme toggles, we can show them or just keep standard -->
+                <button class="header__action-btn" aria-label="Notifications">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+            </div>
+
+            <div class="header__divider"></div>
+
+            <div class="header__profile" id="profileDropdownToggle">
+                <div class="header__profile-text">
+                    <p class="header__profile-name">{{ session.get('full_name') }}</p>
+                    <p class="header__profile-role">{{ session.get('role_name', 'Customer') }}</p>
+                </div>
+                <!-- Default Avatar Person Icon -->
+                <div class="avatar border-white shadow-sm"
+                    style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: var(--primary-container); color: var(--on-primary-container); border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--outline-variant);">
+                    {% if current_user and current_user.avatar %}
+                        <img src="{{ current_user.avatar_url }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <span class="material-symbols-outlined">person</span>
+                    {% endif %}
+                </div>
+
+                <!-- User Profile Dropdown -->
+                <div class="profile-dropdown" id="profileDropdown">
+                    <a href="/profile" class="profile-dropdown__item">
+                        <span class="material-symbols-outlined">account_circle</span> View Profile
+                    </a>
+                    {% if session.get('role_name', '').lower() in ['admin', 'employee'] %}
+                    <a href="/dashboard" class="profile-dropdown__item">
+                        <span class="material-symbols-outlined">dashboard</span> Dashboard
+                    </a>
+                    {% endif %}
+                    <hr class="profile-dropdown__divider">
+                    <a href="/logout" class="profile-dropdown__item profile-dropdown__item--logout">
+                        <span class="material-symbols-outlined">logout</span> Logout
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <!-- Guest state (Buttons: Login and Get Started) -->
+            <button class="btn btn-primary-outline label-md" onclick="window.location.href='/login'">Login</button>
+            <button class="btn btn-secondary label-md" onclick="window.location.href='/register'">Get Started</button>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    {% block content %}
+    {% endblock %}
+
+    <!-- Footer -->
+    {% if request.path not in ['/dashboard', '/control-panel'] %}
+    {% include 'footer.html' %}
+    {% endif %}
+
+    {% block scripts %}{% endblock %}
+
+</body>
+
+</html>

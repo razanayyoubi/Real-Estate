@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block title %}Role Management | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/roles.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="role-container">
+    <!-- Header -->
+    <header class="role-page-header">
+        <div>
+            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Role Management</h2>
+            <p class="body-md text-on-surface-variant">Elevate user privilege levels or adjust administrative staff permissions dynamically.</p>
+        </div>
+    </header>
+
+    <!-- Stats Row -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper primary">
+                    <span class="material-symbols-outlined text-primary">groups</span>
+                </div>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Total Staff</h4>
+            <p class="headline-md text-primary">{{ stats.total }}</p>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper secondary">
+                    <span class="material-symbols-outlined text-secondary">admin_panel_settings</span>
+                </div>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Administrators</h4>
+            <p class="headline-md text-primary">{{ stats.admins }}</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper primary" style="background-color: rgba(10, 31, 68, 0.05); padding: 8px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-bottom: 16px;">
+                <span class="material-symbols-outlined text-primary">badge</span>
+            </div>
+            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Employees</h4>
+            <p class="headline-md text-primary">{{ stats.employees }}</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <section class="filter-section">
+        <div class="filter-row">
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input class="search-input" id="filterSearch" placeholder="Search by name, email, or position..." type="text" onkeyup="applyFilters()">
+            </div>
+            <div class="filter-actions">
+                <select class="filter-select" id="filterRole" onchange="applyFilters()">
+                    <option>All Roles</option>
+                    {% for role in roles %}
+                    <option>{{ role.roleName }}</option>
+                    {% endfor %}
+                </select>
+                <select class="filter-select" id="perPageSelect" onchange="changePerPage(this.value)">
+                    <option value="3" {% if per_page == 3 %}selected{% endif %}>3 Per Page</option>
+                    <option value="6" {% if per_page == 6 or not per_page %}selected{% endif %}>6 Per Page</option>
+                    <option value="12" {% if per_page == 12 %}selected{% endif %}>12 Per Page</option>
+                    <option value="24" {% if per_page == 24 %}selected{% endif %}>24 Per Page</option>
+                </select>
+                <button class="btn btn-secondary" style="height: 48px; border-radius: 8px;" onclick="applyFilters()">
+                    <span class="material-symbols-outlined" style="margin-right: 8px;">filter_list</span>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Card Directory Layout -->
+    <section class="staff-grid">
+        {% for user in staff_users %}
+        <div class="staff-card-v2 {% if user.role_name|lower == 'admin' %}admin-card{% else %}employee-card{% endif %}" id="user-card-{{ user.user_id }}">
+            <!-- Card Avatar & Role Tag -->
+            <div class="card-avatar-section">
+                <div class="avatar-ring">
+                    <img alt="Staff Avatar" src="{{ user.avatar_url }}">
+                </div>
+                <span class="role-badge-pill {% if user.role_name|lower == 'admin' %}admin{% else %}employee{% endif %}">
+                    {{ user.role_name }}
+                </span>
+            </div>
+            
+            <!-- Card Details -->
+            <div class="card-info-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <h4 class="staff-name">{{ user.full_name }}</h4>
+                    <span class="display-id-badge" title="Secure Obfuscated ID (+5000 Offset)">
+                        <span class="material-symbols-outlined" style="font-size: 13px; font-weight: bold; margin-right: 2px;">lock</span>
+                        {{ user.display_user_id }}
+                    </span>
+                </div>
+                <p class="staff-position">{{ user.position }}</p>
+                
+                <div class="staff-contact-details">
+                    <div class="contact-item">
+                        <span class="material-symbols-outlined">mail</span>
+                        <span>{{ user.email }}</span>
+                    </div>
+                    <div class="contact-item">
+                        <span class="material-symbols-outlined">phone</span>
+                        <span>{{ user.phone or 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card Actions: Segmented Toggle Control -->
+            <div class="card-action-section">
+                <label class="action-label">System Privilege Level</label>
+                <div class="role-toggle-group">
+                    {% for role in roles %}
+                    <button class="role-toggle-btn {% if user.role_id == role.roleID %}active{% endif %}" 
+                            onclick="changeUserRoleDirect('{{ user.user_id }}', '{{ role.roleID }}', '{{ role.roleName }}', '{{ user.full_name }}', this)">
+                        {{ role.roleName }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--on-surface-variant); padding: 48px; grid-column: 1 / -1;">
+            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--outline); margin-bottom: 16px;">groups</span>
+            <p class="body-lg" style="font-weight: 500;">No staff accounts found.</p>
+        </div>
+        {% endfor %}
+    </section>
+
+    <!-- Pagination Container -->
+    <div class="pagination-container">
+        <span class="caption text-on-surface-variant">Showing {{ staff_users|length }} of {{ stats.total }} results (Offset: {{ (current_page - 1) * per_page }})</span>
+        <div class="pagination-controls">
+            <button class="pagination-btn" {% if current_page <= 1 %}disabled{% endif %} onclick="window.location.href='?page={{ current_page - 1 }}&per_page={{ per_page }}'">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            
+            {% for p in range(1, total_pages + 1) %}
+            <button class="pagination-btn {% if p == current_page %}active{% endif %}" onclick="window.location.href='?page={{ p }}&per_page={{ per_page }}'">{{ p }}</button>
+            {% endfor %}
+            
+            <button class="pagination-btn" {% if current_page >= total_pages %}disabled{% endif %} onclick="window.location.href='?page={{ current_page + 1 }}&per_page={{ per_page }}'">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+        </div>
+    </div>
+</main>
+
+<!-- Toast Notification -->
+<div class="toast-container" id="toast">
+    <div class="toast-inner" id="toastInner">
+        <span class="material-symbols-outlined" id="toastIcon">check_circle</span>
+        <span class="label-md" id="toastText">Action completed successfully</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+        const toastInner = document.getElementById('toastInner');
+        const toastIcon = document.getElementById('toastIcon');
+
+        toastText.innerText = message;
+        
+        if(type === 'error') {
+            toastInner.classList.add('error');
+            toastIcon.innerText = 'error';
+        } else {
+            toastInner.classList.remove('error');
+            toastIcon.innerText = 'check_circle';
+        }
+
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Submit Role Change via AJAX instantly
+    function changeUserRoleDirect(userId, roleId, roleName, userName, clickedBtn) {
+        // If already active, skip
+        if (clickedBtn.classList.contains('active')) return;
+
+        const payload = {
+            role_id: roleId
+        };
+
+        fetch(`/roles/change/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                showToast(`Successfully upgraded ${userName} to ${roleName}!`);
+                // Smooth card rendering update
+                const card = document.getElementById(`user-card-${userId}`);
+                const pill = card.querySelector('.role-badge-pill');
+                
+                // Toggle active buttons inside the selector group
+                const group = clickedBtn.parentElement;
+                group.querySelectorAll('.role-toggle-btn').forEach(btn => btn.classList.remove('active'));
+                clickedBtn.classList.add('active');
+
+                // Dynamically recolor card and pill on success
+                if (roleName.toLowerCase() === 'admin') {
+                    card.className = 'staff-card-v2 admin-card';
+                    pill.className = 'role-badge-pill admin';
+                    pill.textContent = 'Admin';
+                } else {
+                    card.className = 'staff-card-v2 employee-card';
+                    pill.className = 'role-badge-pill employee';
+                    pill.textContent = 'Employee';
+                }
+                
+                // Refresh statistics count in a few seconds or instantly
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        })
+        .catch(err => {
+            showToast('An error occurred. Please try again.', 'error');
+            console.error(err);
+        });
+    }
+
+    // Client-side filtering logic for staff cards
+    function applyFilters() {
+        const searchVal = document.getElementById('filterSearch').value.toLowerCase().trim();
+        const roleVal = document.getElementById('filterRole').value;
+
+        const cards = document.querySelectorAll('.staff-grid .staff-card-v2');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const idText = card.id.toLowerCase();
+            const nameText = card.querySelector('.staff-name').textContent.toLowerCase();
+            const positionText = card.querySelector('.staff-position').textContent.toLowerCase();
+            const emailText = card.querySelector('.contact-item:nth-child(1) span:nth-child(2)').textContent.toLowerCase();
+            const phoneText = card.querySelector('.contact-item:nth-child(2) span:nth-child(2)').textContent.toLowerCase();
+            const roleText = card.querySelector('.role-badge-pill').textContent.trim().toLowerCase();
+
+            // 1. Search Filter
+            const matchesSearch = !searchVal || 
+                idText.includes(searchVal) || 
+                nameText.includes(searchVal) || 
+                emailText.includes(searchVal) || 
+                phoneText.includes(searchVal) || 
+                positionText.includes(searchVal);
+
+            // 2. Role Filter
+            let matchesRole = true;
+            if (roleVal !== 'All Roles') {
+                matchesRole = (roleText === roleVal.toLowerCase());
+            }
+
+            if (matchesSearch && matchesRole) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Update showing count text
+        const countSpan = document.querySelector('.pagination-container .caption');
+        if (countSpan) {
+            countSpan.textContent = `Showing ${visibleCount} of ${cards.length} results`;
+        }
+
+        // Handle empty search results placeholder
+        let emptyCard = document.getElementById('empty-filter-card');
+        if (visibleCount === 0) {
+            if (!emptyCard) {
+                emptyCard = document.createElement('div');
+                emptyCard.id = 'empty-filter-card';
+                emptyCard.style.textAlign = 'center';
+                emptyCard.style.color = 'var(--on-surface-variant)';
+                emptyCard.style.padding = '48px';
+                emptyCard.style.gridColumn = '1 / -1';
+                emptyCard.innerHTML = `
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--outline); margin-bottom: 16px;">groups</span>
+                    <p class="body-lg" style="font-weight: 500;">No matching staff accounts found.</p>
+                `;
+                document.querySelector('.staff-grid').appendChild(emptyCard);
+            } else {
+                emptyCard.style.display = 'block';
+            }
+        } else if (emptyCard) {
+            emptyCard.style.display = 'none';
+        }
+    }
+
+    // Dynamic per-page limit handler
+    function changePerPage(perPage) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', perPage);
+        url.searchParams.set('page', 1); // Reset to page 1 to prevent offset boundaries errors
+        window.location.href = url.toString();
+    }
+</script>
+{% endblock %}
