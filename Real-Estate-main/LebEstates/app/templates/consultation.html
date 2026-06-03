@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}Consultations | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/consultation.css" />
+{% endblock %}
+
+{% block head_scripts %}
+<script src="/static/js/consultation.js"></script>
+{% endblock %}
+
+{% block content %}
+    <main>
+
+        <!-- ===== 1. HERO SECTION ===== -->
+        <section class="consult-hero">
+
+            <!-- Animated background orbs -->
+            <div class="consult-hero-orb consult-hero-orb-1"></div>
+            <div class="consult-hero-orb consult-hero-orb-2"></div>
+            <div class="consult-hero-orb consult-hero-orb-3"></div>
+
+            <!-- Floating particle dots -->
+            <div class="consult-hero-particles">
+                <span class="ch-particle" style="--x:12%;--y:20%;--d:3.2s;--s:6px;"></span>
+                <span class="ch-particle" style="--x:28%;--y:65%;--d:2.1s;--s:4px;"></span>
+                <span class="ch-particle" style="--x:55%;--y:30%;--d:4.5s;--s:5px;"></span>
+                <span class="ch-particle" style="--x:74%;--y:78%;--d:1.8s;--s:7px;"></span>
+                <span class="ch-particle" style="--x:85%;--y:18%;--d:3.8s;--s:4px;"></span>
+                <span class="ch-particle" style="--x:40%;--y:85%;--d:2.6s;--s:5px;"></span>
+                <span class="ch-particle" style="--x:92%;--y:50%;--d:5.1s;--s:3px;"></span>
+                <span class="ch-particle" style="--x:6%;--y:55%;--d:2.9s;--s:6px;"></span>
+            </div>
+
+            <!-- Main content split grid -->
+            <div class="container consult-hero-grid">
+
+                <!-- Left: Text content -->
+                <div class="consult-hero-left">
+                    <span class="consult-hero-badge">
+                        <span class="consult-hero-badge-dot"></span>
+                        Expert Real Estate Guidance
+                    </span>
+                    <h1 class="consult-hero-title">
+                        Book a Real Estate<br />
+                        <span class="consult-hero-title-gold">Consultation</span>
+                    </h1>
+                    <p class="consult-hero-subtitle">Get expert guidance for buying, renting, selling, or listing your
+                        property in Lebanon. Our specialists are ready to help you every step of the way.</p>
+
+                    <div class="consult-hero-actions">
+                        <a href="#consultation-form-section" class="consult-hero-cta" id="hero-cta-btn">
+                            Start Consultation
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </a>
+                        <div class="consult-hero-trust">
+                            <div class="consult-hero-avatars">
+                                <span class="ch-avatar" style="background: #4c6ea8;">R</span>
+                                <span class="ch-avatar" style="background: #2e5095;">K</span>
+                                <span class="ch-avatar" style="background: #1a3a78;">M</span>
+                            </div>
+                            <div>
+                                <span class="consult-hero-trust-num">2,500+</span>
+                                <span class="consult-hero-trust-label">Clients Served</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key stats strip -->
+                    <div class="consult-hero-stats">
+                        <div class="consult-hero-stat">
+                            <span class="ch-stat-num">500+</span>
+                            <span class="ch-stat-label">Properties</span>
+                        </div>
+                        <div class="consult-hero-stat-div"></div>
+                        <div class="consult-hero-stat">
+                            <span class="ch-stat-num">98%</span>
+                            <span class="ch-stat-label">Satisfaction</span>
+                        </div>
+                        <div class="consult-hero-stat-div"></div>
+                        <div class="consult-hero-stat">
+                            <span class="ch-stat-num">24h</span>
+                            <span class="ch-stat-label">Response Time</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Decorative visual panel -->
+                <div class="consult-hero-right" aria-hidden="true">
+
+                    <!-- Floating booking confirm card -->
+                    <div class="ch-float-card ch-float-card-main">
+                        <div class="ch-float-card-header">
+                            <span class="ch-float-dot ch-float-dot-green"></span>
+                            <span class="ch-float-card-label">Consultation Booked</span>
+                        </div>
+                        <div class="ch-float-card-body">
+                            <div class="ch-float-avatar-lg">
+                                <span class="material-symbols-outlined">support_agent</span>
+                            </div>
+                            <div>
+                                <p class="ch-float-name">Nour Al-Amine</p>
+                                <p class="ch-float-role">Senior Property Consultant</p>
+                                <div class="ch-float-stars">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:14px;color:var(--secondary-container);">star</span>
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:14px;color:var(--secondary-container);">star</span>
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:14px;color:var(--secondary-container);">star</span>
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:14px;color:var(--secondary-container);">star</span>
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:14px;color:var(--secondary-container);">star</span>
+                                    <span
+                                        style="font-size:11px;color:rgba(255,255,255,0.55);margin-left:4px;">5.0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ch-float-card-row">
+                            <span class="material-symbols-outlined"
+                                style="font-size:15px;color:var(--secondary-fixed);">calendar_today</span>
+                            <span>Wed, June 11 · 10:00 AM</span>
+                        </div>
+                        <div class="ch-float-card-row">
+                            <span class="material-symbols-outlined"
+                                style="font-size:15px;color:var(--secondary-fixed);">videocam</span>
+                            <span>Video Call · 45 min session</span>
+                        </div>
+                    </div>
+
+                    <!-- Floating mini stat card -->
+                    <div class="ch-float-card ch-float-card-stat">
+                        <span class="material-symbols-outlined ch-mini-icon">trending_up</span>
+                        <div>
+                            <p class="ch-mini-num">+18%</p>
+                            <p class="ch-mini-label">Property Value Growth</p>
+                        </div>
+                    </div>
+
+                    <!-- Floating verified badge card -->
+                    <div class="ch-float-card ch-float-card-badge">
+                        <span class="material-symbols-outlined"
+                            style="font-size:22px;color:var(--secondary-container);">verified</span>
+                        <div>
+                            <p class="ch-badge-title">LebEstates Certified</p>
+                            <p class="ch-badge-sub">Licensed & Regulated</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Scrolling service marquee -->
+            <div class="consult-hero-marquee">
+                <div class="consult-hero-marquee-track">
+                    <span>Property Buying</span><span class="ch-marquee-sep">✦</span>
+                    <span>Rental Assistance</span><span class="ch-marquee-sep">✦</span>
+                    <span>Selling Support</span><span class="ch-marquee-sep">✦</span>
+                    <span>Investment Advice</span><span class="ch-marquee-sep">✦</span>
+                    <span>Market Valuation</span><span class="ch-marquee-sep">✦</span>
+                    <span>Legal Guidance</span><span class="ch-marquee-sep">✦</span>
+                    <span>Portfolio Strategy</span><span class="ch-marquee-sep">✦</span>
+                    <!-- Duplicate for seamless loop -->
+                    <span>Property Buying</span><span class="ch-marquee-sep">✦</span>
+                    <span>Rental Assistance</span><span class="ch-marquee-sep">✦</span>
+                    <span>Selling Support</span><span class="ch-marquee-sep">✦</span>
+                    <span>Investment Advice</span><span class="ch-marquee-sep">✦</span>
+                    <span>Market Valuation</span><span class="ch-marquee-sep">✦</span>
+                    <span>Legal Guidance</span><span class="ch-marquee-sep">✦</span>
+                    <span>Portfolio Strategy</span><span class="ch-marquee-sep">✦</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ===== 2. BENEFITS SECTION ===== -->
+        <section class="section consult-benefits-section">
+            <div class="container">
+                <div class="consult-section-header">
+                    <span class="consult-section-badge">Why Book With Us</span>
+                    <h2 class="consult-section-title">We Guide You Every Step of the Way</h2>
+                    <p class="consult-section-subtitle">Our experienced consultants offer personalized support across
+                        every real estate need.</p>
+                </div>
+                <div class="consult-benefits-grid">
+
+                    <div class="consult-benefit-card">
+                        <div class="consult-benefit-icon">
+                            <span class="material-symbols-outlined">home_work</span>
+                        </div>
+                        <h3 class="consult-benefit-title">Property Buying Guidance</h3>
+                        <p class="consult-benefit-desc">Navigate the Lebanese property market with confidence. Our
+                            experts identify the right properties that match your budget, lifestyle, and investment
+                            goals.</p>
+                    </div>
+
+                    <div class="consult-benefit-card">
+                        <div class="consult-benefit-icon">
+                            <span class="material-symbols-outlined">apartment</span>
+                        </div>
+                        <h3 class="consult-benefit-title">Rental Assistance</h3>
+                        <p class="consult-benefit-desc">Find the ideal rental property in prime Lebanese neighborhoods.
+                            We handle negotiations, contracts, and all the documentation for a seamless experience.</p>
+                    </div>
+
+                    <div class="consult-benefit-card">
+                        <div class="consult-benefit-icon">
+                            <span class="material-symbols-outlined">sell</span>
+                        </div>
+                        <h3 class="consult-benefit-title">Selling & Listing Support</h3>
+                        <p class="consult-benefit-desc">Maximize your property's market value with our professional
+                            valuation, strategic marketing, and expert negotiation support from listing to closing.</p>
+                    </div>
+
+                    <div class="consult-benefit-card">
+                        <div class="consult-benefit-icon">
+                            <span class="material-symbols-outlined">trending_up</span>
+                        </div>
+                        <h3 class="consult-benefit-title">Investment Advice</h3>
+                        <p class="consult-benefit-desc">Make data-driven investment decisions. Our analysts provide deep
+                            market insights, ROI projections, and portfolio strategies tailored to Lebanon's real estate
+                            landscape.</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 3 & 4. FORM + CONTACT SECTION ===== -->
+        <section class="section consult-form-section" id="consultation-form-section">
+            <div class="container">
+                <div class="consult-section-header">
+                    <span class="consult-section-badge">Get In Touch</span>
+                    <h2 class="consult-section-title">Request Your Consultation</h2>
+                    <p class="consult-section-subtitle">Fill in the form below and one of our specialists will contact
+                        you within 24 hours.</p>
+                </div>
+
+                <div class="consult-form-layout">
+
+                    <!-- Form Card -->
+                    <div class="consult-form-card">
+
+                        <!-- Success Message (hidden by default) -->
+                        <div class="consult-success-msg" id="consult-success-msg" aria-live="polite">
+                            <div class="consult-success-icon">
+                                <span class="material-symbols-outlined">check_circle</span>
+                            </div>
+                            <h3>Request Received!</h3>
+                            <p>Thank you for reaching out. One of our consultants will contact you within 24 hours.</p>
+                        </div>
+
+                        <form class="consult-form" id="consult-form" novalidate>
+
+                            <div class="consult-form-row">
+                                <div class="consult-form-group">
+                                    <label class="consult-label" for="full-name">Full Name <span
+                                            class="consult-required">*</span></label>
+                                    <input class="consult-input" type="text" id="full-name" name="full_name"
+                                        placeholder="e.g. Rania Khalil" required />
+                                    <span class="consult-error-msg" id="err-full-name">Please enter your full
+                                        name.</span>
+                                </div>
+                                <div class="consult-form-group">
+                                    <label class="consult-label" for="email">Email Address <span
+                                            class="consult-required">*</span></label>
+                                    <input class="consult-input" type="email" id="email" name="email"
+                                        placeholder="e.g. rania@email.com" required />
+                                    <span class="consult-error-msg" id="err-email">Please enter a valid email
+                                        address.</span>
+                                </div>
+                            </div>
+
+                            <div class="consult-form-row">
+                                <div class="consult-form-group">
+                                    <label class="consult-label" for="phone">Phone Number <span
+                                            class="consult-required">*</span></label>
+                                    <input class="consult-input" type="tel" id="phone" name="phone"
+                                        placeholder="e.g. +961 71 234 567" required />
+                                    <span class="consult-error-msg" id="err-phone">Please enter your phone
+                                        number.</span>
+                                </div>
+                                <div class="consult-form-group">
+                                    <label class="consult-label" for="consult-type">Consultation Type <span
+                                            class="consult-required">*</span></label>
+                                    <select class="consult-input consult-select" id="consult-type" name="consult_type"
+                                        required>
+                                        <option value="" disabled selected>Select a type...</option>
+                                        <option value="buying">Buying a Property</option>
+                                        <option value="renting">Renting a Property</option>
+                                        <option value="selling">Selling a Property</option>
+                                        <option value="listing">Listing My Property</option>
+                                        <option value="investment">Investment Consultation</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                    <span class="consult-error-msg" id="err-consult-type">Please select a consultation
+                                        type.</span>
+                                </div>
+                            </div>
+
+                            <div class="consult-form-group">
+                                <label class="consult-label">Preferred Contact Method <span
+                                        class="consult-required">*</span></label>
+                                <div class="consult-radio-group" id="contact-method-group">
+                                    <label class="consult-radio-option">
+                                        <input type="radio" name="contact_method" value="phone" />
+                                        <span class="consult-radio-box">
+                                            <span class="material-symbols-outlined">call</span>
+                                            Phone
+                                        </span>
+                                    </label>
+                                    <label class="consult-radio-option">
+                                        <input type="radio" name="contact_method" value="email" />
+                                        <span class="consult-radio-box">
+                                            <span class="material-symbols-outlined">mail</span>
+                                            Email
+                                        </span>
+                                    </label>
+                                    <label class="consult-radio-option">
+                                        <input type="radio" name="contact_method" value="whatsapp" />
+                                        <span class="consult-radio-box">
+                                            <span class="material-symbols-outlined">chat_bubble</span>
+                                            WhatsApp
+                                        </span>
+                                    </label>
+                                </div>
+                                <span class="consult-error-msg" id="err-contact-method">Please select a preferred
+                                    contact method.</span>
+                            </div>
+
+                            <div class="consult-form-row">
+                                <div class="consult-form-group">
+                                    <label class="consult-label" for="pref-date">Preferred Date</label>
+                                    <input class="consult-input" type="date" id="pref-date" name="pref_date" />
+                                </div>
+                                <div class="consult-form-group">
+                                    <label class="consult-label" for="pref-time">Preferred Time</label>
+                                    <input class="consult-input" type="time" id="pref-time" name="pref_time" />
+                                </div>
+                            </div>
+
+                            <div class="consult-form-group">
+                                <label class="consult-label" for="message">Message / Details</label>
+                                <textarea class="consult-input consult-textarea" id="message" name="message"
+                                    placeholder="Tell us more about your property needs, budget, preferred location, or any specific questions..."
+                                    rows="5"></textarea>
+                            </div>
+
+                            <button type="submit" class="consult-submit-btn" id="consult-submit-btn">
+                                Request Consultation
+                                <span class="material-symbols-outlined">arrow_forward</span>
+                            </button>
+
+                        </form>
+                    </div>
+
+                    <!-- Contact Sidebar -->
+                    <aside class="consult-contact-sidebar">
+                        <div class="consult-contact-card">
+                            <div class="consult-contact-header">
+                                <span class="material-symbols-outlined consult-contact-icon-top">support_agent</span>
+                                <h3 class="consult-contact-title">Need Help Choosing?</h3>
+                                <p class="consult-contact-intro">Not sure what type of consultation you need? Our team
+                                    is ready to guide you directly — just reach out.</p>
+                            </div>
+
+                            <ul class="consult-contact-list">
+                                <li class="consult-contact-item">
+                                    <span class="consult-contact-icon-wrap">
+                                        <span class="material-symbols-outlined">call</span>
+                                    </span>
+                                    <div>
+                                        <span class="consult-contact-item-label">Phone</span>
+                                        <span class="consult-contact-item-value">+961 1 234 567</span>
+                                    </div>
+                                </li>
+                                <li class="consult-contact-item">
+                                    <span class="consult-contact-icon-wrap">
+                                        <span class="material-symbols-outlined">alternate_email</span>
+                                    </span>
+                                    <div>
+                                        <span class="consult-contact-item-label">Email</span>
+                                        <span class="consult-contact-item-value">consult@lebestates.com</span>
+                                    </div>
+                                </li>
+                                <li class="consult-contact-item">
+                                    <span class="consult-contact-icon-wrap">
+                                        <span class="material-symbols-outlined">location_on</span>
+                                    </span>
+                                    <div>
+                                        <span class="consult-contact-item-label">Office</span>
+                                        <span class="consult-contact-item-value">Ashrafieh, Beirut, Lebanon</span>
+                                    </div>
+                                </li>
+                            </ul>
+
+                            <a href="https://wa.me/9611234567" target="_blank" class="consult-whatsapp-btn">
+                                <span class="material-symbols-outlined">chat_bubble</span>
+                                Chat on WhatsApp
+                            </a>
+
+                            <div class="consult-hours-box">
+                                <h4 class="consult-hours-title">Office Hours</h4>
+                                <p>Monday – Friday: 9:00 AM – 6:00 PM</p>
+                                <p>Saturday: 10:00 AM – 3:00 PM</p>
+                                <p>Sunday: Closed</p>
+                            </div>
+                        </div>
+                    </aside>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 5. FAQ SECTION ===== -->
+        <section class="section consult-faq-section">
+            <div class="container">
+                <div class="consult-section-header">
+                    <span class="consult-section-badge">Common Questions</span>
+                    <h2 class="consult-section-title">Frequently Asked Questions</h2>
+                    <p class="consult-section-subtitle">Everything you need to know before booking your consultation.
+                    </p>
+                </div>
+
+                <div class="consult-faq-list" id="faq-list">
+
+                    <div class="consult-faq-item">
+                        <button class="consult-faq-question" aria-expanded="false">
+                            <span>Is the consultation free?</span>
+                            <span class="consult-faq-icon material-symbols-outlined">add</span>
+                        </button>
+                        <div class="consult-faq-answer">
+                            <p>Yes, the initial consultation with our LebEstates specialists is completely free of
+                                charge. We believe in building trust before any commitment. After the initial session,
+                                tailored advisory packages may apply based on the scope of your needs.</p>
+                        </div>
+                    </div>
+
+                    <div class="consult-faq-item">
+                        <button class="consult-faq-question" aria-expanded="false">
+                            <span>Can I book a consultation for selling my property?</span>
+                            <span class="consult-faq-icon material-symbols-outlined">add</span>
+                        </button>
+                        <div class="consult-faq-answer">
+                            <p>Absolutely. We offer dedicated consultations for property sellers including professional
+                                market valuations, pricing strategy, and a full marketing plan. Simply select "Selling a
+                                Property" in the consultation type dropdown when booking.</p>
+                        </div>
+                    </div>
+
+                    <div class="consult-faq-item">
+                        <button class="consult-faq-question" aria-expanded="false">
+                            <span>Do you help with rentals?</span>
+                            <span class="consult-faq-icon material-symbols-outlined">add</span>
+                        </button>
+                        <div class="consult-faq-answer">
+                            <p>Yes. Whether you're looking to rent a property or you're a landlord seeking reliable
+                                tenants, our rental specialists assist with search, vetting, contract review, and
+                                negotiation across all Lebanese regions.</p>
+                        </div>
+                    </div>
+
+                    <div class="consult-faq-item">
+                        <button class="consult-faq-question" aria-expanded="false">
+                            <span>Can I choose the consultation time?</span>
+                            <span class="consult-faq-icon material-symbols-outlined">add</span>
+                        </button>
+                        <div class="consult-faq-answer">
+                            <p>Yes. You can specify your preferred date and time in the booking form. While we do our
+                                best to accommodate your schedule, availability is subject to consultant schedules.
+                                We'll confirm or suggest an alternative within 24 hours of your request.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+{% endblock %}

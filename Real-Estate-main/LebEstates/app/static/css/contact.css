@@ -1,0 +1,335 @@
+/* Contact page styles matching LebEstates branding */
+:root {
+    --color-success: #1b873a;
+    --color-success-container: #e6f9ed;
+}
+
+.contact-container {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 24px;
+}
+
+.contact-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.contact-header h1 {
+    font-family: var(--font-headline);
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+}
+
+.contact-header p {
+    font-family: var(--font-body);
+    color: var(--on-surface-variant);
+    font-size: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Centered Dark Luxury Card Layout */
+.contact-card-premium {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #0A1A2F;
+    border: 1px solid rgba(254, 214, 91, 0.15);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 8, 30, 0.5), 0 0 80px rgba(254, 214, 91, 0.03);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s;
+}
+
+.contact-card-premium:hover {
+    border-color: rgba(254, 214, 91, 0.4);
+    box-shadow: 0 25px 50px rgba(0, 8, 30, 0.6), 0 0 100px rgba(254, 214, 91, 0.06);
+}
+
+/* Luxury Ambient Background Glows */
+.card-ambient-glow {
+    position: absolute;
+    top: -10%;
+    right: -10%;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(254, 214, 91, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card-ambient-glow-2 {
+    position: absolute;
+    bottom: -15%;
+    left: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0, 132, 255, 0.06) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card-inner {
+    position: relative;
+    z-index: 2;
+    padding: 60px 50px;
+}
+
+@media (max-width: 768px) {
+    .card-inner {
+        padding: 40px 24px;
+    }
+}
+
+.card-header-block {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.card-header-block h2 {
+    font-family: var(--font-headline);
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+}
+
+.card-header-block p {
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    max-width: 580px;
+    margin: 0 auto;
+}
+
+/* Symmetrical Grid for Communication Channels */
+.channel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+    .channel-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+/* Interactive Social Link Cards */
+.channel-card {
+    display: block;
+    text-decoration: none;
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    padding: 24px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+}
+
+.channel-card-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    z-index: 3;
+}
+
+.icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.channel-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.channel-name {
+    font-family: var(--font-headline);
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    transition: color 0.3s ease;
+}
+
+.channel-action {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.45);
+    transition: color 0.3s ease;
+}
+
+/* Mouse cursor radial tracker glow style */
+.card-glow-tracker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle 80px at 0px 0px, rgba(255, 255, 255, 0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.channel-card:hover .card-glow-tracker {
+    opacity: 1;
+}
+
+/* Individual Brand Customizations */
+
+/* WhatsApp */
+.card-whatsapp .icon-wrap i {
+    color: #25d366;
+}
+.card-whatsapp:hover {
+    background: rgba(37, 211, 102, 0.05);
+    border-color: rgba(37, 211, 102, 0.35);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(37, 211, 102, 0.1);
+}
+.card-whatsapp:hover .icon-wrap {
+    background: #25d366;
+}
+.card-whatsapp:hover .icon-wrap i {
+    color: #ffffff;
+}
+
+/* Email */
+.card-email .icon-wrap i {
+    color: #fed65b;
+}
+.card-email:hover {
+    background: rgba(254, 214, 91, 0.05);
+    border-color: rgba(254, 214, 91, 0.35);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(254, 214, 91, 0.1);
+}
+.card-email:hover .icon-wrap {
+    background: #fed65b;
+}
+.card-email:hover .icon-wrap i {
+    color: #0A1A2F;
+}
+
+/* Instagram */
+.card-instagram .icon-wrap i {
+    color: #e1306c;
+}
+.card-instagram:hover {
+    background: rgba(225, 48, 108, 0.05);
+    border-color: rgba(225, 48, 108, 0.35);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(225, 48, 108, 0.1);
+}
+.card-instagram:hover .icon-wrap {
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+.card-instagram:hover .icon-wrap i {
+    color: #ffffff;
+}
+
+/* Facebook */
+.card-facebook .icon-wrap i {
+    color: #1877f2;
+}
+.card-facebook:hover {
+    background: rgba(24, 119, 242, 0.05);
+    border-color: rgba(24, 119, 242, 0.35);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(24, 119, 242, 0.1);
+}
+.card-facebook:hover .icon-wrap {
+    background: #1877f2;
+}
+.card-facebook:hover .icon-wrap i {
+    color: #ffffff;
+}
+
+/* Divider Line */
+.card-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08) 20%, rgba(254, 214, 91, 0.15) 50%, rgba(255, 255, 255, 0.08) 80%, transparent);
+    margin: 40px 0;
+}
+
+/* Location & Operational Hours styling */
+.office-details-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+@media (max-width: 768px) {
+    .office-details-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
+.office-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 16px 20px;
+}
+
+.detail-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(254, 214, 91, 0.05);
+    font-size: 18px;
+    color: #fed65b;
+}
+
+.detail-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detail-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detail-value {
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
