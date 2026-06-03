@@ -17,8 +17,17 @@ class Users(db.Model):
     passwordHash = db.Column(db.String(255), nullable=False)
     roleID = db.Column(db.Integer, db.ForeignKey('role.roleID'), nullable=False)
     status = db.Column(db.Enum('Active', 'Inactive', 'Blacklisted', name='user_status'), default='Active')
+    avatar = db.Column(db.String(255), nullable=True)
+    twoFactorEnabled = db.Column(db.Boolean, default=False)
+    twoFactorSecret = db.Column(db.String(100), nullable=True)
     createdAt = db.Column(db.DateTime, default=datetime.utcnow)
     updatedAt = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @property
+    def avatar_url(self):
+        if self.avatar:
+            return f"/static/uploads/avatars/{self.avatar}"
+        return f"https://ui-avatars.com/api/?name={self.fullName.replace(' ', '+')}&background=random"
 
 class Blacklist(db.Model):
     __tablename__ = 'blacklist'
@@ -43,3 +52,26 @@ class AuditLog(db.Model):
     createdAt = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('Users', foreign_keys=[userID])
+
+class UserSession(db.Model):
+    __tablename__ = 'user_sessions'
+    sessionID = db.Column(db.Integer, primary_key=True)
+    userID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    token = db.Column(db.String(255), unique=True, nullable=False)
+    ipAddress = db.Column(db.String(45))
+    userAgent = db.Column(db.String(255))
+    lastActive = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('Users', backref=db.backref('sessions', lazy=True, cascade="all, delete-orphan"), foreign_keys=[userID])
+
+class LoginLog(db.Model):
+    __tablename__ = 'login_logs'
+    logID = db.Column(db.Integer, primary_key=True)
+    userID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    ipAddress = db.Column(db.String(45))
+    userAgent = db.Column(db.String(255))
+    loginAt = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50)) # e.g. Success, Failed
+
+    user = db.relationship('Users', backref=db.backref('login_logs', lazy=True), foreign_keys=[userID])
+

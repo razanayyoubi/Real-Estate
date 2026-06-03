@@ -765,6 +765,7 @@
   display: flex;
   justify-content: center;
   width: 100%;
+  padding: 0 24px;
 }
 
 .header__search {
@@ -1013,7 +1014,7 @@
 /* Horizontal links styling for guest/customer navbar view */
 .header__links {
   display: flex;
-  gap: 32px;
+  gap: 24px;
   align-items: center;
   justify-content: center;
 }
@@ -1041,6 +1042,21 @@
   color: var(--primary);
   font-weight: 700;
   background-color: var(--surface-container);
+}
+
+/* Enforce compact navigation on smaller desktop screens to prevent overlap with actions */
+@media (max-width: 1200px) and (min-width: 1025px) {
+  .header__links {
+    gap: 12px;
+  }
+  .header__links .nav-link {
+    font-size: 13.5px;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  .header__links .nav-link .material-symbols-outlined {
+    font-size: 18px;
+  }
 }
 
 /* Responsive Overrides for public header */
