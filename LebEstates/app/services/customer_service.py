@@ -84,17 +84,17 @@ def delete_customer(customer_id):
         has_consultation = db.session.query(Consultation).filter_by(customerID=customer_id).first() is not None
         has_transaction = db.session.query(Transaction).filter((Transaction.customerID == customer_id) | (Transaction.ownerID == customer_id)).first() is not None
         
-        # Proactively check favorites/requests safely
+        # Proactively check favorites/properties safely
         has_favorite = False
-        has_property_request = False
+        has_property = False
         try:
-            from app.models.property import Favorite, PropertyRequest
+            from app.models.property import Favorite, Property
             has_favorite = db.session.query(Favorite).filter_by(customerID=customer_id).first() is not None
-            has_property_request = db.session.query(PropertyRequest).filter_by(customerID=customer_id).first() is not None
+            has_property = db.session.query(Property).filter_by(ownerID=customer_id).first() is not None
         except Exception as relation_err:
-            print(f"Skipping favorite/property request check: {relation_err}")
+            print(f"Skipping favorite/property check: {relation_err}")
             
-        has_actions = has_visit or has_consultation or has_transaction or has_favorite or has_property_request
+        has_actions = has_visit or has_consultation or has_transaction or has_favorite or has_property
         
         if has_actions:
             # Soft-disable the customer by setting status to Inactive

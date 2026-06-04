@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Post Property | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="/static/css/property_add.css" />
+{% endblock %}
+
+{% block content %}
+<main class="post-property-main">
+    <div class="post-property-container">
+        
+        <!-- Breadcrumb / Header -->
+        <header class="post-property-header">
+            <a class="back-link" href="{% if is_employee %}/dashboard{% else %}/{% endif %}">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Back to {% if is_employee %}Dashboard{% else %}Home{% endif %}
+            </a>
+            <h2 class="page-title">Create New Listing</h2>
+            <p class="page-subtitle">Fill in the details below to publish a new prestigious property to the LebEstates collection.</p>
+        </header>
+
+        <div class="post-property-layout">
+            
+            <!-- Left Side: Sticky Progress Tracker & Live Preview -->
+            <div class="layout-left-sidebar">
+                
+                <!-- Sticky Steps Progress Tracker -->
+                <div class="steps-progress-tracker">
+                    <div class="step-item step-active" id="step-nav-1" data-step="1">
+                        <span class="step-number">1</span>
+                        <div class="step-info">
+                            <p class="step-label">General Info</p>
+                            <p class="step-sublabel">Core property details</p>
+                        </div>
+                    </div>
+                    <div class="step-item step-inactive" id="step-nav-2" data-step="2">
+                        <span class="step-number">2</span>
+                        <div class="step-info">
+                            <p class="step-label">Property Specs</p>
+                            <p class="step-sublabel">Structure & facilities</p>
+                        </div>
+                    </div>
+                    <div class="step-item step-inactive" id="step-nav-3" data-step="3">
+                        <span class="step-number">3</span>
+                        <div class="step-info">
+                            <p class="step-label">Location & Media</p>
+                            <p class="step-sublabel">Visuals & mapping</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticky Live Preview Card -->
+                <div class="live-preview-card">
+                    <div class="preview-badge">Live Preview</div>
+                    <div class="preview-image-wrapper">
+                        <div id="preview-placeholder" class="preview-placeholder">
+                            <span class="material-symbols-outlined">image</span>
+                            <span class="placeholder-text">No Image Selected</span>
+                        </div>
+                        <img id="preview-img" src="" alt="Property Preview" style="display: none;" />
+                        <div class="preview-listing-type-badge">
+                            <span id="preview-listing-type">FOR SALE</span>
+                        </div>
+                    </div>
+                    <div class="preview-content">
+                        <span id="preview-property-type" class="preview-property-type-label">Villa</span>
+                        <h4 id="preview-title" class="preview-title-text">Property Title</h4>
+                        <div class="preview-location-wrapper">
+                            <span class="material-symbols-outlined">location_on</span>
+                            <span id="preview-region">Select Region</span>
+                        </div>
+                        <div class="preview-footer">
+                            <span id="preview-price" class="preview-price-text">$0</span>
+                            <div class="preview-area-wrapper">
+                                <span class="material-symbols-outlined">straighten</span>
+                                <span id="preview-area">0 m²</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Form Wizard -->
+            <div class="layout-main-content">
+                <form id="property-form" enctype="multipart/form-data" novalidate>
+                    
+                    <!-- Hidden property type field -->
+                    <input type="hidden" id="input-property-type" name="property_type" value="Villa" />
+
+                    <!-- Step 1: General Info -->
+                    <section class="wizard-pane pane-active" id="step-pane-1">
+                        <div class="pane-header">
+                            <h3>General Information</h3>
+                            <p>Let's start with the basics of the listing.</p>
+                        </div>
+                        
+                        <div class="form-grid">
+                            
+                            <!-- Select Owner (Employee/Admin Only) -->
+                            {% if is_employee %}
+                            <div class="form-group full-width owner-selection-group">
+                                <label class="form-label" for="input-owner">Select Property Owner (Customer) <span class="required-star">*</span></label>
+                                <select class="form-control" id="input-owner" name="owner_id" required>
+                                    <option value="" disabled selected>-- Choose Owner Customer --</option>
+                                    {% for customer in active_customers %}
+                                    <option value="{{ customer.raw_customer.customerID }}">{{ customer.full_name }} ({{ customer.email }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-group full-width">
+                                <label class="form-label" for="input-title">Listing Title <span class="required-star">*</span></label>
+                                <input type="text" class="form-control" id="input-title" name="title" placeholder="e.g., Ultra-Modern Villa in Faraya with Mountain View" required />
+                                <span class="error-msg" id="err-title">Listing title is required.</span>
+                            </div>
+
+                            <div class="form-group half-width">
+                                <label class="form-label">Listing Type <span class="required-star">*</span></label>
+                                <div class="radio-toggle-group">
+                                    <label class="radio-toggle-option">
+                                        <input type="radio" name="listing_type" value="Sell" checked />
+                                        <span class="radio-toggle-button">FOR SALE</span>
+                                    </label>
+                                    <label class="radio-toggle-option">
+                                        <input type="radio" name="listing_type" value="Rent" />
+                                        <span class="radio-toggle-button">FOR RENT</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group half-width">
+                                <label class="form-label" for="input-price">Listing Price ($) <span class="required-star">*</span></label>
+                                <div class="price-input-wrapper">
+                                    <span class="price-symbol">$</span>
+                                    <input type="number" class="form-control" id="input-price" name="price" placeholder="1,500,000" min="0" required />
+                                </div>
+                                <span class="error-msg" id="err-price">A valid price is required.</span>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label">Property Type <span class="required-star">*</span></label>
+                                <div class="property-types-grid">
+                                    <button type="button" class="type-btn" data-type="Apartment">
+                                        <span class="material-symbols-outlined">apartment</span>
+                                        <span class="type-label">Apartment</span>
+                                    </button>
+                                    <button type="button" class="type-btn type-btn-active" data-type="Villa">
+                                        <span class="material-symbols-outlined">bungalow</span>
+                                        <span class="type-label">Villa</span>
+                                    </button>
+                                    <button type="button" class="type-btn" data-type="Duplex">
+                                        <span class="material-symbols-outlined">layers</span>
+                                        <span class="type-label">Duplex</span>
+                                    </button>
+                                    <button type="button" class="type-btn" data-type="Office">
+                                        <span class="material-symbols-outlined">desk</span>
+                                        <span class="type-label">Office</span>
+                                    </button>
+                                    <button type="button" class="type-btn" data-type="Chalet">
+                                        <span class="material-symbols-outlined">cabin</span>
+                                        <span class="type-label">Chalet</span>
+                                    </button>
+                                    <button type="button" class="type-btn" data-type="Commercial">
+                                        <span class="material-symbols-outlined">storefront</span>
+                                        <span class="type-label">Commercial</span>
+                                    </button>
+                                    <button type="button" class="type-btn" data-type="Land">
+                                        <span class="material-symbols-outlined">terrain</span>
+                                        <span class="type-label">Land</span>
+                                    </button>
+                                    <button type="button" class="type-btn" data-type="Other">
+                                        <span class="material-symbols-outlined">more_horiz</span>
+                                        <span class="type-label">Other</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Custom Specify Field (Visible only when 'Other' type selected) -->
+                            <div class="form-group full-width custom-property-type-wrapper" id="custom-property-type-wrapper" style="display: none;">
+                                <label class="form-label" for="input-custom-property-type">Specify Property Type <span class="required-star">*</span></label>
+                                <input type="text" class="form-control" id="input-custom-property-type" placeholder="e.g. Warehouse, Penthouse, Showroom" />
+                                <span class="error-msg" id="err-custom-property-type">Please specify the custom property type.</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Step 2: Property Specs -->
+                    <section class="wizard-pane" id="step-pane-2">
+                        <div class="pane-header">
+                            <h3>Property Specifications</h3>
+                            <p>Detailed metrics and interior configurations.</p>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-group third-width">
+                                <label class="form-label" for="input-area">Total Area (m²) <span class="required-star">*</span></label>
+                                <input type="number" class="form-control" id="input-area" name="area" placeholder="e.g., 450" min="0" required />
+                                <span class="error-msg" id="err-area">A valid total area is required.</span>
+                            </div>
+
+                            <div class="form-group third-width">
+                                <label class="form-label">Rooms</label>
+                                <div class="counter-control-wrapper">
+                                    <button type="button" class="counter-btn" id="rooms-minus">
+                                        <span class="material-symbols-outlined">remove</span>
+                                    </button>
+                                    <input type="number" id="input-rooms" name="rooms" value="4" readonly />
+                                    <button type="button" class="counter-btn" id="rooms-plus">
+                                        <span class="material-symbols-outlined">add</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group third-width">
+                                <label class="form-label">Bathrooms</label>
+                                <div class="counter-control-wrapper">
+                                    <button type="button" class="counter-btn" id="bathrooms-minus">
+                                        <span class="material-symbols-outlined">remove</span>
+                                    </button>
+                                    <input type="number" id="input-bathrooms" name="bathrooms" value="3" readonly />
+                                    <button type="button" class="counter-btn" id="bathrooms-plus">
+                                        <span class="material-symbols-outlined">add</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group half-width">
+                                <label class="form-label" for="input-floor-number">Floor Number</label>
+                                <input type="number" class="form-control" id="input-floor-number" name="floor_number" placeholder="e.g., 5" min="0" />
+                            </div>
+
+                            <div class="form-group half-width">
+                                <label class="form-label" for="input-parking-spots">Parking Spots</label>
+                                <input type="number" class="form-control" id="input-parking-spots" name="parking_spots" placeholder="e.g., 2" min="0" />
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label" for="input-description">Detailed Description</label>
+                                <textarea class="form-control text-area-control" id="input-description" name="description" placeholder="Describe the property's unique features, historical significance, or architectural details..." rows="6"></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Step 3: Location & Media -->
+                    <section class="wizard-pane" id="step-pane-3">
+                        <div class="pane-header">
+                            <h3>Location & Media</h3>
+                            <p>Finalize with visuals and geographical placement.</p>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-group half-width">
+                                <label class="form-label" for="input-region">Region <span class="required-star">*</span></label>
+                                <select class="form-control select-control" id="input-region" name="region" required>
+                                    <option value="" disabled selected>Select Region</option>
+                                    <option value="Beirut">Beirut Central District</option>
+                                    <option value="Achrafieh">Achrafieh</option>
+                                    <option value="Faraya">Faraya</option>
+                                    <option value="Byblos">Byblos (Jbeil)</option>
+                                    <option value="Batroun">Batroun</option>
+                                </select>
+                                <span class="error-msg" id="err-region">Please select a region.</span>
+                            </div>
+
+                            <div class="form-group half-width">
+                                <label class="form-label" for="input-address">Full Address <span class="required-star">*</span></label>
+                                <input type="text" class="form-control" id="input-address" name="address" placeholder="Street name, Building No." required />
+                                <span class="error-msg" id="err-address">Full address is required.</span>
+                            </div>
+
+                            <!-- Media Upload Dropzone -->
+                            <div class="form-group full-width">
+                                <label class="form-label">Property Photos <span class="required-star">*</span></label>
+                                <div class="media-upload-dropzone" id="media-dropzone">
+                                    <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+                                    <p class="dropzone-title">Drag & Drop High-Res Photos or <span class="browse-link">Browse</span></p>
+                                    <p class="dropzone-subtitle">Minimum 1920x1080px. PNG, JPG, JPEG, WEBP or GIF.</p>
+                                    <input type="file" id="input-photos" name="photos" multiple accept="image/*" style="display: none;" />
+                                </div>
+                                <div class="photos-preview-gallery" id="photos-gallery"></div>
+                                <span class="error-msg" id="err-photos">At least one high-res photo is required.</span>
+                            </div>
+
+                            <!-- Map Placement -->
+                            <input type="hidden" id="input-latitude" name="latitude" />
+                            <input type="hidden" id="input-longitude" name="longitude" />
+                            <div class="form-group full-width">
+                                <label class="form-label">Pin on Map <span class="caption text-on-surface-variant">(Click on the map or drag the pin to set the coordinates)</span></label>
+                                <div class="map-placement-wrapper">
+                                    <div id="map-container" style="width: 100%; height: 100%; z-index: 1;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Form Footer Buttons -->
+                    <footer class="wizard-footer">
+                        <button type="button" class="nav-btn-prev btn-hidden" id="prev-btn">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                            Previous Step
+                        </button>
+                        
+                        <div class="actions-right-wrapper">
+                            <button type="button" class="btn-draft" id="draft-btn">
+                                Save as Draft
+                            </button>
+                            <button type="button" class="nav-btn-next" id="next-btn">
+                                Next: Property Specs
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </button>
+                        </div>
+                    </footer>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="/static/js/property_add.js"></script>
+{% endblock %}

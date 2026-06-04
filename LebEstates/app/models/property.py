@@ -20,37 +20,27 @@ class Property(db.Model):
     floorNumber = db.Column(db.Integer)
     parkingAvailable = db.Column(db.Boolean, default=False)
     status = db.Column(db.Enum('Pending', 'Published', 'Sold', 'Rented', 'Rejected', name='prop_status'), default='Pending')
+    latitude = db.Column(db.Numeric(10, 8), nullable=True)
+    longitude = db.Column(db.Numeric(11, 8), nullable=True)
     createdAt = db.Column(db.DateTime, default=datetime.utcnow)
     updatedAt = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     owner = db.relationship('Customer', foreign_keys=[ownerID])
     creator = db.relationship('Users', foreign_keys=[createdBy])
     approver = db.relationship('Users', foreign_keys=[approvedBy])
-    images = db.relationship('PropertyImage', backref='property', lazy=True)
+    images = db.relationship('PropertyImage', backref='property', lazy=True, cascade="all, delete-orphan")
 
 class PropertyImage(db.Model):
     __tablename__ = 'property_image'
     imageID = db.Column(db.Integer, primary_key=True)
     propertyID = db.Column(db.Integer, db.ForeignKey('property.propertyID'), nullable=False)
-    imageURL = db.Column(db.String(255), nullable=False)
+    imageURL = db.Column(db.String(255), nullable=True)
+    fileData = db.Column(db.LargeBinary)
+    fileType = db.Column(db.String(50))
     isMainImage = db.Column(db.Boolean, default=False)
     uploadedAt = db.Column(db.DateTime, default=datetime.utcnow)
 
-class PropertyRequest(db.Model):
-    __tablename__ = 'property_request'
-    requestID = db.Column(db.Integer, primary_key=True)
-    customerID = db.Column(db.Integer, db.ForeignKey('customer.customerID'), nullable=False)
-    propertyID = db.Column(db.Integer, db.ForeignKey('property.propertyID'), nullable=False)
-    requestType = db.Column(db.String(50), nullable=False) # e.g., Visit, Buy, Rent
-    status = db.Column(db.Enum('Pending', 'Assigned', 'Completed', 'Cancelled', name='req_status'), default='Pending')
-    message = db.Column(db.Text)
-    assignedEmployeeID = db.Column(db.Integer, db.ForeignKey('employee.employeeID'))
-    createdAt = db.Column(db.DateTime, default=datetime.utcnow)
-    updatedAt = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    customer = db.relationship('Customer', foreign_keys=[customerID])
-    property_obj = db.relationship('Property', foreign_keys=[propertyID])
-    employee = db.relationship('Employee', foreign_keys=[assignedEmployeeID])
 
 class Favorite(db.Model):
     __tablename__ = 'favorite'

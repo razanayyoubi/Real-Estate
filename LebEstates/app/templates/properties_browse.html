@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Properties | LebEstates - Timeless Prestige{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/properties_browse.css" />
+{% endblock %}
+
+{% block content %}
+<main class="browse-main">
+    <!-- Immersive Hero Section -->
+    <section class="browse-hero">
+        <div class="browse-hero-bg">
+            <img class="hero-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4YRnWI5ZiVw49sAMKN3lZQEi7-Vcp_P5iL1LJnCfnjH5_DrvDbNI5ia0-kT8tt85x6V8WxWuH8cdTzzKA3QQlQOaCAwNE_M0RH5XSUjqwRMl25kIN3VKjdxqijTtNa8YgL4V5tVkcCXNXXyRBuR6NMNnfE6kO9gEUXmmLCYK5lzxL3KTYg2b0ua3YoNSRb9gHWpH_qKIq8aVO0CbEJvL_4q-PA5wF37aa4yBVtWsJ-hPmMO9-iiHIzgL_846otMV5ji84UROdUMY" alt="Lebanese Mountain Villa Overlooking coast" />
+            <div class="hero-bg-overlay"></div>
+        </div>
+        <div class="container hero-content-wrapper">
+            <h1 class="hero-title">Browse Properties</h1>
+            <p class="hero-subtitle">Discover Lebanon's most prestigious real estate, from Beirut's modern skylines to historic mountain retreats.</p>
+            
+            <!-- Refined Global Search -->
+            <div class="hero-search-box">
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" id="search-input" placeholder="Search by region, development, landmark, or description..." />
+                </div>
+                <button type="button" id="btn-search-trigger" class="btn-search-now">Search Now</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Browse Section (Filters + Listings Grid) -->
+    <section class="container browse-content-section">
+        <div class="browse-layout-wrapper">
+            
+            <!-- Sidebar Filters -->
+            <aside class="filters-sidebar">
+                <div class="filters-card">
+                    <div class="filters-header">
+                        <h3 class="filters-title">Filters</h3>
+                        <button type="button" id="btn-clear-filters" class="btn-clear-all">Clear All</button>
+                    </div>
+
+                    <!-- Listing Type -->
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-listing-type">Listing Type</label>
+                        <div class="select-wrapper">
+                            <select id="filter-listing-type" class="filter-select">
+                                <option value="All">All Listings</option>
+                                <option value="Sell">For Sale</option>
+                                <option value="Rent">For Rent</option>
+                            </select>
+                            <span class="material-symbols-outlined select-chevron">keyboard_arrow_down</span>
+                        </div>
+                    </div>
+
+                    <!-- Region Dropdown -->
+                    <div class="filter-group">
+                        <label class="filter-label" for="filter-location">Region</label>
+                        <div class="select-wrapper">
+                            <select id="filter-location" class="filter-select">
+                                <option value="All">All of Lebanon</option>
+                                <option value="Beirut">Beirut</option>
+                                <option value="Achrafieh">Achrafieh</option>
+                                <option value="Faraya">Faraya</option>
+                                <option value="Byblos">Byblos</option>
+                                <option value="Batroun">Batroun</option>
+                            </select>
+                            <span class="material-symbols-outlined select-chevron">keyboard_arrow_down</span>
+                        </div>
+                    </div>
+
+                    <!-- Property Type Checkboxes -->
+                    <div class="filter-group">
+                        <label class="filter-label">Property Type</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-type-checkbox" value="Villa" />
+                                <span class="checkbox-label">Villas</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-type-checkbox" value="Apartment" />
+                                <span class="checkbox-label">Apartments</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-type-checkbox" value="Duplex" />
+                                <span class="checkbox-label">Penthouses / Duplexes</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-type-checkbox" value="Chalet" />
+                                <span class="checkbox-label">Chalets</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-type-checkbox" value="Office" />
+                                <span class="checkbox-label">Offices</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-type-checkbox" value="Commercial" />
+                                <span class="checkbox-label">Commercial Spaces</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-type-checkbox" value="Land" />
+                                <span class="checkbox-label">Land</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Price Range Inputs and Slider -->
+                    <div class="filter-group">
+                        <label class="filter-label">Listing Price ($)</label>
+                        <div class="price-inputs-grid">
+                            <input type="number" id="filter-price-min" class="price-input" placeholder="Min" />
+                            <input type="number" id="filter-price-max" class="price-input" placeholder="Max" />
+                        </div>
+                        <div class="price-slider-wrapper">
+                            <input type="range" id="filter-price-slider" class="price-slider" min="0" max="10000000" step="50000" value="10000000" />
+                            <div class="slider-value-display">Max Price: $<span id="slider-max-display">10,000,000</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Total Area Range -->
+                    <div class="filter-group">
+                        <label class="filter-label">Total Area (m²)</label>
+                        <div class="price-inputs-grid">
+                            <input type="number" id="filter-area-min" class="price-input" placeholder="Min" />
+                            <input type="number" id="filter-area-max" class="price-input" placeholder="Max" />
+                        </div>
+                    </div>
+
+                    <!-- Rooms & Bathrooms Grid -->
+                    <div class="filter-group">
+                        <div class="price-inputs-grid">
+                            <div>
+                                <label class="filter-label" for="filter-rooms">Rooms</label>
+                                <input type="number" id="filter-rooms" class="price-input" placeholder="Min" min="0" />
+                            </div>
+                            <div>
+                                <label class="filter-label" for="filter-bathrooms">Bathrooms</label>
+                                <input type="number" id="filter-bathrooms" class="price-input" placeholder="Min" min="0" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floor & Parking Grid -->
+                    <div class="filter-group">
+                        <div class="price-inputs-grid">
+                            <div>
+                                <label class="filter-label" for="filter-floor">Floor Number</label>
+                                <input type="number" id="filter-floor" class="price-input" placeholder="Floor" />
+                            </div>
+                            <div>
+                                <label class="filter-label" for="filter-parking">Parking Spots</label>
+                                <div class="select-wrapper">
+                                    <select id="filter-parking" class="filter-select">
+                                        <option value="Any">Any</option>
+                                        <option value="Available">Available</option>
+                                    </select>
+                                    <span class="material-symbols-outlined select-chevron">keyboard_arrow_down</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amenities Checkboxes -->
+                    <div class="filter-group">
+                        <label class="filter-label">Amenities</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-amenity-checkbox" value="sea" />
+                                <span class="checkbox-label">Sea View</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-amenity-checkbox" value="pool" />
+                                <span class="checkbox-label">Private Pool</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="filter-amenity-checkbox" value="historic" />
+                                <span class="checkbox-label">Historic / Heritage</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn-apply-filters" class="btn-sidebar-apply">Apply Filters</button>
+                </div>
+            </aside>
+
+            <!-- Main Listing Area -->
+            <div class="listings-container">
+                <!-- Sorting & Count Header -->
+                <div class="listings-header">
+                    <div class="listings-header-text">
+                        <h2 class="listings-section-title">Exclusive Collections</h2>
+                        <p class="listings-subtitle">Showing <span id="properties-count">{{ properties|length }}</span> curated properties across Lebanon</p>
+                    </div>
+                    <div class="sort-control-wrapper">
+                        <span class="material-symbols-outlined sort-icon">sort</span>
+                        <span class="sort-label">Sort by:</span>
+                        <div class="sort-select-wrapper">
+                            <select id="sort-select" class="sort-select">
+                                <option value="newest">Newest Listed</option>
+                                <option value="price-desc">Price: High to Low</option>
+                                <option value="price-asc">Price: Low to High</option>
+                                <option value="area-desc">Area: High to Low</option>
+                            </select>
+                            <span class="material-symbols-outlined select-chevron">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Properties Grid -->
+                <div class="properties-grid" id="properties-grid">
+                    {% for prop in properties %}
+                    <!-- Property Card {{ prop.propertyID }} -->
+                    <div class="property-card" 
+                         data-id="{{ prop.propertyID }}" 
+                         data-title="{{ prop.title }}"
+                         data-price="{{ prop.price }}" 
+                         data-type="{{ prop.propertyType }}" 
+                         data-listing-type="{{ prop.listingType }}" 
+                         data-location="{{ prop.location }}"
+                         data-created="{{ prop.createdAt.isoformat() }}"
+                         data-beds="{{ prop.rooms or 0 }}"
+                         data-baths="{{ prop.bathrooms or 0 }}"
+                         data-area="{{ prop.area }}"
+                         data-floor="{{ prop.floorNumber or 0 }}"
+                         data-parking="{{ 'true' if prop.parkingAvailable else 'false' }}"
+                         data-address="{{ prop.address or '' }}"
+                         data-latitude="{{ prop.latitude or '' }}"
+                         data-longitude="{{ prop.longitude or '' }}"
+                         data-description="{{ prop.description or '' }}"
+                         data-owner-id="{{ prop.ownerID }}"
+                         data-creator-id="{{ prop.createdBy }}"
+                         data-image-urls="{% for img in prop.images %}{{ img.imageURL }}{% if not loop.last %},{% endif %}{% endfor %}">
+                         
+                         <div class="card-image-wrapper">
+                             {% if prop.images %}
+                             <img class="card-img" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" />
+                             {% else %}
+                             <div class="card-img-placeholder">
+                                 <span class="material-symbols-outlined">image</span>
+                             </div>
+                             {% endif %}
+                             <div class="card-badge-container">
+                                 {% if prop.price > 1000000 %}
+                                 <span class="card-badge badge-exclusive">Exclusive</span>
+                                 {% endif %}
+                                 <span class="card-badge badge-listing-type">For {{ prop.listingType }}</span>
+                             </div>
+                             <button type="button" class="btn-favorite" title="Add to Favorites">
+                                 <span class="material-symbols-outlined">favorite</span>
+                             </button>
+                             <div class="card-title-overlay">
+                                 <h3 class="card-title">{{ prop.title }}</h3>
+                                 <p class="card-location">
+                                     <span class="material-symbols-outlined">location_on</span> {{ prop.location }}
+                                 </p>
+                             </div>
+                         </div>
+                         
+                         <div class="card-content">
+                             <div class="card-price-specs">
+                                 <span class="card-price">${{ "{:,.0f}".format(prop.price) }}{% if prop.listingType == 'Rent' %}/mo{% endif %}</span>
+                                 <div class="card-specs">
+                                     <span class="spec-item" title="Beds"><span class="material-symbols-outlined">bed</span> {{ prop.rooms or 0 }}</span>
+                                     <span class="spec-item" title="Baths"><span class="material-symbols-outlined">bathtub</span> {{ prop.bathrooms or 0 }}</span>
+                                     <span class="spec-item" title="Area"><span class="material-symbols-outlined">square_foot</span> {{ "{:.0f}".format(prop.area) }}m²</span>
+                                 </div>
+                             </div>
+                             <div class="card-buttons">
+                                 <button type="button" class="btn-card-action btn-card-details" data-id="{{ prop.propertyID }}">View Details</button>
+                                 <button type="button" class="btn-card-action btn-card-visit" onclick="window.location.href='/consultation'">Request Visit</button>
+                             </div>
+                         </div>
+                    </div>
+                    {% endfor %}
+
+                    {% if not properties %}
+                    <div class="browse-empty-state">
+                        <span class="material-symbols-outlined">inventory_2</span>
+                        <p>No listings exist in the database. Please check back later.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </section>
+</main>
+
+<!-- View Details Modal Overlay -->
+<div id="details-modal" class="modal-overlay hidden">
+    <div class="modal-card luxury-modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="details-modal-title">Property Audit</h3>
+            <button class="btn-modal-close" id="btn-close-details-modal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body details-modal-body custom-scrollbar">
+            <!-- Left Side: Interactive Gallery -->
+            <div class="details-left">
+                <div class="details-hero-container">
+                    <img id="details-hero-img" src="" alt="Property Hero" />
+                </div>
+                <div class="details-thumb-gallery" id="details-gallery">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+            <!-- Right Side: Structured Specifications -->
+            <div class="details-right">
+                <div class="details-meta-header">
+                    <span class="status-badge" id="details-status"></span>
+                    <span class="listing-badge" id="details-listing-type"></span>
+                </div>
+                
+                <h3 class="details-title-display" id="details-title-text"></h3>
+                <div class="details-price-display" id="details-price-text"></div>
+                
+                <hr class="modal-divider" />
+                
+                <div class="details-section">
+                    <h4 class="section-title">Overview Description</h4>
+                    <p class="modal-desc" id="details-desc"></p>
+                </div>
+                
+                <div class="details-section">
+                    <h4 class="section-title">Key Specifications</h4>
+                    <div class="modal-specs-grid">
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">bed</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Beds</span>
+                                <span class="spec-card-val" id="details-beds">0</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">bathtub</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Baths</span>
+                                <span class="spec-card-val" id="details-baths">0</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">straighten</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Area</span>
+                                <span class="spec-card-val"><span id="details-area">0</span> m²</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">layers</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Floor</span>
+                                <span class="spec-card-val" id="details-floor">N/A</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">local_parking</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Parking</span>
+                                <span class="spec-card-val" id="details-parking">None</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">category</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Type</span>
+                                <span class="spec-card-val" id="details-property-type">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="details-section">
+                    <h4 class="section-title">Location & Address</h4>
+                    <div class="modal-meta-grid">
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">location_on</span>
+                            <div>
+                                <span class="meta-item-label">Region</span>
+                                <span class="meta-item-val" id="details-location"></span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">map</span>
+                            <div>
+                                <span class="meta-item-label">Detailed Address</span>
+                                <span class="meta-item-val" id="details-address"></span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">explore</span>
+                            <div>
+                                <span class="meta-item-label">GPS Coordinates</span>
+                                <span class="meta-item-val"><span id="details-lat"></span>, <span id="details-lng"></span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal-action btn-secondary" id="btn-close-details-bottom">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/properties_browse.js"></script>
+{% endblock %}

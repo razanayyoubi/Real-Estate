@@ -69,9 +69,12 @@
                             <span class="material-symbols-outlined chevron-icon">expand_more</span>
                         </button>
                         <div class="sidebar__child-menu">
-                            <a class="sidebar__child-link {% if request.blueprint == 'customers' %}sidebar__child-link--active{% endif %}" href="{{ url_for('customers.index') }}">Users</a>
-                            <a class="sidebar__child-link {% if request.blueprint == 'employees' %}sidebar__child-link--active{% endif %}" href="{{ url_for('employees.index') }}">Employees</a>
-                            <a class="sidebar__child-link {% if request.blueprint == 'blacklist' %}sidebar__child-link--active{% endif %}" href="{{ url_for('blacklist.index') }}">Blacklist</a>
+                            <a class="sidebar__child-link {% if request.blueprint == 'customers' %}sidebar__child-link--active{% endif %}"
+                                href="{{ url_for('customers.index') }}">Users</a>
+                            <a class="sidebar__child-link {% if request.blueprint == 'employees' %}sidebar__child-link--active{% endif %}"
+                                href="{{ url_for('employees.index') }}">Employees</a>
+                            <a class="sidebar__child-link {% if request.blueprint == 'blacklist' %}sidebar__child-link--active{% endif %}"
+                                href="{{ url_for('blacklist.index') }}">Blacklist</a>
                         </div>
                     </div>
 
@@ -85,7 +88,7 @@
                             <span class="material-symbols-outlined chevron-icon">expand_more</span>
                         </button>
                         <div class="sidebar__child-menu">
-                            <a class="sidebar__child-link sidebar__child-link--active" href="#">Properties</a>
+                            <a class="sidebar__child-link {% if request.path == '/control-panel/properties' %}sidebar__child-link--active{% endif %}" href="{{ url_for('properties.properties_list') }}">Properties</a>
                             <a class="sidebar__child-link" href="#">Consultations</a>
                             <a class="sidebar__child-link" href="#">Visits</a>
                         </div>
@@ -137,7 +140,7 @@
         </nav>
 
         <div class="sidebar__footer">
-            <button class="sidebar__cta">
+            <button class="sidebar__cta" onclick="window.location.href='/sell-rent'">
                 <span class="material-symbols-outlined">add</span>
                 <span class="sidebar__cta-label">New Property</span>
             </button>
@@ -178,7 +181,7 @@
                 <span class="material-symbols-outlined">admin_panel_settings</span>
                 <span class="sidebar__nav-label">Control Panel</span>
             </a>
-            <a class="sidebar__nav-item" href="#">
+            <a class="sidebar__nav-item" href="/properties">
                 <span class="material-symbols-outlined">apartment</span>
                 <span class="sidebar__nav-label">Properties</span>
             </a>
@@ -205,7 +208,7 @@
         </nav>
 
         <div class="sidebar__cta-container">
-            <button class="sidebar__cta">
+            <button class="sidebar__cta" onclick="window.location.href='/sell-rent'">
                 <span class="material-symbols-outlined">add_business</span>
                 <span class="sidebar__cta-label">Post New Property</span>
             </button>
@@ -231,11 +234,11 @@
                 <span class="material-symbols-outlined nav-link-icon">home</span>
                 Home
             </a>
-            <a class="nav-link label-md" href="#">
+            <a class="nav-link label-md" href="/properties">
                 <span class="material-symbols-outlined nav-link-icon">apartment</span>
                 Properties
             </a>
-            <a class="nav-link label-md" href="#">
+            <a class="nav-link label-md {% if request.path == '/sell-rent' %}active{% endif %}" href="/sell-rent">
                 <span class="material-symbols-outlined nav-link-icon">sell</span>
                 Sell/Rent
             </a>
@@ -267,9 +270,10 @@
                 <div class="avatar border-white shadow-sm"
                     style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: var(--primary-container); color: var(--on-primary-container);">
                     {% if current_user and current_user.avatar %}
-                        <img src="{{ current_user.avatar_url }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="{{ current_user.avatar_url }}" alt="Profile"
+                        style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
-                        <span class="material-symbols-outlined">person</span>
+                    <span class="material-symbols-outlined">person</span>
                     {% endif %}
                 </div>
             </div>
@@ -315,18 +319,17 @@
             <!-- Navigation links for guest or logged in Customer -->
             <div class="header__links">
                 <a class="nav-link label-md {% if request.path == '/properties' or request.path == '#' %}active{% endif %}"
-                    href="#">
+                    href="/properties">
                     <span class="material-symbols-outlined">apartment</span> Properties
                 </a>
-                <a class="nav-link label-md {% if request.path == '/sell-rent' %}active{% endif %}" href="#">
+                <a class="nav-link label-md {% if request.path == '/sell-rent' %}active{% endif %}" href="/sell-rent">
                     <span class="material-symbols-outlined">sell</span> Sell/Rent
                 </a>
                 <a class="nav-link label-md {% if request.path == '/consultation' %}active{% endif %}"
                     href="/consultation">
                     <span class="material-symbols-outlined">chat</span> Consultations
                 </a>
-                <a class="nav-link label-md {% if request.path == '/contact' %}active{% endif %}"
-                    href="/contact">
+                <a class="nav-link label-md {% if request.path == '/contact' %}active{% endif %}" href="/contact">
                     <span class="material-symbols-outlined">contact_support</span> Contact
                 </a>
             </div>
@@ -354,9 +357,10 @@
                 <div class="avatar border-white shadow-sm"
                     style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: var(--primary-container); color: var(--on-primary-container); border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--outline-variant);">
                     {% if current_user and current_user.avatar %}
-                        <img src="{{ current_user.avatar_url }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="{{ current_user.avatar_url }}" alt="Profile"
+                        style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
-                        <span class="material-symbols-outlined">person</span>
+                    <span class="material-symbols-outlined">person</span>
                     {% endif %}
                 </div>
 
