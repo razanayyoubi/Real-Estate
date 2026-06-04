@@ -54,13 +54,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 2. MODULE CARD CLICK REDIRECTION
+    document.querySelectorAll('.module-card[data-href]').forEach(card => {
+        card.addEventListener('click', () => {
+            const url = card.getAttribute('data-href');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+
 });
 
 /**
  * Global Hierarchical Group Accordion Toggle Function
  * Exposed on `window` to support declarative inline HTML `onclick` callbacks safely.
  */
-window.toggleGroup = function(id) {
+window.toggleGroup = function (id) {
     const groupElement = document.getElementById(id);
     if (!groupElement) return;
 

@@ -163,7 +163,6 @@ def update_employee(employee_id, data):
 def delete_employee(employee_id):
     """Delete an employee or soft-terminate them if they have database relationships."""
     from app.models.operations import Visit, Consultation, Transaction
-    from app.models.property import PropertyRequest
     from sqlalchemy.exc import IntegrityError
     
     try:
@@ -177,9 +176,8 @@ def delete_employee(employee_id):
         has_visit = db.session.query(Visit).filter_by(employeeID=employee_id).first() is not None
         has_consultation = db.session.query(Consultation).filter_by(assignedEmployeeID=employee_id).first() is not None
         has_transaction = db.session.query(Transaction).filter_by(employeeID=employee_id).first() is not None
-        has_property_request = db.session.query(PropertyRequest).filter_by(assignedEmployeeID=employee_id).first() is not None
         
-        has_actions = has_visit or has_consultation or has_transaction or has_property_request
+        has_actions = has_visit or has_consultation or has_transaction
         
         if has_actions:
             # Soft disable: Terminate employee status & Inactive user status

@@ -10,7 +10,7 @@ def create_app(config_class=Config):
 
     # Import models to ensure they are known to SQLAlchemy
     from app.models.users import Role, Users, Blacklist, AuditLog, UserSession, LoginLog
-    from app.models.property import Property, PropertyImage, PropertyRequest, Favorite
+    from app.models.property import Property, PropertyImage, Favorite
     from app.models.hr import Employee, Salary, CommissionSetting
     from app.models.customer import Customer, CustomerDocument
     from app.models.operations import Visit, Consultation, Transaction
@@ -29,6 +29,12 @@ def create_app(config_class=Config):
 
     from app.routes.roles import roles_bp
     app.register_blueprint(roles_bp)
+
+    from app.routes.blacklist import blacklist_bp
+    app.register_blueprint(blacklist_bp)
+
+    from app.routes.properties import properties_bp
+    app.register_blueprint(properties_bp)
 
     # Global session checker middleware
     from flask import session, redirect, url_for, request

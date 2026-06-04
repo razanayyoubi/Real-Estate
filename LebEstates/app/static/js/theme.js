@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const matches = searchablePages.filter(page => 
+            const matches = searchablePages.filter(page =>
                 page.name.toLowerCase().includes(query)
             );
 
