@@ -36,12 +36,8 @@ def control_panel():
         return redirect(url_for('auth.login_page'))
     return render_template('control_panel.html', user=user)
 
-@main_bp.route('/profile')
-def profile():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login_page'))
-    user = Users.query.get(session['user_id'])
-    if not user:
-        session.clear()
-        return redirect(url_for('auth.login_page'))
-    return render_template('profile.html', user=user)
+@main_bp.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+
