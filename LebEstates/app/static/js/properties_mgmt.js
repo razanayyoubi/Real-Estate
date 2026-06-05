@@ -575,4 +575,60 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    // 8. UPDATE PROPERTY STATUS FROM DROPDOWN
+    document.querySelectorAll('.status-dropdown').forEach(dropdown => {
+        dropdown.dataset.originalStatus = dropdown.value;
+        
+        dropdown.addEventListener('change', (e) => {
+            const id = dropdown.dataset.id;
+            const newStatus = dropdown.value;
+            const oldStatus = dropdown.dataset.originalStatus;
+            
+            if (!confirm(`Are you sure you want to change the status to ${newStatus}?`)) {
+                dropdown.value = oldStatus;
+                return;
+            }
+
+            fetch(`/properties/${id}/update_status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    dropdown.className = `status-dropdown status-${newStatus.toLowerCase()}`;
+                    dropdown.dataset.originalStatus = newStatus;
+                    
+                    const mainRow = document.getElementById(`row-main-${id}`);
+                    if (mainRow) {
+                        mainRow.dataset.status = newStatus;
+                    }
+
+                    if (oldStatus.toLowerCase() === 'published') updateStatsCounter(1, -1);
+                    if (oldStatus.toLowerCase() === 'pending') updateStatsCounter(2, -1);
+                    
+                    if (newStatus.toLowerCase() === 'published') updateStatsCounter(1, 1);
+                    if (newStatus.toLowerCase() === 'pending') updateStatsCounter(2, 1);
+
+                    const queueItem = document.getElementById(`queue-item-${id}`);
+                    if (queueItem && newStatus.toLowerCase() !== 'pending') {
+                        queueItem.remove();
+                        checkQueueEmpty();
+                    }
+                    
+                    recalculateValuation();
+                    applyFilters();
+                } else {
+                    alert(data.error || 'Failed to update property status.');
+                    dropdown.value = oldStatus;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Network error occurred.');
+                dropdown.value = oldStatus;
+            });
+        });
+    });
 });

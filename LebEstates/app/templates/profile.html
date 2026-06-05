@@ -43,10 +43,25 @@
         align-items: start;
     }
 
-    @media (max-width: 992px) {
+    @media (max-width: 1024px) {
         .settings-grid {
             grid-template-columns: 1fr;
             gap: 24px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .settings-container {
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        .settings-card {
+            padding: 20px;
+        }
+
+        .backup-tokens-grid {
+            grid-template-columns: 1fr;
         }
     }
 
@@ -218,6 +233,9 @@
     .identity-info-value {
         color: var(--primary);
         font-weight: 600;
+        word-break: break-all;
+        text-align: right;
+        margin-left: 12px;
     }
 
     /* Forms styling */
@@ -228,7 +246,7 @@
         margin-bottom: 20px;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
         .form-grid {
             grid-template-columns: 1fr;
         }
@@ -357,6 +375,7 @@
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        white-space: nowrap;
     }
 
     .audit-table td {
@@ -365,6 +384,7 @@
         color: var(--on-surface);
         font-family: var(--font-body);
         vertical-align: middle;
+        white-space: nowrap;
     }
 
     .audit-table tr:last-child td {
@@ -468,7 +488,7 @@
         width: 130px;
         height: 130px;
         background-image: radial-gradient(var(--primary) 2px, transparent 2px),
-                          radial-gradient(var(--primary) 2px, transparent 2px);
+            radial-gradient(var(--primary) 2px, transparent 2px);
         background-size: 8px 8px;
         background-position: 0 0, 4px 4px;
         opacity: 0.85;
@@ -481,9 +501,21 @@
         border: 5px solid var(--primary);
         background: #ffffff;
     }
-    .mock-qr-corner.top-left { top: 10px; left: 10px; }
-    .mock-qr-corner.top-right { top: 10px; right: 10px; }
-    .mock-qr-corner.bottom-left { bottom: 10px; left: 10px; }
+
+    .mock-qr-corner.top-left {
+        top: 10px;
+        left: 10px;
+    }
+
+    .mock-qr-corner.top-right {
+        top: 10px;
+        right: 10px;
+    }
+
+    .mock-qr-corner.bottom-left {
+        bottom: 10px;
+        left: 10px;
+    }
 
     .mock-secret-key {
         font-family: monospace;
@@ -497,6 +529,7 @@
         color: var(--primary);
         margin-bottom: 8px;
         user-select: all;
+        word-break: break-all;
     }
 
     .backup-tokens-grid {
@@ -563,15 +596,15 @@
         border-radius: 50%;
     }
 
-    input:checked + .slider {
+    input:checked+.slider {
         background-color: var(--color-success);
     }
 
-    input:focus + .slider {
+    input:focus+.slider {
         box-shadow: 0 0 1px var(--color-success);
     }
 
-    input:checked + .slider:before {
+    input:checked+.slider:before {
         transform: translateX(24px);
     }
 
@@ -620,8 +653,14 @@
     .toast-icon {
         font-size: 20px;
     }
-    .toast-success .toast-icon { color: var(--color-success); }
-    .toast-error .toast-icon { color: var(--error); }
+
+    .toast-success .toast-icon {
+        color: var(--color-success);
+    }
+
+    .toast-error .toast-icon {
+        color: var(--error);
+    }
 
     .toast-content {
         flex: 1;
@@ -650,20 +689,22 @@
     <div class="settings-grid">
         <!-- LEFT COLUMN: Identity & 2FA -->
         <div class="settings-sidebar">
-            
+
             <!-- Personal Identity Widget -->
             <div class="settings-card identity-widget">
                 <form id="avatar-form" enctype="multipart/form-data">
                     <div class="avatar-upload-wrapper" onclick="document.getElementById('avatar-input').click()">
-                        <img id="avatar-preview" src="{{ user.avatar_url }}" alt="{{ user.fullName }}" class="avatar-large">
+                        <img id="avatar-preview" src="{{ user.avatar_url }}" alt="{{ user.fullName }}"
+                            class="avatar-large">
                         <div class="avatar-upload-overlay">
                             <span class="material-symbols-outlined">photo_camera</span>
                             <p>Upload Photo</p>
                         </div>
                     </div>
-                    <input type="file" id="avatar-input" name="avatar" style="display: none;" accept="image/*" onchange="previewAndUploadAvatar(event)">
+                    <input type="file" id="avatar-input" name="avatar" style="display: none;" accept="image/*"
+                        onchange="previewAndUploadAvatar(event)">
                 </form>
-                
+
                 <h2 class="identity-name">{{ user.fullName }}</h2>
                 <div class="identity-badge-row">
                     <span class="badge-pill badge-role">{{ user.role.roleName }}</span>
@@ -686,7 +727,8 @@
                 </div>
 
                 {% if user.role.roleName.lower() in ['admin', 'employee'] %}
-                <a href="/control-panel" class="btn btn-secondary w-100" style="display: flex; gap: 8px; justify-content: center;">
+                <a href="/control-panel" class="btn btn-secondary w-100"
+                    style="display: flex; gap: 8px; justify-content: center;">
                     <span class="material-symbols-outlined">admin_panel_settings</span>
                     Return to Control Panel
                 </a>
@@ -699,24 +741,32 @@
                     <span class="material-symbols-outlined">shield_locked</span>
                     2-Step Verification
                 </div>
-                <p class="caption text-on-surface-variant" style="margin-bottom: 20px; text-align: left; line-height: 1.4;">
-                    Protect your account with an extra layer of security. Add Google Authenticator code validation to your log-in attempts.
+                <p class="caption text-on-surface-variant"
+                    style="margin-bottom: 20px; text-align: left; line-height: 1.4;">
+                    Protect your account with an extra layer of security. Add Google Authenticator code validation to
+                    your log-in attempts.
                 </p>
 
                 <div class="switch-container">
                     <span class="form-label" style="margin-bottom: 0;">Authenticator Status</span>
                     <label class="switch">
-                        <input type="checkbox" id="twofactor-toggle" {% if user.twoFactorEnabled %}checked{% endif %} onchange="toggleTwoFactor()">
+                        <input type="checkbox" id="twofactor-toggle" {% if user.twoFactorEnabled %}checked{% endif %}
+                            onchange="toggleTwoFactor()">
                         <span class="slider"></span>
                     </label>
                 </div>
 
                 <!-- Toggleable 2FA setup details -->
-                <div id="twofactor-setup-area" class="two-factor-setup-container" style="display: {% if user.twoFactorEnabled %}flex{% else %}none{% endif %};">
-                    <div id="2fa-qr-container" style="display: {% if user.twoFactorEnabled %}none{% else %}block{% endif %};">
-                        <p class="caption text-primary" style="font-weight: 600; margin-bottom: 8px;">Scan this QR code in Google Authenticator</p>
-                        <div class="mock-qr-code" style="background: #ffffff; padding: 10px; display: flex; justify-content: center; align-items: center;">
-                            <img id="2fa-qr-img" src="" alt="Scan QR Code" style="width: 130px; height: 130px; display: none;">
+                <div id="twofactor-setup-area" class="two-factor-setup-container"
+                    style="display: {% if user.twoFactorEnabled %}flex{% else %}none{% endif %};">
+                    <div id="2fa-qr-container"
+                        style="display: {% if user.twoFactorEnabled %}none{% else %}block{% endif %};">
+                        <p class="caption text-primary" style="font-weight: 600; margin-bottom: 8px;">Scan this QR code
+                            in Google Authenticator</p>
+                        <div class="mock-qr-code"
+                            style="background: #ffffff; padding: 10px; display: flex; justify-content: center; align-items: center;">
+                            <img id="2fa-qr-img" src="" alt="Scan QR Code"
+                                style="width: 130px; height: 130px; display: none;">
                             <div id="2fa-qr-placeholder" style="width: 130px; height: 130px; position: relative;">
                                 <div class="mock-qr-corner top-left"></div>
                                 <div class="mock-qr-corner top-right"></div>
@@ -724,19 +774,24 @@
                                 <div class="mock-qr-pattern"></div>
                             </div>
                         </div>
-                        <p class="caption text-on-surface-variant" style="margin-bottom: 4px;">Or enter code manually:</p>
+                        <p class="caption text-on-surface-variant" style="margin-bottom: 4px;">Or enter code manually:
+                        </p>
                         <div class="mock-secret-key" id="mock-secret-key">JBSWY3DPEHPK3PXP</div>
                     </div>
 
-                    <div id="2fa-recovery-container" style="display: {% if user.twoFactorEnabled %}block{% else %}none{% endif %}; width: 100%;">
-                        <p class="caption text-success" style="font-weight: 700; color: var(--color-success); margin-bottom: 8px;">2FA Active! Backup Recovery Codes:</p>
+                    <div id="2fa-recovery-container"
+                        style="display: {% if user.twoFactorEnabled %}block{% else %}none{% endif %}; width: 100%;">
+                        <p class="caption text-success"
+                            style="font-weight: 700; color: var(--color-success); margin-bottom: 8px;">2FA Active!
+                            Backup Recovery Codes:</p>
                         <div class="backup-tokens-grid">
                             <div class="backup-token-item">ABCD-1234</div>
                             <div class="backup-token-item">EFGH-5678</div>
                             <div class="backup-token-item">IJKL-9012</div>
                             <div class="backup-token-item">MNOP-3456</div>
                         </div>
-                        <p class="caption text-on-surface-variant" style="margin-top: 10px;">Store these safely. You can use them if you lose access to your device.</p>
+                        <p class="caption text-on-surface-variant" style="margin-top: 10px;">Store these safely. You can
+                            use them if you lose access to your device.</p>
                     </div>
                 </div>
             </div>
@@ -756,11 +811,13 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label" for="full_name">Full Name</label>
-                            <input type="text" id="full_name" name="full_name" class="form-input" value="{{ user.fullName }}" required>
+                            <input type="text" id="full_name" name="full_name" class="form-input"
+                                value="{{ user.fullName }}" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="phone_number">Phone Number</label>
-                            <input type="text" id="phone_number" name="phone_number" class="form-input" value="{{ user.phoneNumber or '' }}" placeholder="e.g. +961 70 123 456">
+                            <input type="text" id="phone_number" name="phone_number" class="form-input"
+                                value="{{ user.phoneNumber or '' }}" placeholder="e.g. +961 70 123 456">
                         </div>
                     </div>
                     <div class="form-group">
@@ -785,12 +842,14 @@
                 <form id="change-password-form" onsubmit="submitChangePassword(event)">
                     <div class="form-group">
                         <label class="form-label" for="current_password">Current Password</label>
-                        <input type="password" id="current_password" name="current_password" class="form-input" required>
+                        <input type="password" id="current_password" name="current_password" class="form-input"
+                            required>
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label" for="new_password">New Password</label>
-                            <input type="password" id="new_password" name="new_password" class="form-input" required oninput="evaluatePasswordStrength(this.value)">
+                            <input type="password" id="new_password" name="new_password" class="form-input" required
+                                oninput="evaluatePasswordStrength(this.value)">
                             <div class="password-strength-container">
                                 <div class="password-strength-bar">
                                     <div class="strength-segment" id="strength-seg-1"></div>
@@ -802,7 +861,8 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="confirm_password">Confirm New Password</label>
-                            <input type="password" id="confirm_password" name="confirm_password" class="form-input" required>
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-input"
+                                required>
                         </div>
                     </div>
                     <div style="text-align: right;">
@@ -816,7 +876,8 @@
 
             <!-- Active Sessions Management -->
             <div class="settings-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--surface-container-low); padding-bottom: 12px;">
+                <div
+                    style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--surface-container-low); padding-bottom: 12px;">
                     <div class="card-title" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
                         <span class="material-symbols-outlined">devices</span>
                         Active Sessions
@@ -846,20 +907,20 @@
                                     <div class="session-device-info">
                                         <span class="session-device-name">
                                             {% if 'Windows' in s.userAgent %}
-                                                Windows Device
+                                            Windows Device
                                             {% elif 'Macintosh' in s.userAgent %}
-                                                Macintosh Device
+                                            Macintosh Device
                                             {% elif 'iPhone' in s.userAgent or 'iPad' in s.userAgent %}
-                                                iOS Device
+                                            iOS Device
                                             {% elif 'Android' in s.userAgent %}
-                                                Android Device
+                                            Android Device
                                             {% else %}
-                                                Unknown Device
+                                            Unknown Device
                                             {% endif %}
                                         </span>
                                         <span class="session-device-ua">{{ s.userAgent }}</span>
                                         {% if s.token == current_token %}
-                                            <span class="badge-current-device">Current Session</span>
+                                        <span class="badge-current-device">Current Session</span>
                                         {% endif %}
                                     </div>
                                 </td>
@@ -898,24 +959,31 @@
                             <tr>
                                 <td>{{ log.loginAt.strftime('%b %d, %Y - %H:%M') }} UTC</td>
                                 <td>{{ log.ipAddress }}</td>
-                                <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ log.userAgent }}">{{ log.userAgent }}</td>
+                                <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                    title="{{ log.userAgent }}">{{ log.userAgent }}</td>
                                 <td>
                                     {% if log.status == 'Success' %}
-                                        <span style="color: var(--color-success); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                                            <span style="width:6px; height:6px; border-radius:50%; background-color:var(--color-success); display:inline-block;"></span>
-                                            Success
-                                        </span>
+                                    <span
+                                        style="color: var(--color-success); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                        <span
+                                            style="width:6px; height:6px; border-radius:50%; background-color:var(--color-success); display:inline-block;"></span>
+                                        Success
+                                    </span>
                                     {% else %}
-                                        <span style="color: var(--error); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                                            <span style="width:6px; height:6px; border-radius:50%; background-color:var(--error); display:inline-block;"></span>
-                                            Failed
-                                        </span>
+                                    <span
+                                        style="color: var(--error); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                        <span
+                                            style="width:6px; height:6px; border-radius:50%; background-color:var(--error); display:inline-block;"></span>
+                                        Failed
+                                    </span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" style="text-align: center; color: var(--on-surface-variant); padding: 20px;">No recent login logs found.</td>
+                                <td colspan="4"
+                                    style="text-align: center; color: var(--on-surface-variant); padding: 20px;">No
+                                    recent login logs found.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -938,9 +1006,9 @@
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        
+
         const iconName = type === 'success' ? 'check_circle' : 'error';
-        
+
         toast.innerHTML = `
             <span class="material-symbols-outlined toast-icon">${iconName}</span>
             <div class="toast-content">
@@ -948,13 +1016,13 @@
                 <div class="toast-msg">${message}</div>
             </div>
         `;
-        
+
         container.appendChild(toast);
-        
+
         // Trigger reflow for transition
         toast.offsetHeight;
         toast.classList.add('show');
-        
+
         // Automatically hide and remove after 4 seconds
         setTimeout(() => {
             toast.classList.remove('show');
@@ -976,7 +1044,7 @@
 
         // Show local preview immediately
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             document.getElementById('avatar-preview').src = e.target.result;
         };
         reader.readAsDataURL(file);
@@ -991,28 +1059,28 @@
             method: 'POST',
             body: formData
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                showToast('Upload Failed', data.error, 'error');
-            } else {
-                showToast('Success', 'Profile picture updated successfully.', 'success');
-                // Reload page after a short delay to propagate avatar to nav bar headers
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('Error', 'An error occurred during upload.', 'error');
-        });
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showToast('Upload Failed', data.error, 'error');
+                } else {
+                    showToast('Success', 'Profile picture updated successfully.', 'success');
+                    // Reload page after a short delay to propagate avatar to nav bar headers
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error', 'An error occurred during upload.', 'error');
+            });
     }
 
     // Submit general details (fullName, phone)
     function submitEditProfile(event) {
         event.preventDefault();
-        
+
         const form = document.getElementById('edit-profile-form');
         const formData = new FormData(form);
 
@@ -1020,30 +1088,30 @@
             method: 'POST',
             body: formData
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                showToast('Update Failed', data.error, 'error');
-            } else {
-                showToast('Success', 'Personal information saved.', 'success');
-                // Update identity widget heading
-                document.querySelector('.identity-name').textContent = document.getElementById('full_name').value;
-                // Reload page after delay to update nav headings
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('Error', 'An error occurred while updating profile.', 'error');
-        });
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showToast('Update Failed', data.error, 'error');
+                } else {
+                    showToast('Success', 'Personal information saved.', 'success');
+                    // Update identity widget heading
+                    document.querySelector('.identity-name').textContent = document.getElementById('full_name').value;
+                    // Reload page after delay to update nav headings
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error', 'An error occurred while updating profile.', 'error');
+            });
     }
 
     // Submit Change Password Form
     function submitChangePassword(event) {
         event.preventDefault();
-        
+
         const form = document.getElementById('change-password-form');
         const currentPassword = document.getElementById('current_password').value;
         const newPassword = document.getElementById('new_password').value;
@@ -1070,20 +1138,20 @@
                 confirm_password: confirmPassword
             })
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                showToast('Error', data.error, 'error');
-            } else {
-                showToast('Success', 'Your password has been changed successfully.', 'success');
-                form.reset();
-                evaluatePasswordStrength(''); // Reset strength bar
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('Error', 'An error occurred while changing password.', 'error');
-        });
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showToast('Error', data.error, 'error');
+                } else {
+                    showToast('Success', 'Your password has been changed successfully.', 'success');
+                    form.reset();
+                    evaluatePasswordStrength(''); // Reset strength bar
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error', 'An error occurred while changing password.', 'error');
+            });
     }
 
     // Dynamic Password Strength Evaluation
@@ -1103,17 +1171,17 @@
         if (!password) return;
 
         let strength = 0;
-        
+
         // Criteria 1: Length
         if (password.length >= 6) {
             strength = 1; // Weak
         }
-        
+
         // Criteria 2: Mixed alpha-numeric
         if (password.length >= 6 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password)) {
             strength = 2; // Medium
         }
-        
+
         // Criteria 3: Complex features
         if (password.length >= 8 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^a-zA-Z0-9]/.test(password)) {
             strength = 3; // Strong
@@ -1147,46 +1215,46 @@
         fetch('/profile/toggle-2fa', {
             method: 'POST'
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                showToast('Error', data.error, 'error');
-                toggle.checked = !toggle.checked; // Revert checkbox
-            } else {
-                showToast('Security Update', data.message, 'success');
-                if (data.enabled) {
-                    setupArea.style.display = 'flex';
-                    qrContainer.style.display = 'block';
-                    recoveryContainer.style.display = 'none';
-                    document.getElementById('mock-secret-key').textContent = data.secret;
-
-                    const qrImg = document.getElementById('2fa-qr-img');
-                    const qrPlaceholder = document.getElementById('2fa-qr-placeholder');
-                    if (data.qr_url) {
-                        qrImg.src = data.qr_url;
-                        qrImg.style.display = 'block';
-                        qrPlaceholder.style.display = 'none';
-                    } else {
-                        qrImg.style.display = 'none';
-                        qrPlaceholder.style.display = 'block';
-                    }
-                    
-                    // After a mock 5 seconds, "complete" configuration to show recovery tokens
-                    setTimeout(() => {
-                        qrContainer.style.display = 'none';
-                        recoveryContainer.style.display = 'block';
-                        showToast('2FA Configured', 'Google Authenticator linked. Backup recovery codes generated.', 'success');
-                    }, 5000);
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showToast('Error', data.error, 'error');
+                    toggle.checked = !toggle.checked; // Revert checkbox
                 } else {
-                    setupArea.style.display = 'none';
+                    showToast('Security Update', data.message, 'success');
+                    if (data.enabled) {
+                        setupArea.style.display = 'flex';
+                        qrContainer.style.display = 'block';
+                        recoveryContainer.style.display = 'none';
+                        document.getElementById('mock-secret-key').textContent = data.secret;
+
+                        const qrImg = document.getElementById('2fa-qr-img');
+                        const qrPlaceholder = document.getElementById('2fa-qr-placeholder');
+                        if (data.qr_url) {
+                            qrImg.src = data.qr_url;
+                            qrImg.style.display = 'block';
+                            qrPlaceholder.style.display = 'none';
+                        } else {
+                            qrImg.style.display = 'none';
+                            qrPlaceholder.style.display = 'block';
+                        }
+
+                        // After a mock 5 seconds, "complete" configuration to show recovery tokens
+                        setTimeout(() => {
+                            qrContainer.style.display = 'none';
+                            recoveryContainer.style.display = 'block';
+                            showToast('2FA Configured', 'Google Authenticator linked. Backup recovery codes generated.', 'success');
+                        }, 5000);
+                    } else {
+                        setupArea.style.display = 'none';
+                    }
                 }
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('Error', 'An error occurred during 2FA configuration.', 'error');
-            toggle.checked = !toggle.checked;
-        });
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error', 'An error occurred during 2FA configuration.', 'error');
+                toggle.checked = !toggle.checked;
+            });
     }
 
     // Revoke individual device session
@@ -1198,29 +1266,29 @@
         fetch(`/profile/revoke-session/${sessionId}`, {
             method: 'POST'
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                showToast('Revocation Failed', data.error, 'error');
-            } else {
-                showToast('Device Revoked', data.message, 'success');
-                if (data.logged_out) {
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 1000);
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showToast('Revocation Failed', data.error, 'error');
                 } else {
-                    // Remove row from table
-                    const row = document.getElementById(`session-row-${sessionId}`);
-                    if (row) {
-                        row.remove();
+                    showToast('Device Revoked', data.message, 'success');
+                    if (data.logged_out) {
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 1000);
+                    } else {
+                        // Remove row from table
+                        const row = document.getElementById(`session-row-${sessionId}`);
+                        if (row) {
+                            row.remove();
+                        }
                     }
                 }
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('Error', 'An error occurred while revoking session.', 'error');
-        });
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error', 'An error occurred while revoking session.', 'error');
+            });
     }
 
     // Revoke all other device sessions
@@ -1232,22 +1300,22 @@
         fetch('/profile/revoke-others', {
             method: 'POST'
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                showToast('Error', data.error, 'error');
-            } else {
-                showToast('Devices Terminated', data.message, 'success');
-                // Reload page to refresh the active sessions table
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('Error', 'An error occurred while revoking other sessions.', 'error');
-        });
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showToast('Error', data.error, 'error');
+                } else {
+                    showToast('Devices Terminated', data.message, 'success');
+                    // Reload page to refresh the active sessions table
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error', 'An error occurred while revoking other sessions.', 'error');
+            });
     }
 </script>
 {% endblock %}

@@ -21,13 +21,13 @@
 </head>
 
 <body
-    class="{% if request.path == '/dashboard' %}dashboard-body{% elif request.path == '/control-panel' %}control-panel-body{% endif %}">
+    class="{% if request.path == '/dashboard' %}dashboard-body{% elif request.path.startswith('/control-panel') %}control-panel-body{% endif %}">
     <!-- Sidebar Dark Overlay -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
     <!-- Sidebar Navigation for Admin/Employee globally on all pages -->
-    {% if request.path == '/control-panel' %}
+    {% if request.path.startswith('/control-panel') %}
     <!-- Hierarchical Side Navigation Bar for Control Panel -->
     <aside class="sidebar" id="sideNav">
         <div class="sidebar__brand-container">
@@ -90,7 +90,7 @@
                         <div class="sidebar__child-menu">
                             <a class="sidebar__child-link {% if request.path == '/control-panel/properties' %}sidebar__child-link--active{% endif %}" href="{{ url_for('properties.properties_list') }}">Properties</a>
                             <a class="sidebar__child-link" href="#">Consultations</a>
-                            <a class="sidebar__child-link" href="#">Visits</a>
+                            <a class="sidebar__child-link {% if request.path == '/control-panel/visits' %}sidebar__child-link--active{% endif %}" href="{{ url_for('visits.visits_list') }}">Visits</a>
                         </div>
                     </div>
 

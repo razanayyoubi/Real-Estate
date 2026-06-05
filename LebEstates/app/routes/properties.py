@@ -108,6 +108,21 @@ def reject_property(prop_id):
     else:
         return jsonify({'error': res.get('error')}), res.get('code', 400)
 
+@properties_bp.route('/properties/<int:prop_id>/update_status', methods=['POST'])
+def update_property_status(prop_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    data = request.get_json()
+    if not data or 'status' not in data:
+        return jsonify({'error': 'Status is required'}), 400
+        
+    res = PropertyService.update_property_status(prop_id, data['status'], session['user_id'])
+    if res.get('success'):
+        return jsonify({'success': True, 'message': res.get('message'), 'new_status': res.get('new_status')})
+    else:
+        return jsonify({'error': res.get('error')}), res.get('code', 400)
+
 @properties_bp.route('/properties/<int:prop_id>/delete', methods=['POST'])
 def delete_property(prop_id):
     if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:

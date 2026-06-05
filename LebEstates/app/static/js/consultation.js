@@ -154,13 +154,55 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // ── All valid: show success state ──
-        form.reset();
-        formCard.classList.add('submitted');
+        // ── All valid: Submit to backend ──
+        const submitBtn = document.getElementById('consult-submit-btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="material-symbols-outlined spin" style="animation: spin 1s linear infinite;">sync</span> Submitting...';
+        submitBtn.disabled = true;
 
-        // Scroll success card into view
-        const top = formCard.getBoundingClientRect().top + window.scrollY - 100;
-        window.scrollTo({ top, behavior: 'smooth' });
+        const payload = {
+            consult_type: consultType.value,
+            contact_method: contactMethodChosen.value,
+            message: document.getElementById('message').value,
+            pref_date: document.getElementById('pref-date').value,
+            pref_time: document.getElementById('pref-time').value
+        };
+
+        fetch('/consultation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+
+            if (data.success) {
+                form.reset();
+                formCard.classList.add('submitted');
+                
+                // Update success message text if provided
+                if (data.message && successMsg) {
+                    const h3 = successMsg.querySelector('h3');
+                    if (h3) h3.textContent = data.message;
+                }
+
+                // Scroll success card into view
+                const top = formCard.getBoundingClientRect().top + window.scrollY - 100;
+                window.scrollTo({ top, behavior: 'smooth' });
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting consultation:', err);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            alert('An error occurred. Please try again.');
+        });
     });
 
 });

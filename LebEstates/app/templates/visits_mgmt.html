@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Visits Management | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visits_mgmt.css') }}" />
+{% endblock %}
+
+{% block content %}
+<main class="visits-mgmt-main">
+
+    <!-- Page Header -->
+    <header class="mgmt-header-v2">
+        <div class="mgmt-header-content">
+            <div class="mgmt-header-icon">
+                <span class="material-symbols-outlined">calendar_month</span>
+            </div>
+            <div class="mgmt-header-text">
+                <h2 class="mgmt-title">Visits Management</h2>
+                <p class="mgmt-subtitle">Manage and track property visits, schedules, and consultant assignments.</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Summary Stats Section -->
+    <section class="mgmt-stats-grid">
+        <!-- Total Requests -->
+        <div class="stat-card border-primary">
+            <div class="stat-header">
+                <div>
+                    <p class="stat-label">Total Requests</p>
+                    <h3 class="stat-value text-primary" id="stat-total-requests">{{ "{:,}".format(total_requests) }}
+                    </h3>
+                </div>
+                <div class="stat-icon-wrapper bg-primary-light text-primary">
+                    <span class="material-symbols-outlined">leaderboard</span>
+                </div>
+            </div>
+            <p class="stat-caption text-secondary">
+                <span class="material-symbols-outlined icon-small">trending_up</span>
+                All time recorded visits
+            </p>
+        </div>
+
+        <!-- Pending Today -->
+        <div class="stat-card border-secondary">
+            <div class="stat-header">
+                <div>
+                    <p class="stat-label">Pending Today</p>
+                    <h3 class="stat-value text-primary" id="stat-pending-today">{{ pending_today }}</h3>
+                </div>
+                <div class="stat-icon-wrapper bg-secondary-light text-secondary">
+                    <span class="material-symbols-outlined">pending_actions</span>
+                </div>
+            </div>
+            <p class="stat-caption">Scheduled for today</p>
+        </div>
+
+        <!-- Confirmed Visits -->
+        <div class="stat-card border-success">
+            <div class="stat-header">
+                <div>
+                    <p class="stat-label">Confirmed Visits</p>
+                    <h3 class="stat-value text-primary" id="stat-confirmed-visits">{{ confirmed_visits }}</h3>
+                </div>
+                <div class="stat-icon-wrapper bg-success-light text-success">
+                    <span class="material-symbols-outlined">event_available</span>
+                </div>
+            </div>
+            <p class="stat-caption text-success">
+                <span class="material-symbols-outlined icon-small">arrow_upward</span>
+                Total upcoming scheduled visits
+            </p>
+        </div>
+
+        <!-- Completion Rate -->
+        <div class="stat-card border-primary-container">
+            <div class="stat-header">
+                <div>
+                    <p class="stat-label">Completion Rate</p>
+                    <h3 class="stat-value text-primary" id="stat-completion-rate">{{ "%.1f"|format(completion_rate) }}%
+                    </h3>
+                </div>
+                <div class="stat-icon-wrapper bg-primary-container-light text-primary-container">
+                    <span class="material-symbols-outlined">task_alt</span>
+                </div>
+            </div>
+            <div class="progress-bar-container mt-5">
+                <div class="progress-bar" id="progress-bar-completion" style="width: {{ completion_rate|round|int }}%">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Table Controls -->
+    <div class="table-controls">
+        <div class="controls-left">
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="search-input" id="search-visits"
+                    placeholder="Search by property, client, or consultant...">
+            </div>
+
+            <!-- Status Filter -->
+            <select id="filter-status" class="select-control">
+                <option value="All">All Statuses</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+
+            <!-- Consultant Filter -->
+            <select id="filter-consultant" class="select-control">
+                <option value="All">All Consultants</option>
+                {% for emp in employees %}
+                <option value="{{ emp.employeeID }}">{{ emp.user.fullName }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Time Filter -->
+            <select id="filter-time" class="select-control">
+                <option value="All">All Time</option>
+                <option value="Today">Today</option>
+                <option value="ThisWeek">This Week</option>
+                <option value="ThisMonth">This Month</option>
+            </select>
+        </div>
+        <div class="controls-right">
+            <button class="btn-export">
+                <span class="material-symbols-outlined">download</span>
+                Export PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Data Table Section -->
+    <div class="table-container">
+        <div class="table-responsive custom-scrollbar">
+            <table class="visits-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Customer</th>
+                        <th>Scheduled Time</th>
+                        <th>Consultant</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visit in visits %}
+                    <tr id="visit-row-{{ visit.visitID }}">
+                        <td>
+                            <div class="property-info">
+                                <div class="property-thumb">
+                                    {% if visit.property_obj.images %}
+                                    <img src="{{ visit.property_obj.images[0].imageURL or url_for('properties.get_property_image', image_id=visit.property_obj.images[0].imageID) }}"
+                                        alt="Property Thumbnail">
+                                    {% else %}
+                                    <div class="property-thumb-placeholder"
+                                        style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--surface-container-high); color: var(--on-surface-variant); font-size: 20px;">
+                                        <span class="material-symbols-outlined">image</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="property-name">{{ visit.property_obj.title }}</p>
+                                    <p class="property-id">ID: LB-{{ visit.property_obj.propertyID }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <p class="customer-name">{{ visit.customer.user.fullName if visit.customer and
+                                visit.customer.user else 'Unknown Customer' }}</p>
+                            <p class="customer-email">{{ visit.customer.user.email if visit.customer and
+                                visit.customer.user else '' }}</p>
+                        </td>
+                        <td>
+                            <p class="visit-date">{{ visit.visitDate.strftime('%b %d, %Y') }}</p>
+                            <p class="visit-time">{{ visit.visitTime.strftime('%I:%M %p') }}</p>
+                        </td>
+                        <td>
+                            <div class="consultant-info">
+                                {% set emp_initials = "" %}
+                                {% if visit.employee and visit.employee.user %}
+                                {% set names = visit.employee.user.fullName.split(' ') %}
+                                {% if names|length > 1 %}
+                                {% set emp_initials = names[0][0] + names[1][0] %}
+                                {% else %}
+                                {% set emp_initials = names[0][0] %}
+                                {% endif %}
+                                {% else %}
+                                {% set emp_initials = "UA" %}
+                                {% endif %}
+                                <div class="avatar bg-primary-container text-on-primary"
+                                    id="avatar-{{ visit.visitID }}">{{ emp_initials }}</div>
+                                <select class="consultant-dropdown" data-id="{{ visit.visitID }}">
+                                    {% for emp in employees %}
+                                    <option value="{{ emp.employeeID }}" {% if visit.employeeID==emp.employeeID
+                                        %}selected{% endif %} data-name="{{ emp.user.fullName }}">
+                                        {{ emp.user.fullName }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </td>
+                        <td>
+                            <select class="status-dropdown status-{{ visit.status.lower() }}"
+                                data-id="{{ visit.visitID }}">
+                                <option value="Scheduled" {% if visit.status=='Scheduled' %}selected{% endif %}>
+                                    Scheduled</option>
+                                <option value="Completed" {% if visit.status=='Completed' %}selected{% endif %}>
+                                    Completed</option>
+                                <option value="Cancelled" {% if visit.status=='Cancelled' %}selected{% endif %}>
+                                    Cancelled</option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="action-btn view-details-btn" title="View Details"
+                                    data-id="{{ visit.visitID }}" data-prop-name="{{ visit.property_obj.title }}"
+                                    data-prop-id="LB-{{ visit.property_obj.propertyID }}"
+                                    data-cust-name="{{ visit.customer.user.fullName if visit.customer and visit.customer.user else 'Unknown Customer' }}"
+                                    data-cust-email="{{ visit.customer.user.email if visit.customer and visit.customer.user else '' }}"
+                                    data-visit-date="{{ visit.visitDate.strftime('%b %d, %Y') }}"
+                                    data-visit-time="{{ visit.visitTime.strftime('%I:%M %p') }}"
+                                    data-consultant="{{ visit.employee.user.fullName if visit.employee and visit.employee.user else 'Unassigned' }}"
+                                    data-status="{{ visit.status }}"
+                                    data-notes="{{ visit.notes or 'No notes provided' }}">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 40px; color: var(--on-surface-variant);">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 48px; margin-bottom: 8px; display: block;">calendar_today</span>
+                            No visits scheduled yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination -->
+        <div class="pagination-footer">
+            <p class="pagination-text">Showing <span class="text-primary font-bold">{{ visits|length }}</span> of <span
+                    class="text-primary font-bold">{{ total_requests }}</span> visits</p>
+            <div class="pagination-controls">
+                <button class="page-btn" disabled>
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn" disabled>
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Visit Details Modal -->
+    <div id="visit-details-modal" class="modal-overlay hidden">
+        <div class="modal-card luxury-modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Visit Details</h3>
+                <button class="btn-modal-close" id="btn-close-visit-modal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body details-modal-body custom-scrollbar"
+                style="padding: 24px; font-family: var(--font-body); color: var(--primary);">
+                <div class="modal-details-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <div>
+                        <h5
+                            style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; color: var(--on-surface-variant); font-weight: 600; letter-spacing: 0.05em;">
+                            Property</h5>
+                        <p id="modal-prop-name"
+                            style="margin: 0; font-weight: 700; font-size: 15px; color: var(--primary);"></p>
+                        <p id="modal-prop-id"
+                            style="margin: 4px 0 0 0; font-size: 13px; color: var(--on-surface-variant);"></p>
+                    </div>
+                    <div>
+                        <h5
+                            style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; color: var(--on-surface-variant); font-weight: 600; letter-spacing: 0.05em;">
+                            Customer</h5>
+                        <p id="modal-cust-name"
+                            style="margin: 0; font-weight: 700; font-size: 15px; color: var(--primary);"></p>
+                        <p id="modal-cust-email"
+                            style="margin: 4px 0 0 0; font-size: 13px; color: var(--on-surface-variant);"></p>
+                    </div>
+                    <div>
+                        <h5
+                            style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; color: var(--on-surface-variant); font-weight: 600; letter-spacing: 0.05em;">
+                            Scheduled Time</h5>
+                        <p id="modal-visit-date"
+                            style="margin: 0; font-weight: 600; font-size: 14px; color: var(--primary);"></p>
+                        <p id="modal-visit-time"
+                            style="margin: 4px 0 0 0; font-size: 13px; color: var(--on-surface-variant);"></p>
+                    </div>
+                    <div>
+                        <h5
+                            style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; color: var(--on-surface-variant); font-weight: 600; letter-spacing: 0.05em;">
+                            Consultant</h5>
+                        <p id="modal-consultant-name"
+                            style="margin: 0; font-weight: 600; font-size: 14px; color: var(--primary);"></p>
+                    </div>
+                </div>
+
+                <hr class="modal-divider"
+                    style="border: none; border-top: 1px solid var(--outline-variant); margin: 24px 0;" />
+
+                <div style="margin-bottom: 24px;">
+                    <h5
+                        style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; color: var(--on-surface-variant); font-weight: 600; letter-spacing: 0.05em;">
+                        Status</h5>
+                    <span id="modal-status-badge" class="status-badge" style="display: inline-block;"></span>
+                </div>
+
+                <div>
+                    <h5
+                        style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; color: var(--on-surface-variant); font-weight: 600; letter-spacing: 0.05em;">
+                        Visit Notes</h5>
+                    <p id="modal-visit-notes"
+                        style="margin: 0; padding: 16px; background: var(--surface-container-low); border-radius: 8px; font-size: 14px; line-height: 1.6; color: var(--primary); border: 1px solid var(--outline-variant); white-space: pre-wrap; font-style: italic;">
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer"
+                style="padding: 16px 24px; display: flex; justify-content: flex-end; border-top: 1px solid var(--outline-variant);">
+                <button class="btn-modal-action btn-secondary" id="btn-close-visit-bottom">Close</button>
+            </div>
+        </div>
+    </div>
+
+</main>
+{% endblock %}
+
+{% block head_scripts %}
+<script src="{{ url_for('static', filename='js/visits_mgmt.js') }}" defer></script>
+{% endblock %}

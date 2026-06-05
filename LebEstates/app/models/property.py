@@ -22,8 +22,8 @@ class Property(db.Model):
     status = db.Column(db.Enum('Pending', 'Published', 'Sold', 'Rented', 'Rejected', name='prop_status'), default='Pending')
     latitude = db.Column(db.Numeric(10, 8), nullable=True)
     longitude = db.Column(db.Numeric(11, 8), nullable=True)
-    createdAt = db.Column(db.DateTime, default=datetime.utcnow)
-    updatedAt = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    createdAt = db.Column(db.DateTime, default=datetime.now)
+    updatedAt = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     owner = db.relationship('Customer', foreign_keys=[ownerID])
     creator = db.relationship('Users', foreign_keys=[createdBy])
@@ -38,7 +38,7 @@ class PropertyImage(db.Model):
     fileData = db.Column(db.LargeBinary)
     fileType = db.Column(db.String(50))
     isMainImage = db.Column(db.Boolean, default=False)
-    uploadedAt = db.Column(db.DateTime, default=datetime.utcnow)
+    uploadedAt = db.Column(db.DateTime, default=datetime.now)
 
 
 
@@ -47,7 +47,7 @@ class Favorite(db.Model):
     favoriteID = db.Column(db.Integer, primary_key=True)
     customerID = db.Column(db.Integer, db.ForeignKey('customer.customerID'), nullable=False)
     propertyID = db.Column(db.Integer, db.ForeignKey('property.propertyID'), nullable=False)
-    createdAt = db.Column(db.DateTime, default=datetime.utcnow)
+    createdAt = db.Column(db.DateTime, default=datetime.now)
 
     customer = db.relationship('Customer', foreign_keys=[customerID])
     property_obj = db.relationship('Property', foreign_keys=[propertyID])

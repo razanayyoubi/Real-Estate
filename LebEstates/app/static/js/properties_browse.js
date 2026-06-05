@@ -2,13 +2,13 @@
    LEBESTATES BROWSE PROPERTIES MODULE INTERACTIVE JAVASCRIPT
    ------------------------------------------------------------- */
 
-document.addEventListener('DOMContentLoaded', () => {
-    
+const init = () => {
+
     // Core Elements
     const propertiesGrid = document.getElementById('properties-grid');
     const propertyCards = Array.from(document.querySelectorAll('.property-card'));
     const propertiesCountSpan = document.getElementById('properties-count');
-    
+
     // Filter Inputs
     const searchInput = document.getElementById('search-input');
     const searchBtn = document.getElementById('btn-search-trigger');
@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bathroomsInput = document.getElementById('filter-bathrooms');
     const floorInput = document.getElementById('filter-floor');
     const parkingSelect = document.getElementById('filter-parking');
-    const amenityCheckboxes = document.querySelectorAll('.filter-amenity-checkbox');
-    
+
     const applyFiltersBtn = document.getElementById('btn-apply-filters');
     const clearFiltersBtn = document.getElementById('btn-clear-filters');
     const sortSelect = document.getElementById('sort-select');
@@ -35,6 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailsModal = document.getElementById('details-modal');
     const btnCloseDetailsModal = document.getElementById('btn-close-details-modal');
     const btnCloseDetailsBottom = document.getElementById('btn-close-details-bottom');
+
+    // Load More Elements & State
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const btnLoadMore = document.getElementById('btn-load-more');
+    let visibleLimit = 6;
+    let matchingCards = [];
 
     // Empty state element helper
     let emptyStateEl = document.querySelector('.browse-empty-state');
@@ -48,6 +53,128 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         propertiesGrid.appendChild(emptyStateEl);
     }
+
+
+    /* ─────────────────────────────────────────────────────────
+           2. APPLY FILTERING LOGIC
+        ───────────────────────────────────────────────────────── */
+    const applyFilters = () => {
+        const query = searchInput.value.toLowerCase().trim();
+        const selectedListingType = listingTypeSelect ? listingTypeSelect.value.toLowerCase() : 'all';
+        const selectedLocation = locationSelect.value.toLowerCase();
+
+        // Gather selected property types
+        const checkedTypes = Array.from(typeCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value.toLowerCase());
+
+        // Gather price range boundary
+        const minPrice = parseFloat(priceMinInput.value) || 0;
+        const maxPrice = parseFloat(priceMaxInput.value) || Infinity;
+
+        // Gather area range boundary
+        const minArea = parseFloat(areaMinInput.value) || 0;
+        const maxArea = parseFloat(areaMaxInput.value) || Infinity;
+
+        // Gather rooms, bathrooms, floor, parking
+        const minRooms = parseInt(roomsInput.value) || 0;
+        const minBathrooms = parseInt(bathroomsInput.value) || 0;
+        const floorFilter = floorInput.value !== '' ? parseInt(floorInput.value) : null;
+        const selectedParking = parkingSelect ? parkingSelect.value.toLowerCase() : 'any';
+
+        visibleLimit = 6; // Reset load more limit on new filter
+        matchingCards = []; // Reset matching cards
+
+        propertyCards.forEach(card => {
+            const d = card.dataset;
+            const title = d.title.toLowerCase();
+            const desc = d.description.toLowerCase();
+            const listingType = d.listingType ? d.listingType.toLowerCase() : '';
+            const location = d.location.toLowerCase();
+            const type = d.type.toLowerCase();
+            const price = parseFloat(d.price) || 0;
+            const area = parseFloat(d.area) || 0;
+            const beds = parseInt(d.beds) || 0;
+            const baths = parseInt(d.baths) || 0;
+            const floor = d.floor !== 'None' && d.floor !== '' ? parseInt(d.floor) || 0 : 0;
+            const parking = d.parking === 'true';
+
+            // Search string matching
+            const searchMatch = query === '' ||
+                title.includes(query) ||
+                desc.includes(query) ||
+                location.includes(query);
+
+            // Listing type matching
+            const listingTypeMatch = selectedListingType === 'all' || listingType === selectedListingType;
+
+            // Location dropdown matching
+            const locationMatch = selectedLocation === 'all' || location === selectedLocation;
+
+            // Property type matching
+            const typeMatch = checkedTypes.length === 0 || checkedTypes.includes(type);
+
+            // Pricing range matching
+            const priceMatch = price >= minPrice && price <= maxPrice;
+
+            // Area matching
+            const areaMatch = area >= minArea && area <= maxArea;
+
+            // Rooms & Bathrooms matching
+            const roomsMatch = beds >= minRooms;
+            const bathroomsMatch = baths >= minBathrooms;
+
+            // Floor number matching
+            const floorMatch = floorFilter === null || floor === floorFilter;
+
+            // Parking matching
+            const parkingMatch = selectedParking === 'any' || (selectedParking === 'available' && parking);
+
+            // Combine all filter checks
+            if (searchMatch && listingTypeMatch && locationMatch && typeMatch && priceMatch && areaMatch && roomsMatch && bathroomsMatch && floorMatch && parkingMatch) {
+                matchingCards.push(card);
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        renderVisibleCards();
+    };
+
+    const renderVisibleCards = () => {
+        matchingCards.forEach((card, index) => {
+            if (index < visibleLimit) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Update count display
+        if (propertiesCountSpan) {
+            propertiesCountSpan.textContent = matchingCards.length;
+        }
+
+        // Show/hide empty state message
+        if (emptyStateEl) {
+            emptyStateEl.style.display = (matchingCards.length === 0) ? 'block' : 'none';
+        }
+
+        // Show/hide Load More button
+        if (loadMoreContainer) {
+            loadMoreContainer.style.display = (matchingCards.length > visibleLimit) ? 'block' : 'none';
+        }
+    };
+
+    if (btnLoadMore) {
+        btnLoadMore.addEventListener('click', () => {
+            visibleLimit += 6;
+            renderVisibleCards();
+        });
+    }
+
+
+
 
     /* ─────────────────────────────────────────────────────────
        1. SYNCHRONIZE PRICE SLIDER & INPUTS
@@ -88,123 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         priceMinInput.addEventListener('change', applyFilters);
     }
 
-    /* ─────────────────────────────────────────────────────────
-       2. APPLY FILTERING LOGIC
-    ───────────────────────────────────────────────────────── */
-    const applyFilters = () => {
-        const query = searchInput.value.toLowerCase().trim();
-        const selectedListingType = listingTypeSelect ? listingTypeSelect.value.toLowerCase() : 'all';
-        const selectedLocation = locationSelect.value.toLowerCase();
-        
-        // Gather selected property types
-        const checkedTypes = Array.from(typeCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value.toLowerCase());
-            
-        // Gather price range boundary
-        const minPrice = parseFloat(priceMinInput.value) || 0;
-        const maxPrice = parseFloat(priceMaxInput.value) || Infinity;
 
-        // Gather area range boundary
-        const minArea = parseFloat(areaMinInput.value) || 0;
-        const maxArea = parseFloat(areaMaxInput.value) || Infinity;
-
-        // Gather rooms, bathrooms, floor, parking
-        const minRooms = parseInt(roomsInput.value) || 0;
-        const minBathrooms = parseInt(bathroomsInput.value) || 0;
-        const floorFilter = floorInput.value !== '' ? parseInt(floorInput.value) : null;
-        const selectedParking = parkingSelect ? parkingSelect.value.toLowerCase() : 'any';
-        
-        // Gather selected amenities
-        const checkedAmenities = Array.from(amenityCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value.toLowerCase());
-
-        let visibleCount = 0;
-
-        propertyCards.forEach(card => {
-            const d = card.dataset;
-            const title = d.title.toLowerCase();
-            const desc = d.description.toLowerCase();
-            const listingType = d.listingType ? d.listingType.toLowerCase() : '';
-            const location = d.location.toLowerCase();
-            const type = d.type.toLowerCase();
-            const price = parseFloat(d.price) || 0;
-            const area = parseFloat(d.area) || 0;
-            const beds = parseInt(d.beds) || 0;
-            const baths = parseInt(d.baths) || 0;
-            const floor = d.floor !== 'None' && d.floor !== '' ? parseInt(d.floor) || 0 : 0;
-            const parking = d.parking === 'true';
-            
-            // Search string matching
-            const searchMatch = query === '' || 
-                                title.includes(query) || 
-                                desc.includes(query) || 
-                                location.includes(query);
-                                
-            // Listing type matching
-            const listingTypeMatch = selectedListingType === 'all' || listingType === selectedListingType;
-            
-            // Location dropdown matching
-            const locationMatch = selectedLocation === 'all' || location === selectedLocation;
-            
-            // Property type matching
-            const typeMatch = checkedTypes.length === 0 || checkedTypes.includes(type);
-            
-            // Pricing range matching
-            const priceMatch = price >= minPrice && price <= maxPrice;
-
-            // Area matching
-            const areaMatch = area >= minArea && area <= maxArea;
-
-            // Rooms & Bathrooms matching
-            const roomsMatch = beds >= minRooms;
-            const bathroomsMatch = baths >= minBathrooms;
-
-            // Floor number matching
-            const floorMatch = floorFilter === null || floor === floorFilter;
-
-            // Parking matching
-            const parkingMatch = selectedParking === 'any' || (selectedParking === 'available' && parking);
-            
-            // Amenities matching (search within description & details)
-            let amenitiesMatch = true;
-            if (checkedAmenities.length > 0) {
-                checkedAmenities.forEach(amenity => {
-                    if (amenity === 'sea') {
-                        // check description keywords
-                        const matchesSea = desc.includes('sea') || desc.includes('ocean') || title.includes('sea') || title.includes('ocean');
-                        if (!matchesSea) amenitiesMatch = false;
-                    } else if (amenity === 'pool') {
-                        const matchesPool = desc.includes('pool') || title.includes('pool');
-                        if (!matchesPool) amenitiesMatch = false;
-                    } else if (amenity === 'historic') {
-                        const matchesHistoric = desc.includes('historic') || desc.includes('heritage') || desc.includes('stone') || 
-                                               title.includes('historic') || title.includes('heritage') || title.includes('stone');
-                        if (!matchesHistoric) amenitiesMatch = false;
-                    }
-                });
-            }
-
-            // Combine all filter checks
-            if (searchMatch && listingTypeMatch && locationMatch && typeMatch && priceMatch && areaMatch && roomsMatch && bathroomsMatch && floorMatch && parkingMatch && amenitiesMatch) {
-                card.style.display = 'flex';
-                visibleCount++;
-            } else {
-                card.style.display = 'none';
-            }
-        });
-
-        // Update count display
-        if (propertiesCountSpan) {
-            propertiesCountSpan.textContent = visibleCount;
-        }
-
-        // Show/hide empty state message
-        if (emptyStateEl) {
-            emptyStateEl.style.display = (visibleCount === 0) ? 'block' : 'none';
-        }
-    };
 
     // Attach filter listeners
     if (applyFiltersBtn) applyFiltersBtn.addEventListener('click', applyFilters);
@@ -221,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     typeCheckboxes.forEach(cb => cb.addEventListener('change', applyFilters));
-    amenityCheckboxes.forEach(cb => cb.addEventListener('change', applyFilters));
 
     if (searchInput) {
         searchInput.addEventListener('keyup', (e) => {
@@ -237,10 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.value = '';
         if (listingTypeSelect) listingTypeSelect.value = 'All';
         locationSelect.value = 'All';
-        
+
         typeCheckboxes.forEach(cb => cb.checked = false);
-        amenityCheckboxes.forEach(cb => cb.checked = false);
-        
+
         priceMinInput.value = '';
         priceMaxInput.value = '';
         priceSlider.value = priceSlider.max;
@@ -263,15 +272,15 @@ document.addEventListener('DOMContentLoaded', () => {
     ───────────────────────────────────────────────────────── */
     const sortProperties = () => {
         const criteria = sortSelect.value;
-        
+
         // Sort cards array
         propertyCards.sort((a, b) => {
             const priceA = parseFloat(a.dataset.price) || 0;
             const priceB = parseFloat(b.dataset.price) || 0;
-            
+
             const areaA = parseFloat(a.dataset.area) || 0;
             const areaB = parseFloat(b.dataset.area) || 0;
-            
+
             const dateA = new Date(a.dataset.created);
             const dateB = new Date(b.dataset.created);
 
@@ -297,6 +306,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (emptyStateEl) {
             propertiesGrid.appendChild(emptyStateEl);
         }
+
+        // Re-apply filters to update the visible cards and limit based on the new sort order
+        applyFilters();
     };
 
     if (sortSelect) {
@@ -311,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             btn.classList.toggle('active-favorite');
-            
+
             // Apply scale pop micro-interaction
             btn.style.transform = 'scale(1.2)';
             setTimeout(() => {
@@ -339,25 +351,25 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('details-modal-title').textContent = `#LEB-${id} - Exclusive Collection Details`;
             document.getElementById('details-title-text').textContent = d.title;
             document.getElementById('details-desc').textContent = d.description || 'No description available for this property.';
-            
+
             const listingBadge = document.getElementById('details-listing-type');
             const cardBadgeType = card.querySelector('.badge-listing-type');
             listingBadge.textContent = cardBadgeType ? cardBadgeType.textContent.trim().toUpperCase() : 'FOR SALE';
-            
+
             const statusBadge = document.getElementById('details-status');
             statusBadge.textContent = 'AVAILABLE';
             statusBadge.className = 'status-badge badge-published';
-            
+
             const priceNum = parseFloat(d.price) || 0;
             document.getElementById('details-price-text').textContent = `$${priceNum.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-            
+
             document.getElementById('details-beds').textContent = d.beds;
             document.getElementById('details-baths').textContent = d.baths;
             document.getElementById('details-area').textContent = d.area;
             document.getElementById('details-floor').textContent = d.floor || 'N/A';
             document.getElementById('details-parking').textContent = d.parking === 'true' ? 'Available' : 'None';
             document.getElementById('details-property-type').textContent = d.type;
-            
+
             document.getElementById('details-location').textContent = d.location;
             document.getElementById('details-address').textContent = d.address || 'N/A';
             document.getElementById('details-lat').textContent = d.latitude || 'N/A';
@@ -367,12 +379,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const heroImg = document.getElementById('details-hero-img');
             const heroContainer = document.querySelector('.details-hero-container');
             const galleryContainer = document.getElementById('details-gallery');
-            
+
             galleryContainer.innerHTML = '';
 
             if (d.imageUrls && d.imageUrls.trim() !== '') {
                 const urls = d.imageUrls.split(',');
-                
+
                 heroContainer.style.display = 'block';
                 heroImg.src = urls[0];
 
@@ -422,4 +434,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Run sort on page load to match default filter selection
     sortProperties();
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}

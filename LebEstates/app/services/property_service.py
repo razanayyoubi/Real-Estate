@@ -180,6 +180,23 @@ class PropertyService:
         }
 
     @staticmethod
+    def update_property_status(prop_id, new_status, user_id=None):
+        prop = Property.query.get(prop_id)
+        if not prop:
+            return {'success': False, 'error': 'Property not found', 'code': 404}
+
+        valid_statuses = ['Published', 'Pending', 'Sold', 'Rented', 'Rejected']
+        if new_status not in valid_statuses:
+            return {'success': False, 'error': 'Invalid status', 'code': 400}
+
+        prop.status = new_status
+        if new_status == 'Published' and user_id:
+            prop.approvedBy = user_id
+            
+        db.session.commit()
+        return {'success': True, 'message': 'Property status updated.', 'new_status': new_status}
+
+    @staticmethod
     def approve_property(prop_id, user_id):
         """
         Approves a pending property.

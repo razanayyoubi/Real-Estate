@@ -22,7 +22,7 @@ class Salary(db.Model):
     totalSalary = db.Column(db.Numeric(10, 2), nullable=False)
     salaryMonth = db.Column(db.String(7), nullable=False) # e.g. YYYY-MM
     paymentStatus = db.Column(db.Enum('Pending', 'Paid', name='pay_status'), default='Pending')
-    createdAt = db.Column(db.DateTime, default=datetime.utcnow)
+    createdAt = db.Column(db.DateTime, default=datetime.now)
 
 class CommissionSetting(db.Model):
     __tablename__ = 'commission_setting'
@@ -30,6 +30,6 @@ class CommissionSetting(db.Model):
     commissionType = db.Column(db.String(50), nullable=False) # e.g. Sell, Rent
     ratePercentage = db.Column(db.Numeric(5, 2), nullable=False)
     updatedBy = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
-    updatedAt = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updatedAt = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     admin = db.relationship('Users', foreign_keys=[updatedBy])
