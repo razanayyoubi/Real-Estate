@@ -171,17 +171,13 @@
                         </td>
                         <td class="col-price font-bold">${{ "{:,.0f}".format(prop.price) }}</td>
                         <td class="col-status" id="row-status-{{ prop.propertyID }}">
-                            {% if prop.status == 'Published' %}
-                            <span class="status-badge badge-published">PUBLISHED</span>
-                            {% elif prop.status == 'Pending' %}
-                            <span class="status-badge badge-pending">PENDING</span>
-                            {% elif prop.status == 'Sold' %}
-                            <span class="status-badge badge-sold">SOLD</span>
-                            {% elif prop.status == 'Rented' %}
-                            <span class="status-badge badge-rented">RENTED</span>
-                            {% elif prop.status == 'Rejected' %}
-                            <span class="status-badge badge-rejected">REJECTED</span>
-                            {% endif %}
+                            <select class="status-dropdown status-{{ prop.status.lower() }}" data-id="{{ prop.propertyID }}">
+                                <option value="Pending" {% if prop.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Published" {% if prop.status == 'Published' %}selected{% endif %}>Published</option>
+                                <option value="Sold" {% if prop.status == 'Sold' %}selected{% endif %}>Sold</option>
+                                <option value="Rented" {% if prop.status == 'Rented' %}selected{% endif %}>Rented</option>
+                                <option value="Rejected" {% if prop.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
                         </td>
                         <td class="col-actions text-right">
                             <div class="actions-wrapper">

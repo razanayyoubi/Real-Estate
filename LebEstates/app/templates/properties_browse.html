@@ -4,6 +4,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="/static/css/properties_browse.css" />
+<link rel="stylesheet" href="/static/css/visit_modal.css" />
 {% endblock %}
 
 {% block content %}
@@ -11,18 +12,22 @@
     <!-- Immersive Hero Section -->
     <section class="browse-hero">
         <div class="browse-hero-bg">
-            <img class="hero-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4YRnWI5ZiVw49sAMKN3lZQEi7-Vcp_P5iL1LJnCfnjH5_DrvDbNI5ia0-kT8tt85x6V8WxWuH8cdTzzKA3QQlQOaCAwNE_M0RH5XSUjqwRMl25kIN3VKjdxqijTtNa8YgL4V5tVkcCXNXXyRBuR6NMNnfE6kO9gEUXmmLCYK5lzxL3KTYg2b0ua3YoNSRb9gHWpH_qKIq8aVO0CbEJvL_4q-PA5wF37aa4yBVtWsJ-hPmMO9-iiHIzgL_846otMV5ji84UROdUMY" alt="Lebanese Mountain Villa Overlooking coast" />
+            <img class="hero-bg-img"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4YRnWI5ZiVw49sAMKN3lZQEi7-Vcp_P5iL1LJnCfnjH5_DrvDbNI5ia0-kT8tt85x6V8WxWuH8cdTzzKA3QQlQOaCAwNE_M0RH5XSUjqwRMl25kIN3VKjdxqijTtNa8YgL4V5tVkcCXNXXyRBuR6NMNnfE6kO9gEUXmmLCYK5lzxL3KTYg2b0ua3YoNSRb9gHWpH_qKIq8aVO0CbEJvL_4q-PA5wF37aa4yBVtWsJ-hPmMO9-iiHIzgL_846otMV5ji84UROdUMY"
+                alt="Lebanese Mountain Villa Overlooking coast" />
             <div class="hero-bg-overlay"></div>
         </div>
         <div class="container hero-content-wrapper">
             <h1 class="hero-title">Browse Properties</h1>
-            <p class="hero-subtitle">Discover Lebanon's most prestigious real estate, from Beirut's modern skylines to historic mountain retreats.</p>
-            
+            <p class="hero-subtitle">Discover Lebanon's most prestigious real estate, from Beirut's modern skylines to
+                historic mountain retreats.</p>
+
             <!-- Refined Global Search -->
             <div class="hero-search-box">
                 <div class="search-input-wrapper">
                     <span class="material-symbols-outlined search-icon">search</span>
-                    <input type="text" id="search-input" placeholder="Search by region, development, landmark, or description..." />
+                    <input type="text" id="search-input"
+                        placeholder="Search by region, development, landmark, or description..." />
                 </div>
                 <button type="button" id="btn-search-trigger" class="btn-search-now">Search Now</button>
             </div>
@@ -32,7 +37,7 @@
     <!-- Main Browse Section (Filters + Listings Grid) -->
     <section class="container browse-content-section">
         <div class="browse-layout-wrapper">
-            
+
             <!-- Sidebar Filters -->
             <aside class="filters-sidebar">
                 <div class="filters-card">
@@ -113,8 +118,10 @@
                             <input type="number" id="filter-price-max" class="price-input" placeholder="Max" />
                         </div>
                         <div class="price-slider-wrapper">
-                            <input type="range" id="filter-price-slider" class="price-slider" min="0" max="10000000" step="50000" value="10000000" />
-                            <div class="slider-value-display">Max Price: $<span id="slider-max-display">10,000,000</span></div>
+                            <input type="range" id="filter-price-slider" class="price-slider" min="0" max="10000000"
+                                step="50000" value="10000000" />
+                            <div class="slider-value-display">Max Price: $<span
+                                    id="slider-max-display">10,000,000</span></div>
                         </div>
                     </div>
 
@@ -136,7 +143,8 @@
                             </div>
                             <div>
                                 <label class="filter-label" for="filter-bathrooms">Bathrooms</label>
-                                <input type="number" id="filter-bathrooms" class="price-input" placeholder="Min" min="0" />
+                                <input type="number" id="filter-bathrooms" class="price-input" placeholder="Min"
+                                    min="0" />
                             </div>
                         </div>
                     </div>
@@ -161,24 +169,7 @@
                         </div>
                     </div>
 
-                    <!-- Amenities Checkboxes -->
-                    <div class="filter-group">
-                        <label class="filter-label">Amenities</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="filter-amenity-checkbox" value="sea" />
-                                <span class="checkbox-label">Sea View</span>
-                            </label>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="filter-amenity-checkbox" value="pool" />
-                                <span class="checkbox-label">Private Pool</span>
-                            </label>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="filter-amenity-checkbox" value="historic" />
-                                <span class="checkbox-label">Historic / Heritage</span>
-                            </label>
-                        </div>
-                    </div>
+
 
                     <button type="button" id="btn-apply-filters" class="btn-sidebar-apply">Apply Filters</button>
                 </div>
@@ -190,7 +181,8 @@
                 <div class="listings-header">
                     <div class="listings-header-text">
                         <h2 class="listings-section-title">Exclusive Collections</h2>
-                        <p class="listings-subtitle">Showing <span id="properties-count">{{ properties|length }}</span> curated properties across Lebanon</p>
+                        <p class="listings-subtitle">Showing <span id="properties-count">{{ properties|length }}</span>
+                            curated properties across Lebanon</p>
                     </div>
                     <div class="sort-control-wrapper">
                         <span class="material-symbols-outlined sort-icon">sort</span>
@@ -211,66 +203,65 @@
                 <div class="properties-grid" id="properties-grid">
                     {% for prop in properties %}
                     <!-- Property Card {{ prop.propertyID }} -->
-                    <div class="property-card" 
-                         data-id="{{ prop.propertyID }}" 
-                         data-title="{{ prop.title }}"
-                         data-price="{{ prop.price }}" 
-                         data-type="{{ prop.propertyType }}" 
-                         data-listing-type="{{ prop.listingType }}" 
-                         data-location="{{ prop.location }}"
-                         data-created="{{ prop.createdAt.isoformat() }}"
-                         data-beds="{{ prop.rooms or 0 }}"
-                         data-baths="{{ prop.bathrooms or 0 }}"
-                         data-area="{{ prop.area }}"
-                         data-floor="{{ prop.floorNumber or 0 }}"
-                         data-parking="{{ 'true' if prop.parkingAvailable else 'false' }}"
-                         data-address="{{ prop.address or '' }}"
-                         data-latitude="{{ prop.latitude or '' }}"
-                         data-longitude="{{ prop.longitude or '' }}"
-                         data-description="{{ prop.description or '' }}"
-                         data-owner-id="{{ prop.ownerID }}"
-                         data-creator-id="{{ prop.createdBy }}"
-                         data-image-urls="{% for img in prop.images %}{{ img.imageURL }}{% if not loop.last %},{% endif %}{% endfor %}">
-                         
-                         <div class="card-image-wrapper">
-                             {% if prop.images %}
-                             <img class="card-img" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" />
-                             {% else %}
-                             <div class="card-img-placeholder">
-                                 <span class="material-symbols-outlined">image</span>
-                             </div>
-                             {% endif %}
-                             <div class="card-badge-container">
-                                 {% if prop.price > 1000000 %}
-                                 <span class="card-badge badge-exclusive">Exclusive</span>
-                                 {% endif %}
-                                 <span class="card-badge badge-listing-type">For {{ prop.listingType }}</span>
-                             </div>
-                             <button type="button" class="btn-favorite" title="Add to Favorites">
-                                 <span class="material-symbols-outlined">favorite</span>
-                             </button>
-                             <div class="card-title-overlay">
-                                 <h3 class="card-title">{{ prop.title }}</h3>
-                                 <p class="card-location">
-                                     <span class="material-symbols-outlined">location_on</span> {{ prop.location }}
-                                 </p>
-                             </div>
-                         </div>
-                         
-                         <div class="card-content">
-                             <div class="card-price-specs">
-                                 <span class="card-price">${{ "{:,.0f}".format(prop.price) }}{% if prop.listingType == 'Rent' %}/mo{% endif %}</span>
-                                 <div class="card-specs">
-                                     <span class="spec-item" title="Beds"><span class="material-symbols-outlined">bed</span> {{ prop.rooms or 0 }}</span>
-                                     <span class="spec-item" title="Baths"><span class="material-symbols-outlined">bathtub</span> {{ prop.bathrooms or 0 }}</span>
-                                     <span class="spec-item" title="Area"><span class="material-symbols-outlined">square_foot</span> {{ "{:.0f}".format(prop.area) }}m²</span>
-                                 </div>
-                             </div>
-                             <div class="card-buttons">
-                                 <button type="button" class="btn-card-action btn-card-details" data-id="{{ prop.propertyID }}">View Details</button>
-                                 <button type="button" class="btn-card-action btn-card-visit" onclick="window.location.href='/consultation'">Request Visit</button>
-                             </div>
-                         </div>
+                    <div class="property-card" data-id="{{ prop.propertyID }}" data-title="{{ prop.title }}"
+                        data-price="{{ prop.price }}" data-type="{{ prop.propertyType }}"
+                        data-listing-type="{{ prop.listingType }}" data-location="{{ prop.location }}"
+                        data-created="{{ prop.createdAt.isoformat() }}" data-beds="{{ prop.rooms or 0 }}"
+                        data-baths="{{ prop.bathrooms or 0 }}" data-area="{{ prop.area }}"
+                        data-floor="{{ prop.floorNumber or 0 }}"
+                        data-parking="{{ 'true' if prop.parkingAvailable else 'false' }}"
+                        data-address="{{ prop.address or '' }}" data-latitude="{{ prop.latitude or '' }}"
+                        data-longitude="{{ prop.longitude or '' }}" data-description="{{ prop.description or '' }}"
+                        data-owner-id="{{ prop.ownerID }}" data-creator-id="{{ prop.createdBy }}"
+                        data-image-urls="{% for img in prop.images %}{{ img.imageURL }}{% if not loop.last %},{% endif %}{% endfor %}">
+
+                        <div class="card-image-wrapper">
+                            {% if prop.images %}
+                            <img class="card-img" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" />
+                            {% else %}
+                            <div class="card-img-placeholder">
+                                <span class="material-symbols-outlined">image</span>
+                            </div>
+                            {% endif %}
+                            <div class="card-badge-container">
+                                {% if prop.price > 1000000 %}
+                                <span class="card-badge badge-exclusive">Exclusive</span>
+                                {% endif %}
+                                <span class="card-badge badge-listing-type">For {{ prop.listingType }}</span>
+                            </div>
+                            <button type="button" class="btn-favorite" title="Add to Favorites">
+                                <span class="material-symbols-outlined">favorite</span>
+                            </button>
+                            <div class="card-title-overlay">
+                                <h3 class="card-title">{{ prop.title }}</h3>
+                                <p class="card-location">
+                                    <span class="material-symbols-outlined">location_on</span> {{ prop.location }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="card-content">
+                            <div class="card-price-specs">
+                                <span class="card-price">${{ "{:,.0f}".format(prop.price) }}{% if prop.listingType ==
+                                    'Rent' %}/mo{% endif %}</span>
+                                <div class="card-specs">
+                                    <span class="spec-item" title="Beds"><span
+                                            class="material-symbols-outlined">bed</span> {{ prop.rooms or 0 }}</span>
+                                    <span class="spec-item" title="Baths"><span
+                                            class="material-symbols-outlined">bathtub</span> {{ prop.bathrooms or 0
+                                        }}</span>
+                                    <span class="spec-item" title="Area"><span
+                                            class="material-symbols-outlined">square_foot</span> {{
+                                        "{:.0f}".format(prop.area) }}m²</span>
+                                </div>
+                            </div>
+                            <div class="card-buttons">
+                                <button type="button" class="btn-card-action btn-card-details"
+                                    data-id="{{ prop.propertyID }}">View Details</button>
+                                <button type="button" class="btn-card-action btn-card-visit"
+                                    data-id="{{ prop.propertyID }}">Request Visit</button>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
 
@@ -280,6 +271,14 @@
                         <p>No listings exist in the database. Please check back later.</p>
                     </div>
                     {% endif %}
+                </div>
+
+                <div class="load-more-container" id="load-more-container"
+                    style="display: none; text-align: center; margin-top: 2.5rem; margin-bottom: 1rem;">
+                    <button type="button" id="btn-load-more" class="btn-sidebar-apply"
+                        style="width: auto; padding: 0.85rem 2.5rem; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; margin: 0 auto; border-radius: 4px; font-weight: 600; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                        <span class="material-symbols-outlined">expand_more</span> Load More Properties
+                    </button>
                 </div>
             </div>
 
@@ -312,17 +311,17 @@
                     <span class="status-badge" id="details-status"></span>
                     <span class="listing-badge" id="details-listing-type"></span>
                 </div>
-                
+
                 <h3 class="details-title-display" id="details-title-text"></h3>
                 <div class="details-price-display" id="details-price-text"></div>
-                
+
                 <hr class="modal-divider" />
-                
+
                 <div class="details-section">
                     <h4 class="section-title">Overview Description</h4>
                     <p class="modal-desc" id="details-desc"></p>
                 </div>
-                
+
                 <div class="details-section">
                     <h4 class="section-title">Key Specifications</h4>
                     <div class="modal-specs-grid">
@@ -370,7 +369,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="details-section">
                     <h4 class="section-title">Location & Address</h4>
                     <div class="modal-meta-grid">
@@ -392,7 +391,8 @@
                             <span class="material-symbols-outlined">explore</span>
                             <div>
                                 <span class="meta-item-label">GPS Coordinates</span>
-                                <span class="meta-item-val"><span id="details-lat"></span>, <span id="details-lng"></span></span>
+                                <span class="meta-item-val"><span id="details-lat"></span>, <span
+                                        id="details-lng"></span></span>
                             </div>
                         </div>
                     </div>
@@ -404,8 +404,112 @@
         </div>
     </div>
 </div>
+
+<!-- Request Visit Modal Overlay -->
+<div id="visit-modal" class="modal-overlay hidden visit-modal-overlay">
+    <!-- Modal Content Container -->
+    <div class="visit-modal-card">
+        <!-- Close Button -->
+        <button class="btn-visit-modal-close" id="btn-close-visit-modal">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+
+        <!-- Sidebar / Property Preview -->
+        <aside class="visit-modal-sidebar">
+            <div class="visit-modal-bg">
+                <img id="visit-modal-hero-img" alt="Property Hero" src="" />
+                <div class="visit-modal-gradient"></div>
+            </div>
+            <div class="visit-modal-sidebar-content">
+                <span class="visit-modal-badge" id="visit-modal-badge-text">Exclusive Listing</span>
+                <h3 class="visit-modal-prop-title" id="visit-modal-prop-title">Property Title</h3>
+                <p class="visit-modal-prop-location" id="visit-modal-prop-location">Location</p>
+                <div class="visit-modal-price-wrap">
+                    <span class="visit-modal-price-label">Investment Value</span>
+                    <span class="visit-modal-price-value" id="visit-modal-prop-price">$0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Form Area -->
+        <main class="visit-modal-main custom-scrollbar">
+            <div class="visit-modal-form-container">
+                <header class="visit-modal-header">
+                    <div class="visit-modal-header-top">
+                        <div class="visit-modal-header-line"></div>
+                        <span class="visit-modal-header-tag">Private Viewing</span>
+                    </div>
+                    <h2 class="visit-modal-title">Experience the Heritage</h2>
+                    <p class="visit-modal-subtitle">Schedule your exclusive walkthrough with our senior property
+                        specialists.</p>
+                </header>
+
+                <form class="visit-form" id="visit-form">
+                    <input type="hidden" id="visit-property-id" name="property_id" value="" />
+                    <div class="visit-form-row">
+                        <div class="visit-form-group">
+                            <label class="visit-label">Preferred Date</label>
+                            <div class="visit-input-wrapper">
+                                <span class="material-symbols-outlined visit-input-icon">calendar_today</span>
+                                <input class="visit-input" required type="date" id="visit-date" />
+                            </div>
+                        </div>
+                        <div class="visit-form-group">
+                            <label class="visit-label">Preferred Time</label>
+                            <div class="visit-input-wrapper">
+                                <span class="material-symbols-outlined visit-input-icon">schedule</span>
+                                <input class="visit-input" required type="time" id="visit-time" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="visit-form-group">
+                        <label class="visit-label">Additional Requirements</label>
+                        <div class="visit-input-wrapper align-start">
+                            <span class="material-symbols-outlined visit-input-icon mt-icon">notes</span>
+                            <textarea class="visit-input"
+                                placeholder="Specific features, guest count, or accessibility..." rows="3"
+                                id="visit-notes"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="visit-concierge-card">
+                        <div class="visit-concierge-icon-wrap">
+                            <span class="material-symbols-outlined">concierge</span>
+                        </div>
+                        <div class="visit-concierge-text">
+                            <p class="visit-concierge-title">Bespoke Concierge Service</p>
+                            <p class="visit-concierge-desc">Our premier consultants provide a private, tailored tour of
+                                this prestigious estate.</p>
+                        </div>
+                    </div>
+
+                    <div class="visit-form-footer">
+                        <p class="visit-terms">By confirming, you agree to our premium service terms.</p>
+                        <button class="btn-visit-submit" type="submit" id="btn-visit-submit">
+                            Confirm Request
+                            <span class="material-symbols-outlined">arrow_right_alt</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Success Toast (Hidden by default) -->
+<div class="visit-toast hidden" id="visit-success-toast">
+    <div class="visit-toast-content">
+        <span class="material-symbols-outlined visit-toast-icon">verified</span>
+        <p class="visit-toast-text">Visit Scheduled Successfully</p>
+        <button class="btn-visit-toast-close" id="btn-close-visit-toast">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="/static/js/properties_browse.js"></script>
+<script src="/static/js/visit_modal.js"></script>
 {% endblock %}
