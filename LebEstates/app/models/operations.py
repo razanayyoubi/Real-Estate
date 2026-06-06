@@ -47,7 +47,7 @@ class Transaction(db.Model):
     finalPrice = db.Column(db.Numeric(15, 2), nullable=False)
     commissionRate = db.Column(db.Numeric(5, 2), nullable=False)
     commissionAmount = db.Column(db.Numeric(15, 2), nullable=False)
-    paymentStatus = db.Column(db.Enum('Pending', 'Completed', 'Failed', name='trans_pay_status'), default='Pending')
+    paymentStatus = db.Column(db.Enum('Escrow', 'Legal', 'Closed', 'Cancelled', name='trans_pay_status'), default='Escrow')
     transactionDate = db.Column(db.DateTime, default=datetime.now)
     createdAt = db.Column(db.DateTime, default=datetime.now)
 

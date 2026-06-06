@@ -311,15 +311,10 @@ def edit_profile_details():
         if ext not in allowed_extensions:
             return jsonify({'error': 'Invalid file type. Allowed formats: PNG, JPG, JPEG, GIF.'}), 400
 
-        # Build clean filename
-        filename = f"user_{user.userID}_{int(time.time())}{ext}"
-        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
-        os.makedirs(upload_folder, exist_ok=True)
-        
-        filepath = os.path.join(upload_folder, filename)
         try:
-            avatar_file.save(filepath)
-            user.avatar = filename
+            # Read raw binary data directly
+            image_data = avatar_file.read()
+            user.avatar = image_data
         except Exception as e:
             return jsonify({'error': f"Failed to save profile picture: {str(e)}"}), 500
 
@@ -334,6 +329,26 @@ def edit_profile_details():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to update profile details in database.'}), 500
+
+@auth_bp.route('/profile/avatar/<int:user_id>', methods=['GET'])
+def get_avatar(user_id):
+    from flask import Response
+    user = Users.query.get_or_404(user_id)
+    if not user.avatar:
+        return redirect(f"https://ui-avatars.com/api/?name={user.fullName.replace(' ', '+')}&background=random")
+    
+    avatar_data = user.avatar
+    content_type = 'image/jpeg'
+    
+    # Simple check of binary header signatures to set content-type mimetype
+    if avatar_data.startswith(b'\x89PNG\r\n\x1a\n'):
+        content_type = 'image/png'
+    elif avatar_data.startswith(b'GIF87a') or avatar_data.startswith(b'GIF89a'):
+        content_type = 'image/gif'
+    elif avatar_data.startswith(b'\xff\xd8'):
+        content_type = 'image/jpeg'
+        
+    return Response(avatar_data, mimetype=content_type)
 
 @auth_bp.route('/profile/change-password', methods=['POST'])
 def change_password():

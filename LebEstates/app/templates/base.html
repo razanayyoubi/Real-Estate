@@ -95,7 +95,7 @@
                     </div>
 
                     <!-- Nested Section 3: Financial Management -->
-                    <div class="sidebar__subgroup" id="financial-mgmt">
+                    <div class="sidebar__subgroup {% if request.blueprint == 'transactions' %}sidebar__subgroup--expanded{% endif %}" id="financial-mgmt">
                         <button class="sidebar__subgroup-btn" onclick="toggleGroup('financial-mgmt')">
                             <div class="sidebar__subgroup-title">
                                 <span class="material-symbols-outlined">payments</span>
@@ -104,7 +104,7 @@
                             <span class="material-symbols-outlined chevron-icon">expand_more</span>
                         </button>
                         <div class="sidebar__child-menu">
-                            <a class="sidebar__child-link" href="#">Transactions</a>
+                            <a class="sidebar__child-link {% if request.blueprint == 'transactions' %}sidebar__child-link--active{% endif %}" href="{{ url_for('transactions.transactions_list') }}">Transactions</a>
                             <a class="sidebar__child-link" href="#">Salaries</a>
                             <a class="sidebar__child-link" href="#">Commission Settings</a>
                         </div>
