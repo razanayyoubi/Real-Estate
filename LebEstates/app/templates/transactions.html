@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions Ledger | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/transactions.css" />
+{% endblock %}
+
+{% block head_scripts %}
+<script defer src="/static/js/transactions.js"></script>
+{% endblock %}
+
+{% block content %}
+<main class="transactions-mgmt-main">
+
+    <!-- Page Header -->
+    <header class="mgmt-header">
+        <div class="mgmt-header-text">
+            <h2 class="mgmt-title">Transactions Ledger</h2>
+            <p class="mgmt-subtitle">Monitor deals, sales commissions, legal states, and closed portfolios in real-time.</p>
+        </div>
+    </header>
+
+    <!-- Bento Stats Grid -->
+    <section class="trans-stats-grid">
+        <!-- Gross Volume -->
+        <div class="stat-card border-primary" id="card-gross-volume">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper bg-primary-light">
+                    <span class="material-symbols-outlined">payments</span>
+                </div>
+            </div>
+            <h3 class="stat-label">Gross Volume</h3>
+            <p class="stat-value" id="val-gross-volume">{{ stats.gross_volume }}</p>
+        </div>
+
+        <!-- Total Commissions -->
+        <div class="stat-card border-success" id="card-commissions">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper bg-success-light">
+                    <span class="material-symbols-outlined">percent</span>
+                </div>
+            </div>
+            <h3 class="stat-label">Agency Commission</h3>
+            <p class="stat-value" id="val-commissions">{{ stats.total_commission }}</p>
+        </div>
+
+        <!-- Pending Escrows -->
+        <div class="stat-card border-escrow" id="card-escrows">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper bg-escrow-light">
+                    <span class="material-symbols-outlined">pending_actions</span>
+                </div>
+            </div>
+            <h3 class="stat-label">Pending Escrows</h3>
+            <p class="stat-value" id="val-escrows">{{ stats.pending_escrows }}</p>
+        </div>
+
+        <!-- Total Deals -->
+        <div class="stat-card border-secondary" id="card-deals">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper bg-secondary-light">
+                    <span class="material-symbols-outlined">handshake</span>
+                </div>
+            </div>
+            <h3 class="stat-label">Closed Deals</h3>
+            <p class="stat-value" id="val-deals">{{ stats.total_deals }}</p>
+        </div>
+    </section>
+
+    <!-- Filter Bar -->
+    <section class="trans-filter-bar">
+        <div class="filters-left">
+            <!-- Text Search -->
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon-symbol">search</span>
+                <input type="text" id="search-ledger" class="search-input" placeholder="Search ID, Client, Agent, Title..." onkeyup="filterLedger()" />
+            </div>
+
+            <!-- Date Range Pickers -->
+            <div class="date-picker-group">
+                <span class="date-label">From:</span>
+                <input type="date" id="date-start" class="date-input" onchange="filterLedger()" />
+                <span class="date-label">To:</span>
+                <input type="date" id="date-end" class="date-input" onchange="filterLedger()" />
+            </div>
+
+            <!-- Type Selector -->
+            <select id="filter-type" class="filter-select" onchange="filterLedger()">
+                <option value="All">Type: All</option>
+                <option value="Sell">Sell</option>
+                <option value="Rent">Rent</option>
+            </select>
+
+            <!-- Status Selector -->
+            <select id="filter-status" class="filter-select" onchange="filterLedger()">
+                <option value="All">Status: All</option>
+                <option value="Escrow">Escrow</option>
+                <option value="Legal">Legal</option>
+                <option value="Closed">Closed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+        <div class="filters-right">
+            <span class="filter-info-tag">Financial Hub Audit</span>
+        </div>
+    </section>
+
+    <!-- Ledger Table -->
+    <section class="trans-table-wrapper">
+        <table class="trans-table">
+            <thead>
+                <tr>
+                    <th class="col-id">ID</th>
+                    <th>Type</th>
+                    <th>Property</th>
+                    <th>Deal Price</th>
+                    <th>Commission</th>
+                    <th>Buyer/Tenant</th>
+                    <th>Seller/Owner</th>
+                    <th>Agent</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody id="ledger-table-body">
+                {% if transactions %}
+                    {% for t in transactions %}
+                    <tr class="trans-row-main" id="row-main-{{ t.transactionID }}" 
+                        data-id="{{ t.transactionID }}"
+                        data-type="{{ t.transactionType }}" 
+                        data-status="{{ t.paymentStatus }}" 
+                        data-date="{{ t.transactionDate.strftime('%Y-%m-%d') }}"
+                        data-search-text="#leb-{{ t.transactionID }} {{ t.property_obj.title.lower() }} {{ t.property_obj.location.lower() }} {{ t.customer.user.fullName.lower() }} {{ t.owner.user.fullName.lower() }} {{ t.employee.user.fullName.lower() }}">
+                        
+                        <td class="col-id" data-label="ID">#LEB-{{ t.transactionID }}</td>
+                        <td data-label="Type">
+                            <span class="type-badge {% if t.transactionType == 'Sell' %}type-sell{% else %}type-rent{% endif %}">
+                                {{ t.transactionType }}
+                            </span>
+                        </td>
+                        <td data-label="Property">
+                            <div class="prop-title-cell">{{ t.property_obj.title }}</div>
+                            <div class="prop-loc-cell">{{ t.property_obj.location }}, Lebanon</div>
+                        </td>
+                        <td class="price-bold" data-label="Deal Price">${{ "{:,.2f}".format(t.finalPrice) }}</td>
+                        <td data-label="Commission">
+                            <div class="price-bold">${{ "{:,.2f}".format(t.commissionAmount) }}</div>
+                            <div class="comm-amount">({{ t.commissionRate }}%)</div>
+                        </td>
+                        <td data-label="Buyer/Tenant">
+                            <div class="agent-cell-name">{{ t.customer.user.fullName }}</div>
+                            <div class="prop-loc-cell">{{ t.customer.user.email }}</div>
+                        </td>
+                        <td data-label="Seller/Owner">
+                            <div class="agent-cell-name">{{ t.owner.user.fullName }}</div>
+                            <div class="prop-loc-cell">{{ t.owner.user.email }}</div>
+                        </td>
+                        <td data-label="Agent">
+                            <div class="agent-cell-name">{{ t.employee.user.fullName }}</div>
+                            <div class="prop-loc-cell">{{ t.employee.position }}</div>
+                        </td>
+                        <td data-label="Status">
+                            <select class="status-select-dropdown status-{{ t.paymentStatus.lower() }}" onchange="updateTransactionStatus({{ t.transactionID }}, this)">
+                                <option value="Escrow" {% if t.paymentStatus == 'Escrow' %}selected{% endif %}>Escrow</option>
+                                <option value="Legal" {% if t.paymentStatus == 'Legal' %}selected{% endif %}>Legal</option>
+                                <option value="Closed" {% if t.paymentStatus == 'Closed' %}selected{% endif %}>Closed</option>
+                                <option value="Cancelled" {% if t.paymentStatus == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </td>
+                        <td class="date-display" data-label="Date">{{ t.transactionDate.strftime('%b %d, %Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="no-results-row" style="display: table-row;">
+                        <td colspan="10" class="no-results-cell">
+                            <span class="material-symbols-outlined">info</span>
+                            No transactions records found. Seeding error.
+                        </td>
+                    </tr>
+                {% endif %}
+                
+                <!-- Client Side Filter Empty State Row -->
+                <tr class="no-results-row" id="client-empty-state-row">
+                    <td colspan="10" class="no-results-cell">
+                        <span class="material-symbols-outlined">search_off</span>
+                        No transactions match your search filters.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast">
+        <div class="toast-inner" id="toastInner">
+            <span class="material-symbols-outlined" id="toastIcon">check_circle</span>
+            <span class="label-md" id="toastText">Action completed successfully</span>
+        </div>
+    </div>
+
+</main>
+{% endblock %}

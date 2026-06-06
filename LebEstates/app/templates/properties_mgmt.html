@@ -1,0 +1,599 @@
+{% extends "base.html" %}
+
+{% block title %}Property Inventory | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/properties_mgmt.css" />
+{% endblock %}
+
+{% block content %}
+<main class="properties-mgmt-main">
+
+    <!-- Page Header -->
+    <header class="mgmt-header">
+        <div class="mgmt-header-text">
+            <h2 class="mgmt-title">Property Inventory</h2>
+            <p class="mgmt-subtitle">Manage, audit, and curate Lebanon's most prestigious real estate portfolio.</p>
+        </div>
+        <button class="btn-new-listing" onclick="window.location.href='/sell-rent'">
+            <span class="material-symbols-outlined">add</span>
+            New Listing
+        </button>
+    </header>
+
+    <!-- Stats Bar -->
+    <section class="mgmt-stats-grid">
+        <!-- Total Properties -->
+        <div class="stat-card border-primary">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper bg-primary-light">
+                    <span class="material-symbols-outlined">domain</span>
+                </div>
+            </div>
+            <h3 class="stat-label">Total Properties</h3>
+            <p class="stat-value">{{ total_count }}</p>
+        </div>
+
+        <!-- Active Listings -->
+        <div class="stat-card border-secondary">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper bg-secondary-light">
+                    <span class="material-symbols-outlined">visibility</span>
+                </div>
+                <span class="stat-badge text-green">Active</span>
+            </div>
+            <h3 class="stat-label">Active Listings</h3>
+            <p class="stat-value">{{ active_count }}</p>
+        </div>
+
+        <!-- Pending Review -->
+        <div class="stat-card border-error">
+            <div class="stat-card-header">
+                <div class="stat-icon-wrapper bg-error-light">
+                    <span class="material-symbols-outlined">pending_actions</span>
+                </div>
+                {% if pending_count > 0 %}
+                <div class="stat-badge-urgent">URGENT</div>
+                {% endif %}
+            </div>
+            <h3 class="stat-label">Pending Review</h3>
+            <p class="stat-value">{{ pending_count }}</p>
+        </div>
+
+        <!-- Total Valuation -->
+        <div class="stat-card stat-card-dark bg-primary-dark">
+            <div class="stat-icon-wrapper bg-white-opacity">
+                <span class="material-symbols-outlined text-secondary">stars</span>
+            </div>
+            <h3 class="stat-label text-white-opacity">Portfolio Valuation</h3>
+            <p class="stat-value text-white">{{ portfolio_valuation }}</p>
+        </div>
+    </section>
+
+    <!-- Main Content Area: Property Inventory Grid -->
+    <section class="mgmt-inventory-container">
+        <!-- Filter Bar -->
+        <div class="mgmt-filter-bar">
+            <div class="filters-left">
+                <select id="filter-status" class="filter-select">
+                    <option value="All">Status: All</option>
+                    <option value="Published">Published (Available)</option>
+                    <option value="Pending">Pending Review</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Rented">Rented</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <select id="filter-type" class="filter-select">
+                    <option value="All">Type: All</option>
+                    <option value="Apartment">Apartment</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Duplex">Duplex</option>
+                    <option value="Office">Office</option>
+                    <option value="Chalet">Chalet</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Land">Land</option>
+                    <option value="Other">Other</option>
+                </select>
+                <select id="filter-location" class="filter-select">
+                    <option value="All">Location: All</option>
+                    <option value="Beirut">Beirut</option>
+                    <option value="Achrafieh">Achrafieh</option>
+                    <option value="Faraya">Faraya</option>
+                    <option value="Byblos">Byblos</option>
+                    <option value="Batroun">Batroun</option>
+                </select>
+            </div>
+            <div class="filters-right">
+                <span class="filter-search-info">Dynamic Portfolio Audit</span>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="mgmt-table-wrapper custom-scrollbar">
+            <table class="mgmt-table">
+                <thead>
+                    <tr>
+                        <th class="col-id">Property ID</th>
+                        <th class="col-title">Title & Image</th>
+                        <th class="col-type">Type</th>
+                        <th class="col-location">Location</th>
+                        <th class="col-price">Price</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-actions text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-table-body">
+                    {% for prop in properties %}
+                    <!-- Row {{ prop.propertyID }} -->
+                    <tr class="mgmt-row-main" id="row-main-{{ prop.propertyID }}" data-id="{{ prop.propertyID }}"
+                        data-status="{{ prop.status }}" data-type="{{ prop.propertyType }}"
+                        data-location="{{ prop.location }}" data-title="{{ prop.title }}" data-price="{{ prop.price }}"
+                        data-listing-type="{{ prop.listingType }}" data-area="{{ prop.area }}"
+                        data-rooms="{{ prop.rooms or 0 }}" data-bathrooms="{{ prop.bathrooms or 0 }}"
+                        data-floor="{{ prop.floorNumber or 0 }}"
+                        data-parking="{{ 'true' if prop.parkingAvailable else 'false' }}"
+                        data-latitude="{{ prop.latitude or '' }}" data-longitude="{{ prop.longitude or '' }}"
+                        data-description="{{ prop.description or '' }}" data-address="{{ prop.address or '' }}"
+                        data-owner-id="{{ prop.ownerID }}" data-creator-id="{{ prop.createdBy }}"
+                        data-image-urls="{% for img in prop.images %}{{ img.imageURL }}{% if not loop.last %},{% endif %}{% endfor %}">
+
+                        <td class="col-id">#LEB-{{ prop.propertyID }}</td>
+                        <td class="col-title">
+                            <div class="title-cell-wrapper">
+                                {% if prop.images %}
+                                <img class="table-thumb" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" />
+                                {% else %}
+                                <div class="table-thumb-placeholder">
+                                    <span class="material-symbols-outlined">image</span>
+                                </div>
+                                {% endif %}
+                                <div class="title-cell-text">
+                                    <div class="property-title-text">{{ prop.title }}</div>
+                                    <div class="property-date-text">Created: {{ prop.createdAt.strftime('%d %b %Y') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="col-type">{{ prop.propertyType }}</td>
+                        <td class="col-location">
+                            <div class="location-cell-wrapper">
+                                <span class="material-symbols-outlined">location_on</span>
+                                <span>{{ prop.location }}</span>
+                            </div>
+                        </td>
+                        <td class="col-price font-bold">${{ "{:,.0f}".format(prop.price) }}</td>
+                        <td class="col-status" id="row-status-{{ prop.propertyID }}">
+                            <select class="status-dropdown status-{{ prop.status.lower() }}"
+                                data-id="{{ prop.propertyID }}">
+                                <option value="Pending" {% if prop.status=='Pending' %}selected{% endif %}>Pending
+                                </option>
+                                <option value="Published" {% if prop.status=='Published' %}selected{% endif %}>Published
+                                </option>
+                                <option value="Sold" {% if prop.status=='Sold' %}selected{% endif %}>Sold</option>
+                                <option value="Rented" {% if prop.status=='Rented' %}selected{% endif %}>Rented</option>
+                                <option value="Rejected" {% if prop.status=='Rejected' %}selected{% endif %}>Rejected
+                                </option>
+                            </select>
+                        </td>
+                        <td class="col-actions text-right">
+                            <div class="actions-wrapper">
+                                <button class="btn-action btn-view" title="Toggle Details"
+                                    data-id="{{ prop.propertyID }}">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="btn-action btn-edit" title="Edit Listing"
+                                    data-id="{{ prop.propertyID }}">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </button>
+                                <button class="btn-action btn-delete" title="Delete Listing"
+                                    data-id="{{ prop.propertyID }}">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if not properties %}
+                    <tr class="table-empty-row">
+                        <td colspan="7" class="text-center">
+                            <div class="table-empty-state">
+                                <span class="material-symbols-outlined">inventory_2</span>
+                                <p>No listings exist in the database. Post a new property to get started.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mgmt-pagination-container">
+            <p class="pagination-info">Showing <span id="showing-count">{{ properties|length }}</span> of {{ total_count
+                }} entries</p>
+            <div class="pagination-buttons">
+                <button class="btn-pagination-nav" disabled><span
+                        class="material-symbols-outlined">chevron_left</span></button>
+                <button class="btn-pagination-page active">1</button>
+                <button class="btn-pagination-nav" disabled><span
+                        class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dynamic Insights / Secondary Grid -->
+    <section class="mgmt-insights-grid">
+        <!-- Pending Approvals Queue -->
+        <div class="insights-card queue-card">
+            <div class="insights-card-header">
+                <h3 class="insights-title">Pending Approvals Queue</h3>
+            </div>
+            <div class="queue-list" id="pending-queue-list">
+                {% if pending_queue %}
+                {% for prop in pending_queue %}
+                <div class="queue-item" id="queue-item-{{ prop.propertyID }}">
+                    <div class="queue-item-left">
+                        <div class="queue-icon bg-primary-light">
+                            <span class="material-symbols-outlined">add_home</span>
+                        </div>
+                        <div class="queue-info">
+                            <p class="queue-prop-title">{{ prop.title }}</p>
+                            <p class="queue-prop-sub">Location: {{ prop.location }} • Created by: User #{{
+                                prop.createdBy }}</p>
+                        </div>
+                    </div>
+                    <div class="queue-item-actions">
+                        <button class="btn-queue btn-approve" data-id="{{ prop.propertyID }}">Approve</button>
+                        <button class="btn-queue btn-reject" data-id="{{ prop.propertyID }}">Reject</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="queue-empty-state">
+                    <span class="material-symbols-outlined">done_all</span>
+                    <p>No listings require review. All submissions are current.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Database Schema Quick Look -->
+        <div class="insights-card schema-card bg-primary-dark">
+            <h3 class="insights-title text-white">Schema Overview</h3>
+            <div class="schema-list">
+                <div class="schema-item">
+                    <div class="schema-item-header">
+                        <span class="material-symbols-outlined text-secondary">table_chart</span>
+                        <span class="schema-item-title text-white">property</span>
+                    </div>
+                    <div class="schema-item-details">
+                        <span>26 Columns</span>
+                        <span>{{ total_count }} Rows</span>
+                        <span>Last Sync: Just now</span>
+                    </div>
+                </div>
+                <div class="schema-item">
+                    <div class="schema-item-header">
+                        <span class="material-symbols-outlined text-secondary">image</span>
+                        <span class="schema-item-title text-white">property_image</span>
+                    </div>
+                    <div class="schema-item-details">
+                        <span>8 Columns</span>
+                        <span>{{ image_count }} Files</span>
+                        <span>BLOB Storage: Active</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Decorative Graphic -->
+            <div class="schema-decorative-icon">
+                <span class="material-symbols-outlined">dataset</span>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- View Details Modal Overlay -->
+<div id="details-modal" class="modal-overlay hidden">
+    <div class="modal-card luxury-modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="details-modal-title">Property Audit</h3>
+            <button class="btn-modal-close" id="btn-close-details-modal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body details-modal-body custom-scrollbar">
+            <!-- Left Side: Interactive Gallery -->
+            <div class="details-left">
+                <div class="details-hero-container">
+                    <img id="details-hero-img" src="" alt="Property Hero" />
+                </div>
+                <div class="details-thumb-gallery" id="details-gallery">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+            <!-- Right Side: Structured Specifications -->
+            <div class="details-right">
+                <div class="details-meta-header">
+                    <span class="status-badge" id="details-status"></span>
+                    <span class="listing-badge" id="details-listing-type"></span>
+                </div>
+
+                <h3 class="details-title-display" id="details-title-text"></h3>
+                <div class="details-price-display" id="details-price-text"></div>
+
+                <hr class="modal-divider" />
+
+                <div class="details-section">
+                    <h4 class="section-title">Overview Description</h4>
+                    <p class="modal-desc" id="details-desc"></p>
+                </div>
+
+                <div class="details-section">
+                    <h4 class="section-title">Key Specifications</h4>
+                    <div class="modal-specs-grid">
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">bed</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Beds</span>
+                                <span class="spec-card-val" id="details-beds">0</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">bathtub</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Baths</span>
+                                <span class="spec-card-val" id="details-baths">0</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">straighten</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Area</span>
+                                <span class="spec-card-val"><span id="details-area">0</span> m²</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">layers</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Floor</span>
+                                <span class="spec-card-val" id="details-floor">N/A</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">local_parking</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Parking</span>
+                                <span class="spec-card-val" id="details-parking">None</span>
+                            </div>
+                        </div>
+                        <div class="spec-card">
+                            <span class="material-symbols-outlined">category</span>
+                            <div class="spec-card-text">
+                                <span class="spec-card-label">Type</span>
+                                <span class="spec-card-val" id="details-property-type">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-section">
+                    <h4 class="section-title">Location & Address</h4>
+                    <div class="modal-meta-grid">
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">location_on</span>
+                            <div>
+                                <span class="meta-item-label">Region</span>
+                                <span class="meta-item-val" id="details-location"></span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">map</span>
+                            <div>
+                                <span class="meta-item-label">Detailed Address</span>
+                                <span class="meta-item-val" id="details-address"></span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">explore</span>
+                            <div>
+                                <span class="meta-item-label">GPS Coordinates</span>
+                                <span class="meta-item-val"><span id="details-lat"></span>, <span
+                                        id="details-lng"></span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-section">
+                    <h4 class="section-title">Ownership & Audit</h4>
+                    <div class="modal-meta-grid">
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">person</span>
+                            <div>
+                                <span class="meta-item-label">Owner Customer ID</span>
+                                <span class="meta-item-val" id="details-owner"></span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <span class="material-symbols-outlined">badge</span>
+                            <div>
+                                <span class="meta-item-label">Created By User ID</span>
+                                <span class="meta-item-val" id="details-creator"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal-action btn-secondary" id="btn-close-details-bottom">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Property Modal Overlay -->
+<div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal-card luxury-modal">
+        <form id="edit-property-form" method="POST" enctype="multipart/form-data">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Listing Details</h3>
+                <button type="button" class="btn-modal-close" id="btn-close-edit-modal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body scrollable custom-scrollbar">
+                <div class="form-grid">
+                    <input type="hidden" id="edit-prop-id" name="prop_id" />
+
+                    <!-- Section 1: Listing & Pricing -->
+                    <div class="col-span-2 form-section-header">
+                        <span class="material-symbols-outlined">sell</span>
+                        <h4>General Listing Details</h4>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                        <label class="form-label" for="edit-title">Property Title</label>
+                        <input type="text" id="edit-title" name="title" class="form-input" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-listing-type">Listing Type</label>
+                        <select id="edit-listing-type" name="listing_type" class="form-input" required>
+                            <option value="Sell">Sell</option>
+                            <option value="Rent">Rent</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-price">Price ($)</label>
+                        <input type="number" step="any" id="edit-price" name="price" class="form-input" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-property-type">Property Type</label>
+                        <select id="edit-property-type" name="property_type" class="form-input" required>
+                            <option value="Apartment">Apartment</option>
+                            <option value="Villa">Villa</option>
+                            <option value="Duplex">Duplex</option>
+                            <option value="Office">Office</option>
+                            <option value="Chalet">Chalet</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Land">Land</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-area">Area (m²)</label>
+                        <input type="number" step="any" id="edit-area" name="area" class="form-input" required />
+                    </div>
+
+                    <!-- Section 2: Specifications -->
+                    <div class="col-span-2 form-section-header margin-top-12">
+                        <span class="material-symbols-outlined">hotel</span>
+                        <h4>Interior Specifications</h4>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-rooms">Beds / Rooms</label>
+                        <input type="number" id="edit-rooms" name="rooms" class="form-input" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-bathrooms">Bathrooms</label>
+                        <input type="number" id="edit-bathrooms" name="bathrooms" class="form-input" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-floor">Floor Number</label>
+                        <input type="number" id="edit-floor" name="floor_number" class="form-input" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-parking">Parking Spots</label>
+                        <input type="number" id="edit-parking" name="parking_spots" class="form-input" />
+                    </div>
+
+                    <!-- Section 3: Location Details -->
+                    <div class="col-span-2 form-section-header margin-top-12">
+                        <span class="material-symbols-outlined">pin_drop</span>
+                        <h4>Location & GPS Coordinates</h4>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-region">Region / City</label>
+                        <select id="edit-region" name="region" class="form-input" required>
+                            <option value="" disabled>Select Region</option>
+                            <option value="Beirut">Beirut</option>
+                            <option value="Achrafieh">Achrafieh</option>
+                            <option value="Faraya">Faraya</option>
+                            <option value="Byblos">Byblos</option>
+                            <option value="Batroun">Batroun</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-address">Detailed Address</label>
+                        <input type="text" id="edit-address" name="address" class="form-input" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-latitude">Latitude (Map Pin)</label>
+                        <input type="number" step="any" id="edit-latitude" name="latitude" class="form-input" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-longitude">Longitude (Map Pin)</label>
+                        <input type="number" step="any" id="edit-longitude" name="longitude" class="form-input" />
+                    </div>
+
+                    <!-- Section 4: Description -->
+                    <div class="col-span-2 form-section-header margin-top-12">
+                        <span class="material-symbols-outlined">description</span>
+                        <h4>Property Description</h4>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                        <label class="form-label" for="edit-description">Description</label>
+                        <textarea id="edit-description" name="description" class="form-input form-textarea"></textarea>
+                    </div>
+
+                    <!-- Section 5: Media Manager -->
+                    <div class="col-span-2 form-section-header margin-top-12">
+                        <span class="material-symbols-outlined">photo_library</span>
+                        <h4>Photo & Media Manager</h4>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Current Photos (Click trash to delete)</label>
+                        <div class="edit-existing-photos-container custom-scrollbar" id="edit-existing-photos">
+                            <!-- Rendered via JS -->
+                        </div>
+                        <input type="hidden" id="edit-deleted-images" name="deleted_image_ids" value="" />
+                    </div>
+
+                    <div class="form-group col-span-2">
+                        <label class="form-label" for="edit-new-photos">Upload New Additional Photos</label>
+                        <input type="file" id="edit-new-photos" name="new_photos" class="form-input" multiple
+                            accept="image/*" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-action btn-secondary" id="btn-cancel-edit">Cancel</button>
+                <button type="submit" class="btn-modal-action btn-primary" id="btn-save-edit">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+<button class="floating-action-button visible-mobile-only" onclick="window.location.href='/sell-rent'">
+    <span class="material-symbols-outlined">add</span>
+    <span class="fab-label">New Listing</span>
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/properties_mgmt.js"></script>
+{% endblock %}

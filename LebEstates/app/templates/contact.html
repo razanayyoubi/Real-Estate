@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us | LebEstates{% endblock %}
+
+{% block styles %}
+<!-- Load FontAwesome for standard brand icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Load external CSS for contact page -->
+<link rel="stylesheet" href="/static/css/contact.css">
+{% endblock %}
+
+{% block content %}
+<div class="contact-container">
+    <div class="contact-header">
+        <h1>Contact LebEstates</h1>
+        <p>Connect with our expert consultants today. Whether looking to buy, sell, or receive a bespoke asset consultation, we are ready to assist you.</p>
+    </div>
+
+    <!-- Center Premium Luxury Social Connecting Card -->
+    <div class="contact-card-premium">
+        <!-- Interactive ambient background effects -->
+        <div class="card-ambient-glow"></div>
+        <div class="card-ambient-glow-2"></div>
+        
+        <div class="card-inner">
+            <div class="card-header-block">
+                <h2>Exclusive Communication Channels</h2>
+                <p>Reach out to us directly through any of our premium communication pathways. Our concierges respond promptly to all inquiries.</p>
+            </div>
+            
+            <div class="channel-grid">
+                <!-- WhatsApp Link -->
+                <a href="https://wa.me/your_number" target="_blank" class="channel-card card-whatsapp">
+                    <div class="card-glow-tracker"></div>
+                    <div class="channel-card-content">
+                        <div class="icon-wrap">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </div>
+                        <div class="channel-info">
+                            <span class="channel-name">WhatsApp Chat</span>
+                            <span class="channel-action">Instant Concierge Messaging</span>
+                        </div>
+                    </div>
+                </a>
+                
+                <!-- Email Link -->
+                <a href="mailto:info@lebestates.com" class="channel-card card-email">
+                    <div class="card-glow-tracker"></div>
+                    <div class="channel-card-content">
+                        <div class="icon-wrap">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <div class="channel-info">
+                            <span class="channel-name">info@lebestates.com</span>
+                            <span class="channel-action">Bespoke Acquisitions & Valuation</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Instagram Link -->
+                <a href="https://instagram.com/lebestates" target="_blank" class="channel-card card-instagram">
+                    <div class="card-glow-tracker"></div>
+                    <div class="channel-card-content">
+                        <div class="icon-wrap">
+                            <i class="fa-brands fa-instagram"></i>
+                        </div>
+                        <div class="channel-info">
+                            <span class="channel-name">Instagram Profile</span>
+                            <span class="channel-action">Browse Exquisite Portfolios</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Facebook Link -->
+                <a href="https://facebook.com/lebestates" target="_blank" class="channel-card card-facebook">
+                    <div class="card-glow-tracker"></div>
+                    <div class="channel-card-content">
+                        <div class="icon-wrap">
+                            <i class="fa-brands fa-facebook-f"></i>
+                        </div>
+                        <div class="channel-info">
+                            <span class="channel-name">Facebook Business</span>
+                            <span class="channel-action">Corporate & Community Updates</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="card-divider"></div>
+            
+            <div class="office-details-row">
+                <!-- Location -->
+                <div class="office-detail-item">
+                    <div class="detail-icon">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div class="detail-text">
+                        <span class="detail-label">Office Address</span>
+                        <span class="detail-value">Ashrafieh, Beirut, Lebanon</span>
+                    </div>
+                </div>
+                
+                <!-- Hours -->
+                <div class="office-detail-item">
+                    <div class="detail-icon">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="detail-text">
+                        <span class="detail-label">Concierge Hours</span>
+                        <span class="detail-value">Monday – Saturday: 9:00 AM – 6:00 PM (GMT+3)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Load external JS for contact page logic -->
+<script src="/static/js/contact.js"></script>
+{% endblock %}

@@ -7,7 +7,7 @@ class Customer(db.Model):
     userID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False, unique=True)
     nationalID = db.Column(db.String(50), nullable=True, unique=False)
     address = db.Column(db.String(255))
-    createdAt = db.Column(db.DateTime, default=datetime.utcnow)
+    createdAt = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('Users', backref=db.backref('customer_profile', uselist=False))
     documents = db.relationship('CustomerDocument', backref='customer', lazy=True)
@@ -23,7 +23,7 @@ class CustomerDocument(db.Model):
     fileData = db.Column(db.LargeBinary) # BLOB
     status = db.Column(db.Enum('Pending', 'Verified', 'Rejected', name='doc_status'), default='Pending')
     rejectionReason = db.Column(db.Text)
-    uploadedAt = db.Column(db.DateTime, default=datetime.utcnow)
+    uploadedAt = db.Column(db.DateTime, default=datetime.now)
     verifiedBy = db.Column(db.Integer, db.ForeignKey('employee.employeeID'))
     verifiedAt = db.Column(db.DateTime)
 

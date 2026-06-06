@@ -1,58 +1,10 @@
+/* -------------------------------------------------------------
+   LEBESTATES PUBLIC MOBILE NAVIGATION
+   ------------------------------------------------------------- */
+
 document.addEventListener('DOMContentLoaded', () => {
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const themeToggleIcon = document.getElementById('theme-toggle-icon');
-
-    // Function to set theme
-    const setTheme = (theme) => {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark-mode');
-            if (themeToggleIcon) {
-                themeToggleIcon.textContent = 'light_mode'; // Sun icon in dark mode
-            }
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark-mode');
-            if (themeToggleIcon) {
-                themeToggleIcon.textContent = 'dark_mode'; // Moon icon in light mode
-            }
-            localStorage.setItem('theme', 'light');
-        }
-    };
-
-    // Initialize based on localStorage or document class
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-        setTheme(savedTheme);
-    } else {
-        // Fallback to check if dark-mode is already set via inline script
-        const hasDarkMode = document.documentElement.classList.contains('dark-mode');
-        setTheme(hasDarkMode ? 'dark' : 'light');
-    }
-
-    // Toggle button event listener
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            // Rich scale/rotate micro-interaction animation on click
-            if (themeToggleIcon) {
-                themeToggleIcon.style.transform = 'scale(0.3) rotate(90deg)';
-                themeToggleIcon.style.opacity = '0';
-            }
-            
-            setTimeout(() => {
-                setTheme(newTheme);
-                if (themeToggleIcon) {
-                    themeToggleIcon.style.transform = 'scale(1) rotate(0deg)';
-                    themeToggleIcon.style.opacity = '1';
-                }
-            }, 150);
-        });
-    }
-
     /* ─────────────────────────────────────────────────────────
-       2. RESPONSIVE MOBILE LEFT SIDEBAR NAVIGATION
+       RESPONSIVE MOBILE LEFT SIDEBAR NAVIGATION
     ───────────────────────────────────────────────────────── */
     const hamburger = document.getElementById('hamburger');
     const sidebarClose = document.getElementById('sidebar-close');
@@ -76,7 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hamburger) {
         hamburger.addEventListener('click', (e) => {
             e.stopPropagation();
-            openSidebar();
+            const sideNav = document.getElementById('sideNav');
+            if (sideNav) {
+                // If there's an admin aside sidebar on the page, toggle it!
+                sideNav.classList.toggle('sidebar--open');
+                const overlay = document.getElementById('dashboardSidebarOverlay') || document.getElementById('sidebar-overlay');
+                if (overlay) overlay.classList.toggle('active');
+            } else {
+                // Otherwise, toggle the mobile navigation drawer
+                openSidebar();
+            }
         });
     }
 
@@ -92,11 +53,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', () => {
             closeSidebar();
+            const sideNav = document.getElementById('sideNav');
+            if (sideNav) {
+                sideNav.classList.remove('sidebar--open');
+                const overlay = document.getElementById('dashboardSidebarOverlay') || document.getElementById('sidebar-overlay');
+                if (overlay) overlay.classList.remove('active');
+            }
         });
     }
 
     // Dismiss sidebar when clicking outside of it
     document.addEventListener('click', (e) => {
+        const sideNav = document.getElementById('sideNav');
+        if (sideNav && sideNav.classList.contains('sidebar--open')) {
+            const clickedInsideSidebar = sideNav.contains(e.target);
+            const clickedHamburger = hamburger && hamburger.contains(e.target);
+            if (!clickedInsideSidebar && !clickedHamburger) {
+                sideNav.classList.remove('sidebar--open');
+                const overlay = document.getElementById('dashboardSidebarOverlay') || document.getElementById('sidebar-overlay');
+                if (overlay) overlay.classList.remove('active');
+            }
+        }
         if (navMenu && navMenu.classList.contains('active')) {
             const clickedInsideSidebar = navMenu.contains(e.target);
             const clickedHamburger = hamburger && hamburger.contains(e.target);
@@ -106,10 +83,98 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Dismiss sidebar when a navigation link is clicked (useful for anchors/page transitions)
+    // Dismiss sidebar when a navigation link is clicked
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             closeSidebar();
         });
     });
+
+    /* ─────────────────────────────────────────────────────────
+       CENTERED SEARCH BAR AUTOCOMPLETE SUGGESTIONS
+    ───────────────────────────────────────────────────────── */
+    const searchInput = document.getElementById('searchInput');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+
+    const searchablePages = [
+        { name: "Dashboard Overview", url: "/dashboard", icon: "dashboard" },
+        { name: "Control Panel Center", url: "/control-panel", icon: "admin_panel_settings" },
+        { name: "User / Customer Management", url: "/control-panel#people-mgmt", icon: "groups" },
+        { name: "Employee Directory", url: "/control-panel#people-mgmt", icon: "badge" },
+        { name: "Access & Roles Management", url: "/control-panel#people-mgmt", icon: "security" },
+        { name: "Sales / Sell Ledger", url: "/control-panel#financial-mgmt", icon: "payments" },
+        { name: "Property Listings", url: "/control-panel#property-mgmt", icon: "apartment" },
+        { name: "System Audit Logs", url: "/control-panel#system-admin", icon: "settings_suggest" },
+        { name: "Blacklist Registry", url: "/control-panel#system-admin", icon: "block" },
+        { name: "Customer Support Tickets", url: "/control-panel#support-mgmt", icon: "support_agent" },
+        { name: "Consultation Hub", url: "/consultation", icon: "chat_bubble" },
+        { name: "Homepage", url: "/", icon: "home" },
+        { name: "About LebEstates", url: "/about", icon: "info" }
+    ];
+
+    if (searchInput && searchSuggestions) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            searchSuggestions.innerHTML = ''; // clear suggestions
+
+            if (query.length === 0) {
+                searchSuggestions.style.display = 'none';
+                return;
+            }
+
+            const matches = searchablePages.filter(page =>
+                page.name.toLowerCase().includes(query)
+            );
+
+            if (matches.length === 0) {
+                const emptyItem = document.createElement('div');
+                emptyItem.className = 'search-suggestion-item';
+                emptyItem.style.cursor = 'default';
+                emptyItem.innerHTML = `
+                    <span class="material-symbols-outlined">search_off</span>
+                    <span>No results found</span>
+                `;
+                searchSuggestions.appendChild(emptyItem);
+            } else {
+                matches.forEach(match => {
+                    const suggItem = document.createElement('a');
+                    suggItem.href = match.url;
+                    suggItem.className = 'search-suggestion-item';
+                    suggItem.innerHTML = `
+                        <span class="material-symbols-outlined">${match.icon}</span>
+                        <span>${match.name}</span>
+                    `;
+                    searchSuggestions.appendChild(suggItem);
+                });
+            }
+
+            searchSuggestions.style.display = 'flex';
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+                searchSuggestions.style.display = 'none';
+            }
+        });
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       USER PROFILE DROPDOWN MENU
+    ───────────────────────────────────────────────────────── */
+    const profileToggle = document.getElementById('profileDropdownToggle');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    if (profileToggle && profileDropdown) {
+        profileToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('profile-dropdown--open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileToggle.contains(e.target)) {
+                profileDropdown.classList.remove('profile-dropdown--open');
+            }
+        });
+    }
 });

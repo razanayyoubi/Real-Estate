@@ -3,88 +3,64 @@
    ------------------------------------------------------------- */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
+    // 1. COLLAPSIBLE SIDEBAR WITH BLURRED OVERLAY
     const sidebar = document.getElementById('sideNav');
-    const mainContent = document.getElementById('mainContent');
-    const toggleButton = document.getElementById('toggleButton');
-    const toggleIcon = document.getElementById('toggleIcon');
-    
-    // Select brand text container to hide text but keep the icon visible when collapsed
-    const brandText = document.querySelector('.sidebar__brand-text');
-    const navLabels = document.querySelectorAll('.sidebar__nav-label');
-    const ctaContainer = document.querySelector('.sidebar__cta-container');
-    const ctaLabel = document.querySelector('.sidebar__cta-label');
+    const hamburgerButton = document.getElementById('hamburger') || document.getElementById('hamburgerButton');
+    const sidebarOverlay = document.getElementById('dashboardSidebarOverlay');
+    const toggleButton = document.getElementById('toggleButton'); // Optional inner close button
 
-    let isCollapsed = false;
-
-    // Sidebar Toggling logic
-    function toggleSidebar() {
-        isCollapsed = !isCollapsed;
-
-        if (isCollapsed) {
-            // Collapse sidebar
-            sidebar.classList.add('sidebar--collapsed');
-            mainContent.classList.add('main-content--collapsed');
-            
-            // Hide navigation labels & brand text
-            navLabels.forEach(label => label.classList.add('hidden'));
-            if (brandText) brandText.classList.add('hidden');
-            if (ctaLabel) ctaLabel.classList.add('hidden');
-            if (ctaContainer) ctaContainer.classList.add('collapsed-cta');
-            
-            // Set menu icons
-            if (toggleIcon) toggleIcon.innerText = 'menu';
-        } else {
-            // Expand sidebar
-            sidebar.classList.remove('sidebar--collapsed');
-            mainContent.classList.remove('main-content--collapsed');
-            
-            // Show navigation labels & brand text with slight delay for visual smoothness
-            setTimeout(() => {
-                navLabels.forEach(label => label.classList.remove('hidden'));
-                if (brandText) brandText.classList.remove('hidden');
-                if (ctaLabel) ctaLabel.classList.remove('hidden');
-            }, 100);
-            
-            if (ctaContainer) ctaContainer.classList.remove('collapsed-cta');
-            if (toggleIcon) toggleIcon.innerText = 'menu_open';
-        }
+    function openSidebar() {
+        if (sidebar) sidebar.classList.add('sidebar--open');
+        if (sidebarOverlay) sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // lock page scroll when sidebar is open
     }
 
-    // Attach Toggle Button listener
-    if (toggleButton) {
-        toggleButton.addEventListener('click', toggleSidebar);
+    function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('sidebar--open');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = ''; // unlock scroll
     }
 
-    // Interactive Chart Toggle Simulation (Volume vs Value)
-    const toggleButtons = document.querySelectorAll('.toggle-btn');
-    toggleButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            toggleButtons.forEach(b => b.classList.remove('toggle-btn--active'));
-            e.currentTarget.classList.add('toggle-btn--active');
-            
-            // Simulate data reload animation
-            const chartBars = document.querySelectorAll('.chart-bar');
-            chartBars.forEach(bar => {
-                const originalHeight = bar.style.height || bar.parentElement.style.getPropertyValue('--bar-height') || '50%';
-                bar.style.height = '0%';
-                setTimeout(() => {
-                    bar.style.height = originalHeight;
-                }, 100);
-            });
+    if (hamburgerButton && hamburgerButton.id !== 'hamburger') {
+        hamburgerButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (sidebar && sidebar.classList.contains('sidebar--open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
         });
+    }
+
+    if (toggleButton) {
+        toggleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeSidebar();
+        });
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
+    // Dismiss sidebar when clicking outside of it
+    document.addEventListener('click', (e) => {
+        if (sidebar && sidebar.classList.contains('sidebar--open')) {
+            const clickedInsideSidebar = sidebar.contains(e.target);
+            const clickedHamburger = hamburgerButton && hamburgerButton.contains(e.target);
+            if (!clickedInsideSidebar && !clickedHamburger) {
+                closeSidebar();
+            }
+        }
     });
 
-    // Auto-adjust layout on smaller screens initially
-    function handleResize() {
-        if (window.innerWidth <= 1024 && !isCollapsed) {
-            isCollapsed = false;
-            toggleSidebar(); // Force collapse on tablet and smaller
-        }
-    }
-
-    window.addEventListener('resize', handleResize);
-    
-    // Initial check
-    handleResize();
+    // SIMULATED KPI ANIMATIONS ON PAGE LOAD
+    const chartBars = document.querySelectorAll('.chart-bar');
+    chartBars.forEach(bar => {
+        const originalHeight = bar.style.height || bar.parentElement.style.getPropertyValue('--bar-height') || '50%';
+        bar.style.height = '0%';
+        setTimeout(() => {
+            bar.style.height = originalHeight;
+        }, 150);
+    });
 });

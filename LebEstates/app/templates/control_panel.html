@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}LebEstates Admin Control Panel{% endblock %}
+
+{% block styles %}
+<link href="{{ url_for('static', filename='css/control_panel.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block head_scripts %}
+<script defer src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Main Dashboard Content Area -->
+    <main class="main-content" id="mainContent">
+        
+        <!-- Main Content Wrapper -->
+        <div class="main-content__body">
+            
+            <!-- Breadcrumbs & Heading -->
+            <div class="page-heading">
+                <h2 class="page-heading__title">The Management Panel</h2>
+                <p class="page-heading__subtitle">Centralized management for all LebEstates system modules. Access specialized tools and administrative configurations.</p>
+            </div>
+
+            <!-- Section: Core Operations -->
+            <div class="modules-section">
+                <h3 class="modules-section__title">Core Operations</h3>
+                <div class="modules-grid">
+                    <!-- Property Management -->
+                    <div class="module-card" data-icon="real_estate_agent" data-href="{{ url_for('properties.properties_list') }}" style="cursor: pointer;">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">real_estate_agent</span>
+                        </div>
+                        <h3 class="module-card__title">Property Management</h3>
+                        <p class="module-card__description">Oversee listings, pending approvals, and property media.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Visits Management -->
+                    <div class="module-card" data-icon="calendar_month" data-href="{{ url_for('visits.visits_list') }}" style="cursor: pointer;">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                        </div>
+                        <h3 class="module-card__title">Visits Management</h3>
+                        <p class="module-card__description">Coordinate property tours between owners and prospective buyers.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Consultations -->
+                    <div class="module-card" data-icon="chat_bubble">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">chat_bubble</span>
+                        </div>
+                        <h3 class="module-card__title">Consultations</h3>
+                        <p class="module-card__description">Handle customer requests, agent assignments, and leads.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Transactions -->
+                    <div class="module-card" data-icon="payments" data-href="{{ url_for('transactions.transactions_list') }}" style="cursor: pointer;">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">payments</span>
+                        </div>
+                        <h3 class="module-card__title">Transactions</h3>
+                        <p class="module-card__description">Track sales, rentals, payments, and financial reports.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: User & Role Administration -->
+            <div class="modules-section">
+                <h3 class="modules-section__title">User & Role Administration</h3>
+                <div class="modules-grid">
+                    <!-- Customer Management -->
+                    <div class="module-card" data-icon="groups" data-href="{{ url_for('customers.index') }}" style="cursor: pointer;">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">groups</span>
+                        </div>
+                        <h3 class="module-card__title">Customer Management</h3>
+                        <p class="module-card__description">View client profiles, history, and verification documents.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Employee Management -->
+                    <div class="module-card" data-icon="badge" data-href="{{ url_for('employees.index') }}" style="cursor: pointer;">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">badge</span>
+                        </div>
+                        <h3 class="module-card__title">Employee Management</h3>
+                        <p class="module-card__description">Manage staff accounts, internal roles, and permissions.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Role Management -->
+                    <div class="module-card" data-icon="admin_panel_settings" data-href="{{ url_for('roles.index') }}" style="cursor: pointer;">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                        </div>
+                        <h3 class="module-card__title">Role Management</h3>
+                        <p class="module-card__description">Elevate or adjust user privilege levels within the system.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: System Security & Audit -->
+            <div class="modules-section">
+                <h3 class="modules-section__title">System Security & Audit</h3>
+                <div class="modules-grid">
+                    <!-- Blacklists -->
+                    <div class="module-card" data-icon="block" data-href="{{ url_for('blacklist.index') }}" style="cursor: pointer;">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">block</span>
+                        </div>
+                        <h3 class="module-card__title">Blacklists</h3>
+                        <p class="module-card__description">Restrict access for problematic users and monitor violations.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+
+                    <!-- Audit Logs -->
+                    <div class="module-card" data-icon="history">
+                        <div class="module-card__icon-wrapper">
+                            <span class="material-symbols-outlined">history</span>
+                        </div>
+                        <h3 class="module-card__title">Audit Logs</h3>
+                        <p class="module-card__description">Trace all admin actions, modifications, and access logs.</p>
+                        <div class="module-card__action">
+                            Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Footer -->
+        {% include 'footer.html' %}
+    </main>
+
+{% endblock %}

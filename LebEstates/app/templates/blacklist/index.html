@@ -1,0 +1,702 @@
+{% extends "base.html" %}
+
+{% block title %}Blacklist Management | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="{{ url_for('static', filename='css/blacklist.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<main class="blacklist-container">
+    <!-- Page Header -->
+    <div class="blacklist-page-header">
+        <div>
+            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Blacklist Management</h2>
+            <p class="body-md text-on-surface-variant">Monitor restricted accounts and manage system-wide security access.</p>
+        </div>
+        <button class="btn btn-secondary btn-lg" onclick="openModal('blacklistModal')" style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined">person_add_disabled</span>
+            Blacklist User
+        </button>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Total Blacklisted</p>
+                <h3 class="headline-md text-primary">{{ stats.total }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon primary">group_off</span>
+            </div>
+        </div>
+        <div class="stat-card error">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Active Blocks</p>
+                <h3 class="headline-md text-primary" style="color: var(--error);">{{ stats.active }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon error">block</span>
+            </div>
+        </div>
+        <div class="stat-card secondary">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Resolved Cases</p>
+                <h3 class="headline-md text-primary" style="color: var(--secondary);">{{ stats.resolved }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon secondary">verified_user</span>
+            </div>
+        </div>
+        <div class="stat-card outline">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Monthly Restrictions</p>
+                <h3 class="headline-md text-primary">{{ stats.monthly }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon outline">trending_up</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="filter-section">
+        <div class="filter-left">
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input class="search-input" id="filterSearch" placeholder="Search by User ID, Name, or Reason..." type="text" onkeyup="applyClientFilters()"/>
+            </div>
+            <select class="filter-select" id="filterStatus" onchange="applyClientFilters()">
+                <option value="All">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Resolved">Resolved</option>
+            </select>
+            <button class="btn-filter-advanced">
+                <span class="material-symbols-outlined">filter_list</span>
+                Advanced Filters
+            </button>
+        </div>
+        <button class="btn-refresh" onclick="window.location.reload();" title="Refresh Table">
+            <span class="material-symbols-outlined">refresh</span>
+        </button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+        <div class="table-responsive custom-scrollbar">
+            <table class="blacklist-table" id="blacklistTable">
+                <thead>
+                    <tr class="table-header-row">
+                        <th class="table-th">ID</th>
+                        <th class="table-th">User</th>
+                        <th class="table-th">Reason</th>
+                        <th class="table-th">Restricted By</th>
+                        <th class="table-th">Restricted At</th>
+                        <th class="table-th" style="text-align: center;">Status</th>
+                        <th class="table-th" style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                    {% for entry in entries %}
+                    <tr class="table-row">
+                        <td class="table-td body-md text-on-surface" style="font-weight: 600;">{{ entry.blacklist_id }}</td>
+                        <td class="table-td user-cell popover-container">
+                            <div class="user-profile-trigger">
+                                <img alt="User" class="user-avatar" src="{{ entry.user.avatar_url }}"/>
+                                <div>
+                                    <p class="font-semibold text-primary" style="margin: 0; font-weight: 600;">{{ entry.user.full_name }}</p>
+                                    <p class="caption text-on-surface-variant" style="margin: 0;">UID: {{ entry.user.user_id }}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Customer Profile Popover -->
+                            <div class="popover">
+                                <div class="popover-header">
+                                    <div>
+                                        <h4 class="popover-title">{{ entry.user.full_name }}</h4>
+                                        <p class="popover-subtitle">User #{{ entry.user.user_id }}</p>
+                                    </div>
+                                    <span class="popover-badge blacklisted">{{ entry.user.status | upper }}</span>
+                                </div>
+                                <div class="popover-grid">
+                                    <div class="popover-row">
+                                        <span class="popover-label">Email:</span>
+                                        <span class="popover-value" title="{{ entry.user.email }}">{{ entry.user.email }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Phone:</span>
+                                        <span class="popover-value">{{ entry.user.phone }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Address:</span>
+                                        <span class="popover-value" title="{{ entry.user.address }}">{{ entry.user.address }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">National ID:</span>
+                                        <span class="popover-value">{{ entry.user.national_id }}</span>
+                                    </div>
+                                    <div class="popover-divider"></div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Account status:</span>
+                                        <span class="popover-value">{{ entry.user.status }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="table-td">
+                            <p class="text-sm text-on-surface max-w-[200px]" style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ entry.reason }}">
+                                {{ entry.reason }}
+                            </p>
+                        </td>
+                        <td class="table-td popover-container">
+                            <span class="admin-trigger">{{ entry.admin.full_name }}</span>
+                            
+                            <!-- Employee Profile Popover -->
+                            <div class="popover">
+                                <div class="popover-header">
+                                    <div>
+                                        <h4 class="popover-title">{{ entry.admin.full_name }}</h4>
+                                        <p class="popover-subtitle">{{ entry.admin.position }}</p>
+                                    </div>
+                                    <span class="popover-badge active">{{ entry.admin.status | upper }}</span>
+                                </div>
+                                <div class="popover-grid">
+                                    <div class="popover-row">
+                                        <span class="popover-label">Hire Date:</span>
+                                        <span class="popover-value">{{ entry.admin.hire_date }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Email:</span>
+                                        <span class="popover-value" title="{{ entry.admin.email }}">{{ entry.admin.email }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Phone:</span>
+                                        <span class="popover-value">{{ entry.admin.phone }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Status:</span>
+                                        <span class="popover-value">{{ entry.admin.status }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="table-td">
+                            <p class="text-sm text-on-surface" style="margin: 0;">{{ entry.restricted_at_date }}</p>
+                            <p class="caption text-on-surface-variant" style="margin: 0;">{{ entry.restricted_at_time }}</p>
+                        </td>
+                        <td class="table-td" style="text-align: center;">
+                            <span class="status-badge {% if entry.status | lower == 'active' %}active{% else %}resolved{% endif %}">
+                                {{ entry.status }}
+                            </span>
+                        </td>
+                        <td class="table-td" style="text-align: right;">
+                            <div class="action-group">
+                                <button class="btn-action-icon" onclick="openEditModal('{{ entry.raw_id }}', '{{ entry.user.full_name }}', '{{ entry.reason | replace("'", "\\'") }}', '{{ entry.status }}')" title="Edit Reason">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">edit_note</span>
+                                </button>
+                                
+                                {% if entry.status | lower == 'active' %}
+                                <button class="btn-resolve" onclick="openResolveModal('{{ entry.raw_id }}')">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">how_to_reg</span>
+                                    RESOLVE
+                                </button>
+                                {% else %}
+                                <div class="resolved-pill">
+                                    RESTORED
+                                </div>
+                                {% endif %}
+                                
+                                <button class="btn-action-icon delete" onclick="openDeleteModal('{{ entry.raw_id }}')" title="Delete Record">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td class="table-td" colspan="7" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
+                            No blacklisted users found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <p class="pagination-text">Showing {{ entries|length }} of {{ total_records }} records</p>
+            <div class="pagination-controls">
+                <button class="pagination-btn" {% if current_page <= 1 %}disabled{% endif %} onclick="goToPage({{ current_page - 1 }})">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+                </button>
+                
+                {% for p in range(1, total_pages + 1) %}
+                <button class="pagination-btn {% if p == current_page %}active{% endif %}" onclick="goToPage({{ p }})">{{ p }}</button>
+                {% endfor %}
+                
+                <button class="pagination-btn" {% if current_page >= total_pages %}disabled{% endif %} onclick="goToPage({{ current_page + 1 }})">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modals Overlay Container -->
+<div class="modal-overlay" id="modalOverlay">
+    <!-- 1. Blacklist User Modal -->
+    <div class="modal-container" id="blacklistModal" style="display: none;">
+        <div class="modal-header">
+            <h3 class="modal-title">Blacklist New User</h3>
+            <button class="btn-close" onclick="closeAllModals()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form onsubmit="handleFormSubmit(event, '/blacklist/add', 'User has been blacklisted successfully')">
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="position: relative;">
+                    <label class="form-label">User Search / ID</label>
+                    <input type="text" id="blacklistUserSearch" placeholder="Enter name or email..." class="form-input" autocomplete="off" required>
+                    <input type="hidden" id="blacklistUserID" name="user_id">
+                    <div id="autocompleteSuggestions" class="autocomplete-suggestions" style="display: none;"></div>
+                </div>
+                <div>
+                    <label class="form-label">Reason for Restriction</label>
+                    <textarea name="reason" class="form-textarea" placeholder="Describe the violation in detail..." required rows="3"></textarea>
+                </div>
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label">Restriction Level</label>
+                        <select name="level" class="form-input">
+                            <option value="Warning">Warning</option>
+                            <option value="Temporary Suspension">Temporary Suspension</option>
+                            <option value="Permanent Ban" selected>Permanent Ban</option>
+                            <option value="IP Restriction">IP Restriction</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-input" disabled>
+                            <option value="Active" selected>Active</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-discard" onclick="closeAllModals()" type="button">Cancel</button>
+                <button class="btn-confirm" type="submit">Confirm Blacklist</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 2. Edit Restriction Modal -->
+    <div class="modal-container" id="editModal" style="display: none;">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title">Edit Restriction</h3>
+                <p class="caption text-on-surface-variant" id="editModalSubtitle" style="margin-top: 4px;">Case: #BL-8942</p>
+            </div>
+            <button class="btn-close" onclick="closeAllModals()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="editForm" onsubmit="handleEditSubmit(event)">
+            <input type="hidden" id="editBlacklistID">
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label class="form-label">User</label>
+                    <input class="form-input readonly" id="editUserName" readonly type="text"/>
+                </div>
+                <div>
+                    <label class="form-label">Reason for Restriction</label>
+                    <textarea class="form-textarea" id="editReason" required rows="4"></textarea>
+                </div>
+                <div>
+                    <label class="form-label">Current Status</label>
+                    <select class="form-input" id="editStatus">
+                        <option value="Active">Active</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-discard" onclick="closeAllModals()" type="button">Discard</button>
+                <button class="btn-confirm" type="submit">Save Changes</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 3. Resolve Case Modal (Confirmation) -->
+    <div class="modal-container max-w-md" id="resolveModal" style="display: none;">
+        <div class="modal-body" style="text-align: center; padding: 32px 32px 16px 32px;">
+            <div style="width: 64px; height: 64px; background-color: rgba(254, 214, 91, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px auto;">
+                <span class="material-symbols-outlined text-secondary" style="font-size: 32px;">verified_user</span>
+            </div>
+            <h3 class="modal-title" style="margin-bottom: 8px;">Resolve Restriction?</h3>
+            <p class="text-on-surface-variant body-md" style="margin-bottom: 24px;">Are you sure you want to resolve this restriction? This will restore user access to all platform features.</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn-confirm secondary" style="width: 100%; height: 48px;" onclick="confirmResolve()">Confirm Resolution</button>
+                <button class="btn-discard" style="width: 100%; height: 48px; border: none; background-color: var(--surface-container-low);" onclick="closeAllModals()">Keep Restricted</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Delete Entry Modal (Destructive) -->
+    <div class="modal-container max-w-md" id="deleteModal" style="display: none;">
+        <div class="modal-body" style="text-align: center; padding: 32px 32px 16px 32px;">
+            <div style="width: 64px; height: 64px; background-color: var(--error-container); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px auto;">
+                <span class="material-symbols-outlined text-error" style="font-size: 32px;">warning</span>
+            </div>
+            <h3 class="modal-title" style="margin-bottom: 8px; color: var(--error);">Delete Record?</h3>
+            <p class="text-on-surface-variant body-md" style="margin-bottom: 24px;">This action is irreversible. All historical data regarding this restriction will be permanently removed from the system logs.</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn-confirm error" style="width: 100%; height: 48px;" onclick="confirmDelete()">Delete Permanently</button>
+                <button class="btn-discard" style="width: 100%; height: 48px; border: none; background-color: var(--surface-container-low);" onclick="closeAllModals()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-container" id="toast">
+    <div class="toast-inner" id="toastInner">
+        <span class="material-symbols-outlined toast-icon" id="toastIcon">check_circle</span>
+        <span class="toast-text" id="toastMessage">Action completed successfully</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let activeBlacklistID = null;
+
+    // Modals handling
+    function openModal(id) {
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById(id);
+        
+        // Hide all modal containers first
+        overlay.querySelectorAll('.modal-container').forEach(c => c.style.display = 'none');
+        
+        // Show overlay and specific container
+        overlay.classList.add('active');
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAllModals() {
+        const overlay = document.getElementById('modalOverlay');
+        overlay.classList.remove('active');
+        overlay.querySelectorAll('.modal-container').forEach(c => {
+            setTimeout(() => { c.style.display = 'none'; }, 200);
+        });
+        document.body.style.overflow = '';
+        
+        // Reset autocomplete search
+        const searchInput = document.getElementById('blacklistUserSearch');
+        const userIdInput = document.getElementById('blacklistUserID');
+        const suggestionsBox = document.getElementById('autocompleteSuggestions');
+        if (searchInput) searchInput.value = '';
+        if (userIdInput) userIdInput.value = '';
+        if (suggestionsBox) {
+            suggestionsBox.innerHTML = '';
+            suggestionsBox.style.display = 'none';
+        }
+    }
+
+    // Modal Edit Pre-fill
+    function openEditModal(id, name, reason, status) {
+        document.getElementById('editBlacklistID').value = id;
+        document.getElementById('editModalSubtitle').innerText = `Case: #BL-${id}`;
+        document.getElementById('editUserName').value = name;
+        document.getElementById('editReason').value = reason;
+        document.getElementById('editStatus').value = status;
+        openModal('editModal');
+    }
+
+    // Resolve confirmation triggers
+    function openResolveModal(id) {
+        activeBlacklistID = id;
+        openModal('resolveModal');
+    }
+
+    function confirmResolve() {
+        if (!activeBlacklistID) return;
+        
+        fetch(`/blacklist/resolve/${activeBlacklistID}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, true);
+            } else {
+                closeAllModals();
+                showToast('Case has been marked as resolved');
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('An error occurred. Please try again.', true);
+        });
+    }
+
+    // Delete confirmation triggers
+    function openDeleteModal(id) {
+        activeBlacklistID = id;
+        openModal('deleteModal');
+    }
+
+    function confirmDelete() {
+        if (!activeBlacklistID) return;
+        
+        fetch(`/blacklist/delete/${activeBlacklistID}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, true);
+            } else {
+                closeAllModals();
+                showToast('Record deleted permanently', false);
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('An error occurred. Please try again.', true);
+        });
+    }
+
+    // Edit form submission
+    function handleEditSubmit(e) {
+        e.preventDefault();
+        const id = document.getElementById('editBlacklistID').value;
+        const reason = document.getElementById('editReason').value.trim();
+        const status = document.getElementById('editStatus').value;
+
+        if (!reason) {
+            showToast('Reason is required.', true);
+            return;
+        }
+
+        const payload = {
+            reason: reason,
+            status: status
+        };
+
+        fetch(`/blacklist/edit/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, true);
+            } else {
+                closeAllModals();
+                showToast('Restriction updated successfully');
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('An error occurred.', true);
+        });
+    }
+
+    // Add blacklist user form submission
+    function handleFormSubmit(e, url, successMessage) {
+        e.preventDefault();
+        const form = e.target;
+        const userId = document.getElementById('blacklistUserID').value;
+        const reason = form.querySelector('[name="reason"]').value.trim();
+        const level = form.querySelector('[name="level"]').value;
+
+        if (!userId) {
+            showToast('Please search and select a user from the dropdown.', true);
+            return;
+        }
+
+        const payload = {
+            user_id: userId,
+            reason: reason,
+            level: level
+        };
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, true);
+            } else {
+                closeAllModals();
+                showToast(successMessage);
+                form.reset();
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('An error occurred.', true);
+        });
+    }
+
+    // Toast notification
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastInner = document.getElementById('toastInner');
+        const toastMsg = document.getElementById('toastMessage');
+        const toastIcon = document.getElementById('toastIcon');
+        
+        toastMsg.innerText = message;
+        toastIcon.innerText = isError ? 'error' : 'check_circle';
+        
+        if (isError) {
+            toastIcon.className = 'material-symbols-outlined toast-icon error';
+        } else {
+            toastIcon.className = 'material-symbols-outlined toast-icon';
+        }
+        
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Autocomplete User Search
+    const searchInput = document.getElementById('blacklistUserSearch');
+    const userIdInput = document.getElementById('blacklistUserID');
+    const suggestionsBox = document.getElementById('autocompleteSuggestions');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query.length < 2) {
+                suggestionsBox.innerHTML = '';
+                suggestionsBox.style.display = 'none';
+                userIdInput.value = '';
+                return;
+            }
+            
+            fetch(`/blacklist/search-users?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        suggestionsBox.innerHTML = '<div class="autocomplete-item"><span class="email">No active users found matching query</span></div>';
+                        suggestionsBox.style.display = 'block';
+                        return;
+                    }
+                    
+                    let html = '';
+                    data.forEach(user => {
+                        html += `
+                            <div class="autocomplete-item" onclick="selectUser(${user.userID}, '${user.fullName.replace("'", "\\'")}')">
+                                <span class="name">${user.fullName}</span>
+                                <span class="email">ID: ${user.userID} | ${user.email}</span>
+                            </div>
+                        `;
+                    });
+                    suggestionsBox.innerHTML = html;
+                    suggestionsBox.style.display = 'block';
+                })
+                .catch(err => console.error('Error fetching users:', err));
+        });
+    }
+
+    function selectUser(id, name) {
+        searchInput.value = name;
+        userIdInput.value = id;
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.style.display = 'none';
+    }
+
+    // Close suggestions on click outside
+    document.addEventListener('click', function(e) {
+        if (e.target !== searchInput && e.target !== suggestionsBox) {
+            if (suggestionsBox) suggestionsBox.style.display = 'none';
+        }
+    });
+
+    // Close modals on Esc key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeAllModals();
+        }
+    });
+
+    // Client-side pagination redirect
+    function goToPage(page) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page);
+        window.location.href = url.toString();
+    }
+
+    // Client-side quick filter logic
+    function applyClientFilters() {
+        const searchVal = document.getElementById('filterSearch').value.toLowerCase().trim();
+        const statusVal = document.getElementById('filterStatus').value.toLowerCase();
+        const rows = document.querySelectorAll('#blacklistTable tbody tr');
+        
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            // Skip empty placeholder row if present
+            if (row.cells.length === 1 && row.cells[0].colSpan === 7) return;
+            
+            const idText = row.cells[0].textContent.toLowerCase();
+            const userText = row.cells[1].querySelector('.font-semibold').textContent.toLowerCase();
+            const uidText = row.cells[1].querySelector('.caption').textContent.toLowerCase();
+            const reasonText = row.cells[2].textContent.toLowerCase();
+            const adminText = row.cells[3].textContent.toLowerCase();
+            const statusText = row.cells[5].textContent.trim().toLowerCase();
+            
+            const matchesSearch = !searchVal || 
+                idText.includes(searchVal) || 
+                userText.includes(searchVal) || 
+                uidText.includes(searchVal) || 
+                reasonText.includes(searchVal) || 
+                adminText.includes(searchVal);
+                
+            const matchesStatus = statusVal === 'all' || statusText === statusVal;
+            
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update pagination text showing status
+        const pagText = document.querySelector('.pagination-text');
+        if (pagText) {
+            pagText.textContent = `Showing ${visibleCount} of ${rows.length} records`;
+        }
+    }
+</script>
+{% endblock %}
