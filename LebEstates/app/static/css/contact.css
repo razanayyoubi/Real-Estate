@@ -1,4 +1,4 @@
-/* Contact page styles matching LebEstates branding */
+/* Contact page styles  */
 :root {
     --color-success: #1b873a;
     --color-success-container: #e6f9ed;
@@ -204,15 +204,18 @@
 .card-whatsapp .icon-wrap i {
     color: #25d366;
 }
+
 .card-whatsapp:hover {
     background: rgba(37, 211, 102, 0.05);
     border-color: rgba(37, 211, 102, 0.35);
     transform: translateY(-4px);
     box-shadow: 0 10px 20px rgba(37, 211, 102, 0.1);
 }
+
 .card-whatsapp:hover .icon-wrap {
     background: #25d366;
 }
+
 .card-whatsapp:hover .icon-wrap i {
     color: #ffffff;
 }
@@ -221,15 +224,18 @@
 .card-email .icon-wrap i {
     color: #fed65b;
 }
+
 .card-email:hover {
     background: rgba(254, 214, 91, 0.05);
     border-color: rgba(254, 214, 91, 0.35);
     transform: translateY(-4px);
     box-shadow: 0 10px 20px rgba(254, 214, 91, 0.1);
 }
+
 .card-email:hover .icon-wrap {
     background: #fed65b;
 }
+
 .card-email:hover .icon-wrap i {
     color: #0A1A2F;
 }
@@ -238,15 +244,18 @@
 .card-instagram .icon-wrap i {
     color: #e1306c;
 }
+
 .card-instagram:hover {
     background: rgba(225, 48, 108, 0.05);
     border-color: rgba(225, 48, 108, 0.35);
     transform: translateY(-4px);
     box-shadow: 0 10px 20px rgba(225, 48, 108, 0.1);
 }
+
 .card-instagram:hover .icon-wrap {
     background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
 }
+
 .card-instagram:hover .icon-wrap i {
     color: #ffffff;
 }
@@ -255,15 +264,18 @@
 .card-facebook .icon-wrap i {
     color: #1877f2;
 }
+
 .card-facebook:hover {
     background: rgba(24, 119, 242, 0.05);
     border-color: rgba(24, 119, 242, 0.35);
     transform: translateY(-4px);
     box-shadow: 0 10px 20px rgba(24, 119, 242, 0.1);
 }
+
 .card-facebook:hover .icon-wrap {
     background: #1877f2;
 }
+
 .card-facebook:hover .icon-wrap i {
     color: #ffffff;
 }

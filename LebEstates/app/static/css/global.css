@@ -378,7 +378,7 @@
   }
 
   /* Override desktop absolute dropdown inside mobile sidebar */
-  .profile-dropdown {
+  .nav-menu .profile-dropdown, .sidebar .profile-dropdown {
     position: static !important;
     width: 100% !important;
     box-shadow: none !important;
@@ -386,6 +386,23 @@
     background-color: transparent !important;
     margin-top: 8px;
     border-top: 1px solid var(--outline-variant) !important;
+  }
+
+  /* Ensure header profile dropdown remains floating on mobile header */
+  .header .profile-dropdown {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    background-color: #ffffff !important;
+    border: 1px solid var(--outline-variant) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-lg) !important;
+    min-width: 220px !important;
+    display: none;
+    z-index: 200 !important;
+  }
+  .header .profile-dropdown.profile-dropdown--open {
+    display: flex !important;
   }
 }
 
@@ -1485,4 +1502,4 @@ body.dashboard-body, body.control-panel-body {
 .sidebar__logout-label {
   font-size: 14px;
   white-space: nowrap;
-}
+}

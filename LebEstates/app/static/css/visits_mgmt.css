@@ -35,64 +35,64 @@
 }
 
 .mgmt-header-v2 {
-    margin-bottom: 40px;
-    padding: 32px 40px;
-    background: linear-gradient(135deg, var(--surface-container-lowest) 0%, var(--surface-container-low) 100%);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 10px 30px rgba(10, 31, 68, 0.05), inset 0 2px 0 rgba(255, 255, 255, 0.8);
-    position: relative;
-    overflow: hidden;
+  margin-bottom: 40px;
+  padding: 32px 40px;
+  background: linear-gradient(135deg, var(--surface-container-lowest) 0%, var(--surface-container-low) 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 30px rgba(10, 31, 68, 0.05), inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
 }
 
 .mgmt-header-v2::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -5%;
-    width: 350px;
-    height: 350px;
-    background: radial-gradient(circle, var(--primary-container) 0%, transparent 70%);
-    opacity: 0.2;
-    border-radius: 50%;
-    pointer-events: none;
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -5%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, var(--primary-container) 0%, transparent 70%);
+  opacity: 0.2;
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .mgmt-header-content {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    position: relative;
-    z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .mgmt-header-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--on-primary);
-    box-shadow: 0 12px 24px rgba(0, 8, 30, 0.2);
-    position: relative;
-    overflow: hidden;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-primary);
+  box-shadow: 0 12px 24px rgba(0, 8, 30, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
 .mgmt-header-icon::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-    pointer-events: none;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 .mgmt-header-icon .material-symbols-outlined {
-    font-size: 36px;
+  font-size: 36px;
 }
 
 .mgmt-title {
@@ -107,12 +107,12 @@
 }
 
 .mgmt-subtitle {
-    font-family: var(--font-body);
-    font-size: 16px;
-    color: var(--on-surface-variant);
-    margin: 0;
-    max-width: 600px;
-    line-height: 1.6;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--on-surface-variant);
+  margin: 0;
+  max-width: 600px;
+  line-height: 1.6;
 }
 
 .header-filter-link {
@@ -1179,5 +1179,122 @@
     border: 1px solid #ccc !important;
     box-shadow: none !important;
     padding: 12px !important;
+  }
+}
+
+/* ==========================================================================
+   VISITS MANAGEMENT MOBILE RESPONSIVE CARD TRANSFORMATION (PHONE & TABLET)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+  .visits-table,
+  .visits-table thead,
+  .visits-table tbody,
+  .visits-table tr,
+  .visits-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .visits-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  .visits-table tbody tr {
+    background: var(--surface-container-lowest) !important;
+    border: 1px solid var(--outline-variant) !important;
+    border-radius: 16px !important;
+    margin-bottom: 20px !important;
+    padding: 20px !important;
+    box-shadow: 0 4px 16px rgba(10, 31, 68, 0.03) !important;
+    transform: none !important;
+  }
+
+  .visits-table td {
+    border: none !important;
+    padding: 8px 0 !important;
+    white-space: normal !important;
+  }
+
+  .property-info {
+    align-items: flex-start !important;
+    margin-bottom: 8px;
+  }
+
+  .property-thumb {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .property-name {
+    font-size: 15px !important;
+    line-height: 1.3;
+  }
+
+  .consultant-info {
+    width: 100% !important;
+    margin-top: 6px;
+  }
+
+  .consultant-dropdown,
+  .status-dropdown {
+    width: 100% !important;
+    box-sizing: border-box;
+    padding: 10px 16px !important;
+    background-position: right 16px top 50% !important;
+    font-size: 13px !important;
+  }
+
+  .table-actions {
+    opacity: 1 !important;
+    justify-content: flex-end !important;
+    border-top: 1px solid rgba(197, 198, 207, 0.2);
+    padding-top: 14px !important;
+    margin-top: 10px;
+  }
+
+  .action-btn {
+    width: 100% !important;
+    background-color: var(--surface-container-low);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px !important;
+    border-radius: 10px;
+  }
+
+  .table-controls {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 16px !important;
+  }
+
+  .controls-left {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .search-wrapper {
+    max-width: 100% !important;
+  }
+
+  .select-control {
+    width: 100% !important;
+  }
+
+  .controls-right,
+  .btn-export {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  .pagination-footer {
+    flex-direction: column !important;
+    gap: 16px !important;
+    text-align: center !important;
   }
 }

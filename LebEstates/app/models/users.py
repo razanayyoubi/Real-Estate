@@ -17,7 +17,7 @@ class Users(db.Model):
     passwordHash = db.Column(db.String(255), nullable=False)
     roleID = db.Column(db.Integer, db.ForeignKey('role.roleID'), nullable=False)
     status = db.Column(db.Enum('Active', 'Inactive', 'Blacklisted', name='user_status'), default='Active')
-    avatar = db.Column(db.String(255), nullable=True)
+    avatar = db.Column(db.LargeBinary(length=2**24), nullable=True)
     twoFactorEnabled = db.Column(db.Boolean, default=False)
     twoFactorSecret = db.Column(db.String(100), nullable=True)
     createdAt = db.Column(db.DateTime, default=datetime.now)
@@ -26,7 +26,7 @@ class Users(db.Model):
     @property
     def avatar_url(self):
         if self.avatar:
-            return f"/static/uploads/avatars/{self.avatar}"
+            return f"/profile/avatar/{self.userID}"
         return f"https://ui-avatars.com/api/?name={self.fullName.replace(' ', '+')}&background=random"
 
 class Blacklist(db.Model):

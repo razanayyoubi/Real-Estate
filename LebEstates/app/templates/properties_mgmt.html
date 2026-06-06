@@ -8,7 +8,7 @@
 
 {% block content %}
 <main class="properties-mgmt-main">
-    
+
     <!-- Page Header -->
     <header class="mgmt-header">
         <div class="mgmt-header-text">
@@ -33,7 +33,7 @@
             <h3 class="stat-label">Total Properties</h3>
             <p class="stat-value">{{ total_count }}</p>
         </div>
-        
+
         <!-- Active Listings -->
         <div class="stat-card border-secondary">
             <div class="stat-card-header">
@@ -45,7 +45,7 @@
             <h3 class="stat-label">Active Listings</h3>
             <p class="stat-value">{{ active_count }}</p>
         </div>
-        
+
         <!-- Pending Review -->
         <div class="stat-card border-error">
             <div class="stat-card-header">
@@ -59,7 +59,7 @@
             <h3 class="stat-label">Pending Review</h3>
             <p class="stat-value">{{ pending_count }}</p>
         </div>
-        
+
         <!-- Total Valuation -->
         <div class="stat-card stat-card-dark bg-primary-dark">
             <div class="stat-icon-wrapper bg-white-opacity">
@@ -125,27 +125,18 @@
                 <tbody id="inventory-table-body">
                     {% for prop in properties %}
                     <!-- Row {{ prop.propertyID }} -->
-                    <tr class="mgmt-row-main" id="row-main-{{ prop.propertyID }}" 
-                        data-id="{{ prop.propertyID }}" 
-                        data-status="{{ prop.status }}" 
-                        data-type="{{ prop.propertyType }}" 
-                        data-location="{{ prop.location }}"
-                        data-title="{{ prop.title }}"
-                        data-price="{{ prop.price }}"
-                        data-listing-type="{{ prop.listingType }}"
-                        data-area="{{ prop.area }}"
-                        data-rooms="{{ prop.rooms or 0 }}"
-                        data-bathrooms="{{ prop.bathrooms or 0 }}"
+                    <tr class="mgmt-row-main" id="row-main-{{ prop.propertyID }}" data-id="{{ prop.propertyID }}"
+                        data-status="{{ prop.status }}" data-type="{{ prop.propertyType }}"
+                        data-location="{{ prop.location }}" data-title="{{ prop.title }}" data-price="{{ prop.price }}"
+                        data-listing-type="{{ prop.listingType }}" data-area="{{ prop.area }}"
+                        data-rooms="{{ prop.rooms or 0 }}" data-bathrooms="{{ prop.bathrooms or 0 }}"
                         data-floor="{{ prop.floorNumber or 0 }}"
                         data-parking="{{ 'true' if prop.parkingAvailable else 'false' }}"
-                        data-latitude="{{ prop.latitude or '' }}"
-                        data-longitude="{{ prop.longitude or '' }}"
-                        data-description="{{ prop.description or '' }}"
-                        data-address="{{ prop.address or '' }}"
-                        data-owner-id="{{ prop.ownerID }}"
-                        data-creator-id="{{ prop.createdBy }}"
+                        data-latitude="{{ prop.latitude or '' }}" data-longitude="{{ prop.longitude or '' }}"
+                        data-description="{{ prop.description or '' }}" data-address="{{ prop.address or '' }}"
+                        data-owner-id="{{ prop.ownerID }}" data-creator-id="{{ prop.createdBy }}"
                         data-image-urls="{% for img in prop.images %}{{ img.imageURL }}{% if not loop.last %},{% endif %}{% endfor %}">
-                        
+
                         <td class="col-id">#LEB-{{ prop.propertyID }}</td>
                         <td class="col-title">
                             <div class="title-cell-wrapper">
@@ -158,7 +149,8 @@
                                 {% endif %}
                                 <div class="title-cell-text">
                                     <div class="property-title-text">{{ prop.title }}</div>
-                                    <div class="property-date-text">Created: {{ prop.createdAt.strftime('%d %b %Y') }}</div>
+                                    <div class="property-date-text">Created: {{ prop.createdAt.strftime('%d %b %Y') }}
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -171,30 +163,37 @@
                         </td>
                         <td class="col-price font-bold">${{ "{:,.0f}".format(prop.price) }}</td>
                         <td class="col-status" id="row-status-{{ prop.propertyID }}">
-                            <select class="status-dropdown status-{{ prop.status.lower() }}" data-id="{{ prop.propertyID }}">
-                                <option value="Pending" {% if prop.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                <option value="Published" {% if prop.status == 'Published' %}selected{% endif %}>Published</option>
-                                <option value="Sold" {% if prop.status == 'Sold' %}selected{% endif %}>Sold</option>
-                                <option value="Rented" {% if prop.status == 'Rented' %}selected{% endif %}>Rented</option>
-                                <option value="Rejected" {% if prop.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            <select class="status-dropdown status-{{ prop.status.lower() }}"
+                                data-id="{{ prop.propertyID }}">
+                                <option value="Pending" {% if prop.status=='Pending' %}selected{% endif %}>Pending
+                                </option>
+                                <option value="Published" {% if prop.status=='Published' %}selected{% endif %}>Published
+                                </option>
+                                <option value="Sold" {% if prop.status=='Sold' %}selected{% endif %}>Sold</option>
+                                <option value="Rented" {% if prop.status=='Rented' %}selected{% endif %}>Rented</option>
+                                <option value="Rejected" {% if prop.status=='Rejected' %}selected{% endif %}>Rejected
+                                </option>
                             </select>
                         </td>
                         <td class="col-actions text-right">
                             <div class="actions-wrapper">
-                                <button class="btn-action btn-view" title="Toggle Details" data-id="{{ prop.propertyID }}">
+                                <button class="btn-action btn-view" title="Toggle Details"
+                                    data-id="{{ prop.propertyID }}">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button class="btn-action btn-edit" title="Edit Listing" data-id="{{ prop.propertyID }}">
+                                <button class="btn-action btn-edit" title="Edit Listing"
+                                    data-id="{{ prop.propertyID }}">
                                     <span class="material-symbols-outlined">edit</span>
                                 </button>
-                                <button class="btn-action btn-delete" title="Delete Listing" data-id="{{ prop.propertyID }}">
+                                <button class="btn-action btn-delete" title="Delete Listing"
+                                    data-id="{{ prop.propertyID }}">
                                     <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
                         </td>
                     </tr>
                     {% endfor %}
-                    
+
                     {% if not properties %}
                     <tr class="table-empty-row">
                         <td colspan="7" class="text-center">
@@ -211,11 +210,14 @@
 
         <!-- Pagination -->
         <div class="mgmt-pagination-container">
-            <p class="pagination-info">Showing <span id="showing-count">{{ properties|length }}</span> of {{ total_count }} entries</p>
+            <p class="pagination-info">Showing <span id="showing-count">{{ properties|length }}</span> of {{ total_count
+                }} entries</p>
             <div class="pagination-buttons">
-                <button class="btn-pagination-nav" disabled><span class="material-symbols-outlined">chevron_left</span></button>
+                <button class="btn-pagination-nav" disabled><span
+                        class="material-symbols-outlined">chevron_left</span></button>
                 <button class="btn-pagination-page active">1</button>
-                <button class="btn-pagination-nav" disabled><span class="material-symbols-outlined">chevron_right</span></button>
+                <button class="btn-pagination-nav" disabled><span
+                        class="material-symbols-outlined">chevron_right</span></button>
             </div>
         </div>
     </section>
@@ -229,28 +231,29 @@
             </div>
             <div class="queue-list" id="pending-queue-list">
                 {% if pending_queue %}
-                    {% for prop in pending_queue %}
-                    <div class="queue-item" id="queue-item-{{ prop.propertyID }}">
-                        <div class="queue-item-left">
-                            <div class="queue-icon bg-primary-light">
-                                <span class="material-symbols-outlined">add_home</span>
-                            </div>
-                            <div class="queue-info">
-                                <p class="queue-prop-title">{{ prop.title }}</p>
-                                <p class="queue-prop-sub">Location: {{ prop.location }} • Created by: User #{{ prop.createdBy }}</p>
-                            </div>
+                {% for prop in pending_queue %}
+                <div class="queue-item" id="queue-item-{{ prop.propertyID }}">
+                    <div class="queue-item-left">
+                        <div class="queue-icon bg-primary-light">
+                            <span class="material-symbols-outlined">add_home</span>
                         </div>
-                        <div class="queue-item-actions">
-                            <button class="btn-queue btn-approve" data-id="{{ prop.propertyID }}">Approve</button>
-                            <button class="btn-queue btn-reject" data-id="{{ prop.propertyID }}">Reject</button>
+                        <div class="queue-info">
+                            <p class="queue-prop-title">{{ prop.title }}</p>
+                            <p class="queue-prop-sub">Location: {{ prop.location }} • Created by: User #{{
+                                prop.createdBy }}</p>
                         </div>
                     </div>
-                    {% endfor %}
+                    <div class="queue-item-actions">
+                        <button class="btn-queue btn-approve" data-id="{{ prop.propertyID }}">Approve</button>
+                        <button class="btn-queue btn-reject" data-id="{{ prop.propertyID }}">Reject</button>
+                    </div>
+                </div>
+                {% endfor %}
                 {% else %}
-                    <div class="queue-empty-state">
-                        <span class="material-symbols-outlined">done_all</span>
-                        <p>No listings require review. All submissions are current.</p>
-                    </div>
+                <div class="queue-empty-state">
+                    <span class="material-symbols-outlined">done_all</span>
+                    <p>No listings require review. All submissions are current.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -316,17 +319,17 @@
                     <span class="status-badge" id="details-status"></span>
                     <span class="listing-badge" id="details-listing-type"></span>
                 </div>
-                
+
                 <h3 class="details-title-display" id="details-title-text"></h3>
                 <div class="details-price-display" id="details-price-text"></div>
-                
+
                 <hr class="modal-divider" />
-                
+
                 <div class="details-section">
                     <h4 class="section-title">Overview Description</h4>
                     <p class="modal-desc" id="details-desc"></p>
                 </div>
-                
+
                 <div class="details-section">
                     <h4 class="section-title">Key Specifications</h4>
                     <div class="modal-specs-grid">
@@ -374,7 +377,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="details-section">
                     <h4 class="section-title">Location & Address</h4>
                     <div class="modal-meta-grid">
@@ -396,12 +399,13 @@
                             <span class="material-symbols-outlined">explore</span>
                             <div>
                                 <span class="meta-item-label">GPS Coordinates</span>
-                                <span class="meta-item-val"><span id="details-lat"></span>, <span id="details-lng"></span></span>
+                                <span class="meta-item-val"><span id="details-lat"></span>, <span
+                                        id="details-lng"></span></span>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="details-section">
                     <h4 class="section-title">Ownership & Audit</h4>
                     <div class="modal-meta-grid">
@@ -442,48 +446,48 @@
             <div class="modal-body scrollable custom-scrollbar">
                 <div class="form-grid">
                     <input type="hidden" id="edit-prop-id" name="prop_id" />
-                    
+
                     <!-- Section 1: Listing & Pricing -->
                     <div class="col-span-2 form-section-header">
                         <span class="material-symbols-outlined">sell</span>
                         <h4>General Listing Details</h4>
                     </div>
-                    
+
                     <div class="form-group col-span-2">
-                         <label class="form-label" for="edit-title">Property Title</label>
-                         <input type="text" id="edit-title" name="title" class="form-input" required />
+                        <label class="form-label" for="edit-title">Property Title</label>
+                        <input type="text" id="edit-title" name="title" class="form-input" required />
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-listing-type">Listing Type</label>
-                         <select id="edit-listing-type" name="listing_type" class="form-input" required>
-                             <option value="Sell">Sell</option>
-                             <option value="Rent">Rent</option>
-                         </select>
+                        <label class="form-label" for="edit-listing-type">Listing Type</label>
+                        <select id="edit-listing-type" name="listing_type" class="form-input" required>
+                            <option value="Sell">Sell</option>
+                            <option value="Rent">Rent</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-price">Price ($)</label>
-                         <input type="number" step="any" id="edit-price" name="price" class="form-input" required />
+                        <label class="form-label" for="edit-price">Price ($)</label>
+                        <input type="number" step="any" id="edit-price" name="price" class="form-input" required />
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-property-type">Property Type</label>
-                         <select id="edit-property-type" name="property_type" class="form-input" required>
-                             <option value="Apartment">Apartment</option>
-                             <option value="Villa">Villa</option>
-                             <option value="Duplex">Duplex</option>
-                             <option value="Office">Office</option>
-                             <option value="Chalet">Chalet</option>
-                             <option value="Commercial">Commercial</option>
-                             <option value="Land">Land</option>
-                             <option value="Other">Other</option>
-                         </select>
+                        <label class="form-label" for="edit-property-type">Property Type</label>
+                        <select id="edit-property-type" name="property_type" class="form-input" required>
+                            <option value="Apartment">Apartment</option>
+                            <option value="Villa">Villa</option>
+                            <option value="Duplex">Duplex</option>
+                            <option value="Office">Office</option>
+                            <option value="Chalet">Chalet</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Land">Land</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-area">Area (m²)</label>
-                         <input type="number" step="any" id="edit-area" name="area" class="form-input" required />
+                        <label class="form-label" for="edit-area">Area (m²)</label>
+                        <input type="number" step="any" id="edit-area" name="area" class="form-input" required />
                     </div>
 
                     <!-- Section 2: Specifications -->
@@ -493,23 +497,23 @@
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-rooms">Beds / Rooms</label>
-                         <input type="number" id="edit-rooms" name="rooms" class="form-input" />
+                        <label class="form-label" for="edit-rooms">Beds / Rooms</label>
+                        <input type="number" id="edit-rooms" name="rooms" class="form-input" />
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-bathrooms">Bathrooms</label>
-                         <input type="number" id="edit-bathrooms" name="bathrooms" class="form-input" />
+                        <label class="form-label" for="edit-bathrooms">Bathrooms</label>
+                        <input type="number" id="edit-bathrooms" name="bathrooms" class="form-input" />
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-floor">Floor Number</label>
-                         <input type="number" id="edit-floor" name="floor_number" class="form-input" />
+                        <label class="form-label" for="edit-floor">Floor Number</label>
+                        <input type="number" id="edit-floor" name="floor_number" class="form-input" />
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-parking">Parking Spots</label>
-                         <input type="number" id="edit-parking" name="parking_spots" class="form-input" />
+                        <label class="form-label" for="edit-parking">Parking Spots</label>
+                        <input type="number" id="edit-parking" name="parking_spots" class="form-input" />
                     </div>
 
                     <!-- Section 3: Location Details -->
@@ -519,30 +523,30 @@
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-region">Region / City</label>
-                         <select id="edit-region" name="region" class="form-input" required>
-                             <option value="" disabled>Select Region</option>
-                             <option value="Beirut">Beirut</option>
-                             <option value="Achrafieh">Achrafieh</option>
-                             <option value="Faraya">Faraya</option>
-                             <option value="Byblos">Byblos</option>
-                             <option value="Batroun">Batroun</option>
-                         </select>
+                        <label class="form-label" for="edit-region">Region / City</label>
+                        <select id="edit-region" name="region" class="form-input" required>
+                            <option value="" disabled>Select Region</option>
+                            <option value="Beirut">Beirut</option>
+                            <option value="Achrafieh">Achrafieh</option>
+                            <option value="Faraya">Faraya</option>
+                            <option value="Byblos">Byblos</option>
+                            <option value="Batroun">Batroun</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-address">Detailed Address</label>
-                         <input type="text" id="edit-address" name="address" class="form-input" required />
+                        <label class="form-label" for="edit-address">Detailed Address</label>
+                        <input type="text" id="edit-address" name="address" class="form-input" required />
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-latitude">Latitude (Map Pin)</label>
-                         <input type="number" step="any" id="edit-latitude" name="latitude" class="form-input" />
+                        <label class="form-label" for="edit-latitude">Latitude (Map Pin)</label>
+                        <input type="number" step="any" id="edit-latitude" name="latitude" class="form-input" />
                     </div>
 
                     <div class="form-group">
-                         <label class="form-label" for="edit-longitude">Longitude (Map Pin)</label>
-                         <input type="number" step="any" id="edit-longitude" name="longitude" class="form-input" />
+                        <label class="form-label" for="edit-longitude">Longitude (Map Pin)</label>
+                        <input type="number" step="any" id="edit-longitude" name="longitude" class="form-input" />
                     </div>
 
                     <!-- Section 4: Description -->
@@ -552,8 +556,8 @@
                     </div>
 
                     <div class="form-group col-span-2">
-                         <label class="form-label" for="edit-description">Description</label>
-                         <textarea id="edit-description" name="description" class="form-input form-textarea"></textarea>
+                        <label class="form-label" for="edit-description">Description</label>
+                        <textarea id="edit-description" name="description" class="form-input form-textarea"></textarea>
                     </div>
 
                     <!-- Section 5: Media Manager -->
@@ -563,16 +567,17 @@
                     </div>
 
                     <div class="form-group col-span-2">
-                         <label class="form-label">Current Photos (Click trash to delete)</label>
-                         <div class="edit-existing-photos-container custom-scrollbar" id="edit-existing-photos">
-                             <!-- Rendered via JS -->
-                         </div>
-                         <input type="hidden" id="edit-deleted-images" name="deleted_image_ids" value="" />
+                        <label class="form-label">Current Photos (Click trash to delete)</label>
+                        <div class="edit-existing-photos-container custom-scrollbar" id="edit-existing-photos">
+                            <!-- Rendered via JS -->
+                        </div>
+                        <input type="hidden" id="edit-deleted-images" name="deleted_image_ids" value="" />
                     </div>
 
                     <div class="form-group col-span-2">
-                         <label class="form-label" for="edit-new-photos">Upload New Additional Photos</label>
-                         <input type="file" id="edit-new-photos" name="new_photos" class="form-input" multiple accept="image/*" />
+                        <label class="form-label" for="edit-new-photos">Upload New Additional Photos</label>
+                        <input type="file" id="edit-new-photos" name="new_photos" class="form-input" multiple
+                            accept="image/*" />
                     </div>
                 </div>
             </div>
@@ -583,6 +588,10 @@
         </form>
     </div>
 </div>
+<button class="floating-action-button visible-mobile-only" onclick="window.location.href='/sell-rent'">
+    <span class="material-symbols-outlined">add</span>
+    <span class="fab-label">New Listing</span>
+</button>
 {% endblock %}
 
 {% block scripts %}
