@@ -138,6 +138,14 @@ class PropertyService:
                     new_img.imageURL = f"/properties/image/{new_img.imageID}"
                     first_image = False
 
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='ADD',
+                table_name='property',
+                record_id=new_prop.propertyID,
+                description=f"Created property listing '{title}' (Type: '{property_type}', Listing: '{listing_type}', Price: ${price_val:,.2f})",
+                user_id=user.userID
+            )
             db.session.commit()
         except Exception as e:
             db.session.rollback()
@@ -189,12 +197,75 @@ class PropertyService:
         if new_status not in valid_statuses:
             return {'success': False, 'error': 'Invalid status', 'code': 400}
 
+        old_status = prop.status
+        if old_status == new_status:
+            return {'success': True, 'message': 'Status is already set to this value.', 'new_status': new_status}
+
         prop.status = new_status
         if new_status == 'Published' and user_id:
             prop.approvedBy = user_id
-            
+
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='property',
+            record_id=prop_id,
+            description=f"Updated status of property '{prop.title}' to '{new_status}'",
+            user_id=user_id
+        )
+
+        # If property is sold or rented, automatically create a placeholder transaction
+        if new_status in ['Sold', 'Rented']:
+            from app.models.operations import Transaction
+            from app.models.hr import Employee
+
+            employee = None
+            if user_id:
+                employee = Employee.query.filter_by(userID=user_id).first()
+            if not employee:
+                employee = Employee.query.first()
+            employee_id = employee.employeeID if employee else 1
+
+            trans_type = 'Sell' if new_status == 'Sold' else 'Rent'
+
+            if trans_type == 'Sell':
+                commission_rate = 5.0
+                commission_amount = float(prop.price) * 0.05
+            else: # Rent
+                commission_rate = 100.0
+                commission_amount = float(prop.price)
+
+            placeholder_trans = Transaction(
+                propertyID=prop.propertyID,
+                customerID=prop.ownerID, # Placeholder client (buyer/tenant) same as owner
+                ownerID=prop.ownerID,
+                employeeID=employee_id,
+                transactionType=trans_type,
+                finalPrice=prop.price,
+                commissionRate=commission_rate,
+                commissionAmount=commission_amount,
+                paymentStatus='Escrow', # Default (Pending)
+                transactionDate=datetime.now(),
+                createdAt=datetime.now()
+            )
+            db.session.add(placeholder_trans)
+            db.session.flush()
+
+            AuditLog.log_action(
+                action='INSERT',
+                table_name='transaction',
+                record_id=placeholder_trans.transactionID,
+                description=f"Auto-created placeholder transaction #{placeholder_trans.transactionID} due to property '{prop.title}' status changed to '{new_status}'",
+                user_id=user_id
+            )
+
         db.session.commit()
-        return {'success': True, 'message': 'Property status updated.', 'new_status': new_status}
+
+        msg = f"Property status updated to {new_status}."
+        if new_status in ['Sold', 'Rented']:
+            msg += "\n\n[NOTICE]: A placeholder transaction has been automatically added to the ledger. Please visit the All Transactions page to edit and finalize the stakeholder details, final price, and agent commission splits."
+
+        return {'success': True, 'message': msg, 'new_status': new_status}
 
     @staticmethod
     def approve_property(prop_id, user_id):
@@ -207,6 +278,14 @@ class PropertyService:
 
         prop.status = 'Published'
         prop.approvedBy = user_id
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='property',
+            record_id=prop_id,
+            description=f"Approved property listing '{prop.title}'",
+            user_id=user_id
+        )
         db.session.commit()
         return {'success': True, 'message': 'Property approved successfully.'}
 
@@ -220,6 +299,13 @@ class PropertyService:
             return {'success': False, 'error': 'Property not found', 'code': 404}
 
         prop.status = 'Rejected'
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='property',
+            record_id=prop_id,
+            description=f"Rejected property listing '{prop.title}'"
+        )
         db.session.commit()
         return {'success': True, 'message': 'Property rejected successfully.'}
 
@@ -232,6 +318,13 @@ class PropertyService:
         if not prop:
             return {'success': False, 'error': 'Property not found', 'code': 404}
 
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='DELETE',
+            table_name='property',
+            record_id=prop_id,
+            description=f"Deleted property listing '{prop.title}' (Price: ${prop.price:,.2f})"
+        )
         db.session.delete(prop)
         db.session.commit()
         return {'success': True, 'message': 'Property deleted successfully.'}
@@ -349,6 +442,13 @@ class PropertyService:
                         new_img.imageURL = f"/properties/image/{new_img.imageID}"
                         first_image = False
 
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='property',
+                record_id=prop_id,
+                description=f"Updated details for property listing '{prop.title}' (Price: ${prop.price:,.2f})"
+            )
             db.session.commit()
 
             # Gather updated image URLs
@@ -364,4 +464,238 @@ class PropertyService:
         except Exception as e:
             db.session.rollback()
             return {'success': False, 'error': f'Database error: {str(e)}', 'code': 500}
+
+    @staticmethod
+    def get_property_image(image_id):
+        img = PropertyImage.query.get(image_id)
+        if not img or not img.fileData:
+            return None, None
+        return img.fileData, img.fileType or 'image/jpeg'
+
+    @staticmethod
+    def query_properties(filters):
+        from sqlalchemy import or_
+        query = Property.query.filter_by(status='Published')
+        
+        # Text search
+        q = filters.get('q', '').strip()
+        if q:
+            query = query.filter(or_(
+                Property.title.ilike(f'%{q}%'),
+                Property.description.ilike(f'%{q}%'),
+                Property.location.ilike(f'%{q}%'),
+                Property.address.ilike(f'%{q}%')
+            ))
+            
+        # Listing Type
+        listing_type = filters.get('listing_type', 'All').strip()
+        if listing_type and listing_type.lower() != 'all':
+            query = query.filter(Property.listingType.ilike(listing_type))
+            
+        # Location
+        location = filters.get('location', 'All').strip()
+        if location and location.lower() != 'all':
+            query = query.filter(Property.location.ilike(location))
+            
+        # Property Types
+        property_types = filters.get('property_types', [])
+        if isinstance(property_types, str):
+            if ',' in property_types:
+                property_types = [t.strip() for t in property_types.split(',') if t.strip()]
+            elif property_types.strip():
+                property_types = [property_types.strip()]
+            else:
+                property_types = []
+        if property_types:
+            query = query.filter(Property.propertyType.in_(property_types))
+            
+        # Price range
+        price_min = filters.get('price_min')
+        if price_min is not None and price_min != '':
+            try:
+                query = query.filter(Property.price >= float(price_min))
+            except (ValueError, TypeError):
+                pass
+                
+        price_max = filters.get('price_max')
+        if price_max is not None and price_max != '':
+            try:
+                query = query.filter(Property.price <= float(price_max))
+            except (ValueError, TypeError):
+                pass
+                
+        # Area range
+        area_min = filters.get('area_min')
+        if area_min is not None and area_min != '':
+            try:
+                query = query.filter(Property.area >= float(area_min))
+            except (ValueError, TypeError):
+                pass
+                
+        area_max = filters.get('area_max')
+        if area_max is not None and area_max != '':
+            try:
+                query = query.filter(Property.area <= float(area_max))
+            except (ValueError, TypeError):
+                pass
+                
+        # Rooms
+        rooms = filters.get('rooms')
+        if rooms is not None and rooms != '':
+            try:
+                query = query.filter(Property.rooms >= int(rooms))
+            except (ValueError, TypeError):
+                pass
+                
+        # Bathrooms
+        bathrooms = filters.get('bathrooms')
+        if bathrooms is not None and bathrooms != '':
+            try:
+                query = query.filter(Property.bathrooms >= int(bathrooms))
+            except (ValueError, TypeError):
+                pass
+                
+        # Floor
+        floor = filters.get('floor')
+        if floor is not None and floor != '':
+            try:
+                query = query.filter(Property.floorNumber == int(floor))
+            except (ValueError, TypeError):
+                pass
+                
+        # Parking
+        parking = filters.get('parking', 'Any').strip()
+        if parking and parking.lower() == 'available':
+            query = query.filter(Property.parkingAvailable == True)
+            
+        # Sorting
+        sort_order = filters.get('sort', 'newest').strip()
+        if sort_order == 'price-desc':
+            query = query.order_by(Property.price.desc(), Property.propertyID.desc())
+        elif sort_order == 'price-asc':
+            query = query.order_by(Property.price.asc(), Property.propertyID.desc())
+        elif sort_order == 'area-desc':
+            query = query.order_by(Property.area.desc(), Property.propertyID.desc())
+        else: # newest
+            query = query.order_by(Property.createdAt.desc(), Property.propertyID.desc())
+            
+        return query
+
+    @staticmethod
+    def browse_properties(user_id, filters, limit=6):
+        from app.models.property import Favorite
+        query = PropertyService.query_properties(filters)
+        total_count = query.count()
+        properties = query.limit(limit).all()
+        
+        favorite_ids = []
+        if user_id:
+            customer = Customer.query.filter_by(userID=user_id).first()
+            if customer:
+                favorites = Favorite.query.filter_by(customerID=customer.customerID).all()
+                favorite_ids = [f.propertyID for f in favorites]
+                
+        return properties, favorite_ids, total_count
+
+    @staticmethod
+    def get_properties_api(user_id, data):
+        from app.models.property import Favorite
+        try:
+            offset = int(data.get('offset', 0))
+        except (ValueError, TypeError):
+            offset = 0
+            
+        try:
+            limit = int(data.get('limit', 6))
+        except (ValueError, TypeError):
+            limit = 6
+            
+        query = PropertyService.query_properties(data)
+        total_count = query.count()
+        properties = query.offset(offset).limit(limit).all()
+        
+        favorite_ids = []
+        if user_id:
+            customer = Customer.query.filter_by(userID=user_id).first()
+            if customer:
+                favorites = Favorite.query.filter_by(customerID=customer.customerID).all()
+                favorite_ids = [f.propertyID for f in favorites]
+                
+        properties_data = []
+        for prop in properties:
+            images_data = []
+            for img in prop.images:
+                images_data.append({
+                    'imageID': img.imageID,
+                    'imageURL': img.imageURL,
+                    'isMainImage': img.isMainImage
+                })
+            properties_data.append({
+                'propertyID': prop.propertyID,
+                'ownerID': prop.ownerID,
+                'createdBy': prop.createdBy,
+                'title': prop.title,
+                'description': prop.description or '',
+                'propertyType': prop.propertyType,
+                'listingType': prop.listingType,
+                'location': prop.location,
+                'address': prop.address or '',
+                'price': float(prop.price),
+                'area': float(prop.area),
+                'rooms': prop.rooms or 0,
+                'bathrooms': prop.bathrooms or 0,
+                'floorNumber': prop.floorNumber or 0,
+                'parkingAvailable': bool(prop.parkingAvailable),
+                'latitude': float(prop.latitude) if prop.latitude else None,
+                'longitude': float(prop.longitude) if prop.longitude else None,
+                'createdAt': prop.createdAt.isoformat() if prop.createdAt else None,
+                'is_favorited': prop.propertyID in favorite_ids,
+                'images': images_data
+            })
+            
+        return {
+            'success': True,
+            'properties': properties_data,
+            'total_count': total_count
+        }
+
+    @staticmethod
+    def toggle_favorite(user_id, property_id):
+        from app.models.property import Favorite
+        prop = Property.query.get(property_id)
+        if not prop:
+            return {'success': False, 'error': 'Property not found.', 'code': 404}
+            
+        customer = Customer.query.filter_by(userID=user_id).first()
+        if not customer:
+            customer = Customer(userID=user_id)
+            db.session.add(customer)
+            db.session.commit()
+            
+        favorite = Favorite.query.filter_by(customerID=customer.customerID, propertyID=property_id).first()
+        if favorite:
+            db.session.delete(favorite)
+            action = 'removed'
+        else:
+            favorite = Favorite(customerID=customer.customerID, propertyID=property_id)
+            db.session.add(favorite)
+            action = 'added'
+            
+        try:
+            db.session.commit()
+            return {'success': True, 'action': action}
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'error': f'Failed to update favorite: {str(e)}', 'code': 500}
+
+    @staticmethod
+    def get_favorite_properties(user_id):
+        from app.models.property import Favorite
+        customer = Customer.query.filter_by(userID=user_id).first()
+        favorite_properties = []
+        if customer:
+            favorites = Favorite.query.filter_by(customerID=customer.customerID).all()
+            favorite_properties = [f.property_obj for f in favorites if f.property_obj and f.property_obj.status == 'Published']
+        return favorite_properties
+
 

@@ -1,0 +1,622 @@
+{% extends "base.html" %}
+
+{% block title %}LebEstates Admin | All Transactions{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/transactions.css') }}" />
+{% endblock %}
+
+{% block head_scripts %}
+<script defer src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<main class="transactions-ledger-main">
+    <!-- Page Header -->
+    <div class="ledger-header">
+        <div class="header-details">
+            <h2 class="ledger-title">All Transactions</h2>
+            <p class="ledger-subtitle">View and manage all property sales and rental transactions within the LebEstates ecosystem.</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')">
+                <span class="material-symbols-outlined">add</span>
+                <span>New Transaction</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Section 1: Summary Cards -->
+    <div class="stats-grid">
+        <!-- Card 1: Total Transactions -->
+        <div class="stat-card border-left-blue">
+            <div class="stat-card-top">
+                <div class="stat-icon-box bg-blue-light">
+                    <span class="material-symbols-outlined text-primary-color">analytics</span>
+                </div>
+                <div class="stat-trend trend-green">
+                    <span class="material-symbols-outlined text-sm">trending_up</span>
+                    <span>12%</span>
+                </div>
+            </div>
+            <div class="stat-card-bottom">
+                <h4 class="stat-number" id="val-total-transactions">{{ "{:,}".format(stats.total_transactions) }}</h4>
+                <p class="stat-desc text-muted">Total Transactions</p>
+            </div>
+        </div>
+
+        <!-- Card 2: Sales Transactions -->
+        <div class="stat-card border-left-gold">
+            <div class="stat-card-top">
+                <div class="stat-icon-box bg-gold-light">
+                    <span class="material-symbols-outlined text-gold-color">sell</span>
+                </div>
+                <div class="stat-trend trend-green">
+                    <span class="material-symbols-outlined text-sm">trending_up</span>
+                    <span>8%</span>
+                </div>
+            </div>
+            <div class="stat-card-bottom">
+                <h4 class="stat-number" id="val-sales-transactions">{{ "{:,}".format(stats.sales_transactions) }}</h4>
+                <p class="stat-desc text-muted">Sales Transactions</p>
+            </div>
+        </div>
+
+        <!-- Card 3: Rental Transactions -->
+        <div class="stat-card border-left-purple">
+            <div class="stat-card-top">
+                <div class="stat-icon-box bg-purple-light">
+                    <span class="material-symbols-outlined text-purple-color">key</span>
+                </div>
+                <div class="stat-trend trend-red">
+                    <span class="material-symbols-outlined text-sm">trending_down</span>
+                    <span>3%</span>
+                </div>
+            </div>
+            <div class="stat-card-bottom">
+                <h4 class="stat-number" id="val-rental-transactions">{{ "{:,}".format(stats.rental_transactions) }}</h4>
+                <p class="stat-desc text-muted">Rental Transactions</p>
+            </div>
+        </div>
+
+        <!-- Card 4: Paid Transactions -->
+        <div class="stat-card border-left-green">
+            <div class="stat-card-top">
+                <div class="stat-icon-box bg-green-light">
+                    <span class="material-symbols-outlined text-green-color">check_circle</span>
+                </div>
+                <div class="stat-goal-tag text-muted">
+                    92% of goal
+                </div>
+            </div>
+            <div class="stat-card-bottom">
+                <h4 class="stat-number" id="val-paid-transactions">{{ "{:,}".format(stats.paid_transactions) }}</h4>
+                <p class="stat-desc text-muted">Paid Transactions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Filter Bar -->
+    <div class="filter-section">
+        <div class="filter-card">
+            <div class="filter-grid">
+                <!-- Search -->
+                <div class="filter-group col-span-2">
+                    <label class="filter-label">Search Transaction</label>
+                    <div class="input-icon-wrapper">
+                        <span class="material-symbols-outlined input-icon">search</span>
+                        <input type="text" id="search-ledger" class="filter-input" placeholder="ID, Client, Property..." onkeyup="filterLedger()">
+                    </div>
+                </div>
+
+                <!-- Type -->
+                <div class="filter-group">
+                    <label class="filter-label">Transaction Type</label>
+                    <select id="filter-type" class="filter-select" onchange="filterLedger()">
+                        <option value="All">All Types</option>
+                        <option value="Sell">Sale</option>
+                        <option value="Rent">Rental</option>
+                    </select>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="filter-group">
+                    <label class="filter-label">Payment Status</label>
+                    <select id="filter-payment-status" class="filter-select" onchange="filterLedger()">
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In progress">In progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="filter-group">
+                    <label class="filter-label">Date Range</label>
+                    <input type="date" id="filter-date" class="filter-input" onchange="filterLedger()">
+                </div>
+
+                <!-- Actions -->
+                <div class="filter-actions-group">
+                    <button class="btn btn-apply" onclick="filterLedger()">Apply</button>
+                    <button class="btn btn-reset" onclick="resetFilters()">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Transactions Table -->
+    <div class="table-section">
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th class="th-id">ID</th>
+                            <th class="th-property">Property &amp; Type</th>
+                            <th class="th-stakeholders">Stakeholders</th>
+                            <th class="th-value">Value</th>
+                            <th class="th-status text-center">Status</th>
+                            <th class="th-payment text-center">Payment</th>
+                            <th class="th-actions text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-table-body">
+                        {% if transactions %}
+                            {% for t in transactions %}
+                            {% set main_image = none %}
+                            {% for img in t.property_obj.images %}
+                                {% if img.isMainImage %}
+                                    {% set main_image = img.imageURL %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if not main_image and t.property_obj.images %}
+                                {% set main_image = t.property_obj.images[0].imageURL %}
+                            {% endif %}
+                            {% if not main_image %}
+                                {% set main_image = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" %}
+                            {% endif %}
+                            <tr class="trans-row-main" id="row-main-{{ t.transactionID }}"
+                                data-id="{{ t.transactionID }}"
+                                data-type="{{ t.transactionType }}"
+                                data-status="{{ 'Pending' if t.paymentStatus == 'Escrow' else 'In progress' if t.paymentStatus == 'Legal' else 'Completed' if t.paymentStatus == 'Closed' else 'Cancelled' }}"
+                                data-date="{{ t.transactionDate.strftime('%Y-%m-%d') }}"
+                                data-search-text="trx-{{ t.transactionID }} {{ t.property_obj.title.lower() }} {{ t.property_obj.location.lower() }} {{ t.customer.user.fullName.lower() }} {{ t.employee.user.fullName.lower() }}">
+                                
+                                <td class="td-id" data-label="ID">TRX-{{ t.transactionID }}</td>
+                                
+                                <td class="td-property" data-label="Property">
+                                    <div class="property-cell-wrapper">
+                                        <div class="property-image-box">
+                                            <img src="{{ main_image }}" alt="Property Thumbnail">
+                                        </div>
+                                        <div class="property-info-box">
+                                            <p class="property-title-text">{{ t.property_obj.title }}</p>
+                                            <p class="property-meta-text">{{ 'Sale' if t.transactionType == 'Sell' else 'Rent' }} • {{ t.property_obj.location }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="td-stakeholders" data-label="Stakeholders">
+                                    <div class="stakeholders-cell-box">
+                                        <span class="client-name-text">{{ t.customer.user.fullName }}</span>
+                                        <span class="agent-name-text">Agent: {{ t.employee.user.fullName }}</span>
+                                    </div>
+                                </td>
+
+                                <td class="td-value text-right" data-label="Value">
+                                    <div class="value-cell-box">
+                                        <span class="value-price-text">${{ "{:,.2f}".format(t.finalPrice) }}{{ ' /mo' if t.transactionType == 'Rent' }}</span>
+                                        <span class="value-comm-text">Comm: ${{ "{:,.2f}".format(t.commissionAmount) }}</span>
+                                    </div>
+                                </td>
+
+                                <td class="td-status text-center" data-label="Status">
+                                    {% if t.transactionType == 'Sell' %}
+                                    <span class="badge badge-sold">Sold</span>
+                                    {% else %}
+                                    <span class="badge badge-rented">Rented</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="td-payment text-center" data-label="Payment">
+                                    <select class="payment-select-dropdown status-{{ 'pending' if t.paymentStatus == 'Escrow' else 'inprogress' if t.paymentStatus == 'Legal' else 'completed' if t.paymentStatus == 'Closed' else 'cancelled' }}" onchange="updateTransactionStatus({{ t.transactionID }}, this)">
+                                        <option value="Pending" {% if t.paymentStatus == 'Escrow' %}selected{% endif %}>Pending</option>
+                                        <option value="In progress" {% if t.paymentStatus == 'Legal' %}selected{% endif %}>In progress</option>
+                                        <option value="Completed" {% if t.paymentStatus == 'Closed' %}selected{% endif %}>Completed</option>
+                                        <option value="Cancelled" {% if t.paymentStatus == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </td>
+
+                                <td class="td-actions text-center" data-label="Actions">
+                                    <div class="actions-cell-wrapper">
+                                        <button class="btn btn-icon btn-view" onclick="loadTransactionDetails({{ t.transactionID }})" title="View Details">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </button>
+                                        <button class="btn btn-icon btn-edit" title="Edit Transaction" onclick="openEditTransactionModal({{ t.transactionID }})">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </button>
+                                        <button class="btn btn-icon btn-print" onclick="window.print()" title="Print Receipt">
+                                            <span class="material-symbols-outlined">print</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr class="no-records-row">
+                                <td colspan="7" class="no-records-cell">
+                                    <span class="material-symbols-outlined">info</span>
+                                    <p>No transaction records found in the database.</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+
+                        <!-- Client side filter empty state -->
+                        <tr class="no-records-row" id="client-empty-state-row" style="display: none;">
+                            <td colspan="7" class="no-records-cell">
+                                <span class="material-symbols-outlined">search_off</span>
+                                <p>No transactions match your search filters.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination Footer -->
+            <div class="pagination-footer">
+                <span class="pagination-info" id="pagination-info">Showing 1 to 10 of {{ transactions|length }} entries</span>
+                <div class="pagination-buttons" id="pagination-buttons">
+                    <!-- Dynamic Buttons Inject via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal: New Transaction -->
+<div class="modal-overlay hidden" id="new-transaction-modal" onclick="handleOverlayClick(event, 'new-transaction-modal')">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-header-text">
+                <h3 class="modal-title">New Transaction</h3>
+                <p class="modal-subtitle">Fill in the details to record a new property sale or rental.</p>
+            </div>
+            <button class="btn btn-close" onclick="toggleModal('new-transaction-modal')">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form class="modal-form" action="{{ url_for('transactions.create_transaction') }}" method="POST">
+            <div class="form-grid">
+                <!-- Property Selection -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Select Property</label>
+                    <select name="propertyID" id="new-prop-select" class="form-select" required onchange="handlePropertyChange(this)">
+                        <option value="">Select a property...</option>
+                        {% for p in properties %}
+                        <option value="{{ p.propertyID }}" data-price="{{ p.price }}" data-type="{{ p.listingType }}">{{ p.title }} (${{ "{:,.2f}".format(p.price) }} - {{ p.listingType }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Type Selection -->
+                <div class="form-group">
+                    <label class="form-label">Transaction Type</label>
+                    <input type="hidden" name="transactionType" id="new-type-hidden" value="Sell">
+                    <div class="radio-card-wrapper" id="new-type-radio-wrapper">
+                        <label class="radio-card-label" id="label-type-sell">
+                            <input type="radio" name="transactionTypeDisplay" value="Sell" checked onchange="handleTypeDisplayChange(this)">
+                            <div class="radio-card-content">
+                                <span class="radio-bold">Sale</span>
+                            </div>
+                        </label>
+                        <label class="radio-card-label" id="label-type-rent">
+                            <input type="radio" name="transactionTypeDisplay" value="Rent" onchange="handleTypeDisplayChange(this)">
+                            <div class="radio-card-content">
+                                <span class="radio-bold">Rental</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Client -->
+                <div class="form-group">
+                    <label class="form-label">Client (Buyer/Tenant)</label>
+                    <select name="customerID" class="form-select" required>
+                        <option value="">Select a client...</option>
+                        {% for c in customers %}
+                        <option value="{{ c.customerID }}">{{ c.user.fullName }} (ID: {{ c.customerID }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Agent -->
+                <div class="form-group">
+                    <label class="form-label">Assign Agent</label>
+                    <select name="employeeID" class="form-select" required>
+                        <option value="">Select an agent...</option>
+                        {% for e in employees %}
+                        <option value="{{ e.employeeID }}">{{ e.user.fullName }} ({{ e.position }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Price -->
+                <div class="form-group">
+                    <label class="form-label">Total Value (USD)</label>
+                    <input type="number" name="finalPrice" id="new-price-input" class="form-input font-bold" placeholder="0.00" min="0" step="0.01" required onkeyup="updateCommissionPreview()">
+                </div>
+
+                <!-- Payment Type Selection -->
+                <div class="form-group">
+                    <label class="form-label">Payment Type</label>
+                    <select name="paymentType" class="form-select" required>
+                        <option value="Full Payment">Full Payment</option>
+                        <option value="Installments">Installments</option>
+                    </select>
+                </div>
+
+                <!-- Payment Method Selection -->
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select name="paymentMethod" class="form-select" required>
+                        <option value="Cash">Cash</option>
+                        <option value="Bank Transfer (Wire)">Bank Transfer (Wire)</option>
+                        <option value="Credit/Debit Card">Credit/Debit Card</option>
+                        <option value="Check">Check</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Commission Preview Section -->
+            <div class="commission-preview-banner">
+                <div class="preview-left">
+                    <p class="preview-tag text-muted">Commission Preview (<span id="preview-rate-label">5</span>%)</p>
+                    <h4 class="preview-amount" id="preview-commission-val">Waiting for price...</h4>
+                </div>
+                <div class="preview-right text-right" id="preview-right-container" style="display: none;">
+                    <p class="preview-tag text-muted" id="preview-split-owner">2.5% from owner</p>
+                    <p class="preview-tag-bold text-white" id="preview-split-buyer" style="font-size: 14px; margin-top: 2px;">2.5% from buyer</p>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="toggleModal('new-transaction-modal')">Cancel</button>
+                <button type="submit" class="btn btn-submit">Process Transaction</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Details Breakdown -->
+<div class="modal-overlay hidden" id="details-modal" onclick="handleOverlayClick(event, 'details-modal')">
+    <div class="modal-card modal-card-large">
+        <div class="details-banner" id="details-banner-img" style="background-image: url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80');">
+            <div class="details-banner-overlay">
+                <div class="details-banner-header">
+                    <div>
+                        <span class="ref-badge" id="details-ref-id">Ref: TRX-9482</span>
+                        <h3 class="details-banner-title" id="details-prop-title">Achrafieh Heights Penthouse</h3>
+                    </div>
+                    <button class="btn btn-close-circle" onclick="toggleModal('details-modal')">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="details-content">
+            <div class="details-grid">
+                <!-- Column 1: Parties -->
+                <div class="details-col">
+                    <h4 class="details-col-title">Involved Parties</h4>
+                    <div class="parties-list">
+                        <!-- Buyer -->
+                        <div class="party-item">
+                            <div class="party-icon bg-surface-container">
+                                <span class="material-symbols-outlined text-primary-color">person</span>
+                            </div>
+                            <div class="party-details">
+                                <p class="party-name" id="details-buyer-name">George Mansour</p>
+                                <p class="party-role text-muted" id="details-buyer-role">Buyer / Client</p>
+                            </div>
+                        </div>
+                        <!-- Agent -->
+                        <div class="party-item">
+                            <div class="party-icon bg-surface-container">
+                                <span class="material-symbols-outlined text-primary-color">real_estate_agent</span>
+                            </div>
+                            <div class="party-details">
+                                <p class="party-name" id="details-agent-name">Lina Hage</p>
+                                <p class="party-role text-muted" id="details-agent-role">Lead Agent</p>
+                            </div>
+                        </div>
+                        <!-- Owner -->
+                        <div class="party-item">
+                            <div class="party-icon bg-surface-container">
+                                <span class="material-symbols-outlined text-primary-color">corporate_fare</span>
+                            </div>
+                            <div class="party-details">
+                                <p class="party-name" id="details-owner-name">Capital Realty Ltd.</p>
+                                <p class="party-role text-muted" id="details-owner-role">Original Owner</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Financials -->
+                <div class="details-col">
+                    <h4 class="details-col-title">Financial Summary</h4>
+                    <div class="financials-box">
+                        <div class="financial-row">
+                            <span class="fin-label text-muted">Property Value</span>
+                            <span class="fin-value text-bold" id="details-prop-value">$1,250,000</span>
+                        </div>
+                        <div class="financial-row">
+                            <span class="fin-label text-muted">Commission Rate</span>
+                            <span class="fin-value text-bold" id="details-comm-rate">3.00%</span>
+                        </div>
+                        <div class="financial-divider"></div>
+                        <div class="financial-row font-lg">
+                            <span class="fin-label text-bold">Total Commission</span>
+                            <span class="fin-value text-bold text-gold-color" id="details-comm-total">$37,500</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 3: Payment Summary -->
+                <div class="details-col">
+                    <h4 class="details-col-title">Payment Progress</h4>
+                    <div class="progress-box bg-surface-container-low">
+                        <div class="progress-info-row">
+                            <span class="progress-status-tag" id="details-progress-text">PAID IN FULL</span>
+                            <span class="progress-percent-text text-bold" id="details-progress-percent">100%</span>
+                        </div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar-fill" id="details-progress-bar" style="width: 100%;"></div>
+                        </div>
+                        <p class="progress-note-text text-muted" id="details-progress-note">
+                            Transaction cleared via Swift Wire Transfer. Receipt issued.
+                        </p>
+                    </div>
+                    
+                    <div class="financials-box" style="margin-top: 16px;">
+                        <div class="financial-row">
+                            <span class="fin-label text-muted">Payment Type</span>
+                            <span class="fin-value text-bold" id="details-payment-type">Full Payment</span>
+                        </div>
+                        <div class="financial-row">
+                            <span class="fin-label text-muted">Payment Method</span>
+                            <span class="fin-value text-bold" id="details-payment-method">Bank Transfer (Wire)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="details-footer">
+                <button class="btn btn-print-receipt" onclick="window.print()">
+                    <span class="material-symbols-outlined">print</span>
+                    <span>Print Receipt</span>
+                </button>
+                <button class="btn btn-edit-details" onclick="editTransactionDetails()">
+                    <span class="material-symbols-outlined">edit</span>
+                    <span>Edit Details</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Transaction -->
+<div class="modal-overlay hidden" id="edit-transaction-modal" onclick="handleOverlayClick(event, 'edit-transaction-modal')">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-header-text">
+                <h3 class="modal-title">Edit Transaction</h3>
+                <p class="modal-subtitle">Update stakeholder, agent, and payment details for this transaction.</p>
+            </div>
+            <button class="btn btn-close" onclick="toggleModal('edit-transaction-modal')">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form class="modal-form" id="edit-transaction-form" method="POST">
+            <div class="form-grid">
+                <!-- Property (Read-Only) -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Property</label>
+                    <input type="text" id="edit-prop-title" class="form-input font-bold" readonly style="background-color: var(--surface-container-low); pointer-events: none;">
+                </div>
+
+                <!-- Transaction Type (Read-Only) -->
+                <div class="form-group">
+                    <label class="form-label">Transaction Type</label>
+                    <input type="text" id="edit-type-display" class="form-input font-bold" readonly style="background-color: var(--surface-container-low); pointer-events: none;">
+                </div>
+
+                <!-- Price (Read-Only) -->
+                <div class="form-group">
+                    <label class="form-label">Total Value (USD)</label>
+                    <input type="number" name="finalPrice" id="edit-price-input" class="form-input font-bold" readonly style="background-color: var(--surface-container-low); pointer-events: none;">
+                </div>
+
+                <!-- Client -->
+                <div class="form-group">
+                    <label class="form-label">Client (Buyer/Tenant)</label>
+                    <select name="customerID" id="edit-customer-select" class="form-select" required>
+                        <option value="">Select a client...</option>
+                        {% for c in customers %}
+                        <option value="{{ c.customerID }}">{{ c.user.fullName }} (ID: {{ c.customerID }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Agent -->
+                <div class="form-group">
+                    <label class="form-label">Assign Agent</label>
+                    <select name="employeeID" id="edit-employee-select" class="form-select" required>
+                        <option value="">Select an agent...</option>
+                        {% for e in employees %}
+                        <option value="{{ e.employeeID }}">{{ e.user.fullName }} ({{ e.position }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Payment Type -->
+                <div class="form-group">
+                    <label class="form-label">Payment Type</label>
+                    <select name="paymentType" id="edit-payment-type" class="form-select" required>
+                        <option value="Full Payment">Full Payment</option>
+                        <option value="Installments">Installments</option>
+                    </select>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select name="paymentMethod" id="edit-payment-method" class="form-select" required>
+                        <option value="Cash">Cash</option>
+                        <option value="Bank Transfer (Wire)">Bank Transfer (Wire)</option>
+                        <option value="Credit/Debit Card">Credit/Debit Card</option>
+                        <option value="Check">Check</option>
+                    </select>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Payment Status</label>
+                    <select name="paymentStatus" id="edit-payment-status" class="form-select" required>
+                        <option value="Pending">Pending</option>
+                        <option value="In progress">In progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Commission Info Preview -->
+            <div class="commission-preview-banner">
+                <div class="preview-left">
+                    <p class="preview-tag text-muted">Commission Info</p>
+                    <h4 class="preview-amount" id="edit-commission-val">$0.00</h4>
+                </div>
+                <div class="preview-right text-right" id="edit-right-container">
+                    <!-- Splits -->
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="toggleModal('edit-transaction-modal')">Cancel</button>
+                <button type="submit" class="btn btn-submit">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast Notification Container -->
+<div class="toast-container-global" id="toast">
+    <div class="toast-inner" id="toastInner">
+        <span class="material-symbols-outlined" id="toastIcon">check_circle</span>
+        <span class="label-md" id="toastText">Action completed successfully</span>
+    </div>
+</div>
+{% endblock %}

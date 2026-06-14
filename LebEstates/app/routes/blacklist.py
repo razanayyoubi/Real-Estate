@@ -1,14 +1,14 @@
 from flask import Blueprint, render_template, session, redirect, request, url_for, flash, jsonify
 from functools import wraps
 import math
-from app.models.users import Users
 from app.services.blacklist_service import (
     get_all_blacklist_entries,
     get_blacklist_stats,
     blacklist_user,
     resolve_blacklist_entry,
     update_blacklist_reason,
-    delete_blacklist_entry
+    delete_blacklist_entry,
+    search_users_for_blacklist
 )
 
 blacklist_bp = Blueprint('blacklist', __name__, url_prefix='/blacklist')
@@ -60,18 +60,7 @@ def search_users():
     if not q or len(q) < 2:
         return jsonify([])
         
-    # Query users matching search query (name or email), who are not blacklisted
-    users = Users.query.filter(
-        (Users.fullName.like(f"%{q}%")) | (Users.email.like(f"%{q}%")),
-        Users.status != 'Blacklisted'
-    ).limit(10).all()
-    
-    result = [{
-        'userID': u.userID,
-        'fullName': u.fullName,
-        'email': u.email
-    } for u in users]
-    
+    result = search_users_for_blacklist(q)
     return jsonify(result)
 
 @blacklist_bp.route('/add', methods=['POST'])
@@ -142,3 +131,4 @@ def delete_blacklist_route(blacklist_id):
         return jsonify({'message': 'Blacklist record deleted successfully!'}), 200
     else:
         return jsonify({'error': result.get('error', 'Deletion failed')}), result.get('code', 400)
+

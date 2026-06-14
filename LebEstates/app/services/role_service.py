@@ -65,9 +65,37 @@ def change_user_role(user_id, new_role_id):
                 
         # Apply role change
         user.roleID = new_role_id
+        
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='users',
+            record_id=user_id,
+            description=f"Changed user '{user.fullName}' role to '{new_role.roleName}'"
+        )
         db.session.commit()
         return {"success": True}
     except Exception as e:
         db.session.rollback()
         print(f"Change user role service error: {e}")
         return {"success": False, "error": "An internal error occurred while updating the role.", "code": 500}
+
+def get_staff_stats():
+    """Calculate counts of admin/employee staff users."""
+    customer_role = Role.query.filter_by(roleName='Customer').first()
+    query = Users.query
+    if customer_role:
+        query = query.filter(Users.roleID != customer_role.roleID)
+        
+    total_staff = query.count()
+    admin_role = Role.query.filter_by(roleName='Admin').first()
+    employee_role = Role.query.filter_by(roleName='Employee').first()
+    
+    admins = query.filter_by(roleID=admin_role.roleID).count() if admin_role else 0
+    employees = query.filter_by(roleID=employee_role.roleID).count() if employee_role else 0
+    
+    return {
+        'total': total_staff,
+        'admins': admins,
+        'employees': employees
+    }

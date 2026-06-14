@@ -48,6 +48,8 @@ class Transaction(db.Model):
     commissionRate = db.Column(db.Numeric(5, 2), nullable=False)
     commissionAmount = db.Column(db.Numeric(15, 2), nullable=False)
     paymentStatus = db.Column(db.Enum('Escrow', 'Legal', 'Closed', 'Cancelled', name='trans_pay_status'), default='Escrow')
+    paymentType = db.Column(db.String(50), nullable=True, default='Full Payment')
+    paymentMethod = db.Column(db.String(50), nullable=True, default='Bank Transfer (Wire)')
     transactionDate = db.Column(db.DateTime, default=datetime.now)
     createdAt = db.Column(db.DateTime, default=datetime.now)
 

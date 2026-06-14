@@ -26,7 +26,7 @@
             <div class="hero-search-box">
                 <div class="search-input-wrapper">
                     <span class="material-symbols-outlined search-icon">search</span>
-                    <input type="text" id="search-input"
+                    <input type="text" id="search-input" value="{{ initial_filters.q or '' }}"
                         placeholder="Search by region, development, landmark, or description..." />
                 </div>
                 <button type="button" id="btn-search-trigger" class="btn-search-now">Search Now</button>
@@ -51,9 +51,9 @@
                         <label class="filter-label" for="filter-listing-type">Listing Type</label>
                         <div class="select-wrapper">
                             <select id="filter-listing-type" class="filter-select">
-                                <option value="All">All Listings</option>
-                                <option value="Sell">For Sale</option>
-                                <option value="Rent">For Rent</option>
+                                <option value="All" {% if initial_filters.listing_type == 'All' %}selected{% endif %}>All Listings</option>
+                                <option value="Sell" {% if initial_filters.listing_type == 'Sell' %}selected{% endif %}>For Sale</option>
+                                <option value="Rent" {% if initial_filters.listing_type == 'Rent' %}selected{% endif %}>For Rent</option>
                             </select>
                             <span class="material-symbols-outlined select-chevron">keyboard_arrow_down</span>
                         </div>
@@ -64,12 +64,12 @@
                         <label class="filter-label" for="filter-location">Region</label>
                         <div class="select-wrapper">
                             <select id="filter-location" class="filter-select">
-                                <option value="All">All of Lebanon</option>
-                                <option value="Beirut">Beirut</option>
-                                <option value="Achrafieh">Achrafieh</option>
-                                <option value="Faraya">Faraya</option>
-                                <option value="Byblos">Byblos</option>
-                                <option value="Batroun">Batroun</option>
+                                <option value="All" {% if initial_filters.location == 'All' %}selected{% endif %}>All of Lebanon</option>
+                                <option value="Beirut" {% if initial_filters.location == 'Beirut' %}selected{% endif %}>Beirut</option>
+                                <option value="Achrafieh" {% if initial_filters.location == 'Achrafieh' %}selected{% endif %}>Achrafieh</option>
+                                <option value="Faraya" {% if initial_filters.location == 'Faraya' %}selected{% endif %}>Faraya</option>
+                                <option value="Byblos" {% if initial_filters.location == 'Byblos' %}selected{% endif %}>Byblos</option>
+                                <option value="Batroun" {% if initial_filters.location == 'Batroun' %}selected{% endif %}>Batroun</option>
                             </select>
                             <span class="material-symbols-outlined select-chevron">keyboard_arrow_down</span>
                         </div>
@@ -181,7 +181,7 @@
                 <div class="listings-header">
                     <div class="listings-header-text">
                         <h2 class="listings-section-title">Exclusive Collections</h2>
-                        <p class="listings-subtitle">Showing <span id="properties-count">{{ properties|length }}</span>
+                        <p class="listings-subtitle">Showing <span id="properties-count">{{ total_count }}</span>
                             curated properties across Lebanon</p>
                     </div>
                     <div class="sort-control-wrapper">
@@ -229,7 +229,7 @@
                                 {% endif %}
                                 <span class="card-badge badge-listing-type">For {{ prop.listingType }}</span>
                             </div>
-                            <button type="button" class="btn-favorite" title="Add to Favorites">
+                            <button type="button" class="btn-favorite {% if prop.propertyID in favorite_ids %}active-favorite{% endif %}" data-id="{{ prop.propertyID }}" title="Add to Favorites">
                                 <span class="material-symbols-outlined">favorite</span>
                             </button>
                             <div class="card-title-overlay">
@@ -274,7 +274,7 @@
                 </div>
 
                 <div class="load-more-container" id="load-more-container"
-                    style="display: none; text-align: center; margin-top: 2.5rem; margin-bottom: 1rem;">
+                    style="{% if total_count > 6 %}display: block;{% else %}display: none;{% endif %} text-align: center; margin-top: 2.5rem; margin-bottom: 1rem;">
                     <button type="button" id="btn-load-more" class="btn-sidebar-apply"
                         style="width: auto; padding: 0.85rem 2.5rem; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; margin: 0 auto; border-radius: 4px; font-weight: 600; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
                         <span class="material-symbols-outlined">expand_more</span> Load More Properties

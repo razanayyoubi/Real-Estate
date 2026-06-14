@@ -24,21 +24,35 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = ''; // unlock page scroll
     };
 
-    // Toggle button opens the sidebar
-    if (hamburger) {
-        hamburger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const sideNav = document.getElementById('sideNav');
-            if (sideNav) {
-                // If there's an admin aside sidebar on the page, toggle it!
-                sideNav.classList.toggle('sidebar--open');
-                const overlay = document.getElementById('dashboardSidebarOverlay') || document.getElementById('sidebar-overlay');
-                if (overlay) overlay.classList.toggle('active');
+    const handleToggle = (e) => {
+        e.stopPropagation();
+        const sideNav = document.getElementById('sideNav');
+        if (!sideNav) {
+            // Toggle the mobile navigation drawer for customer/guest pages
+            const navMenu = document.getElementById('nav-menu');
+            if (navMenu && navMenu.classList.contains('active')) {
+                closeSidebar();
             } else {
-                // Otherwise, toggle the mobile navigation drawer
                 openSidebar();
             }
-        });
+            return;
+        }
+
+        const isDesktop = window.innerWidth > 1024;
+        const isAdmin = !!document.querySelector('.admin-layout-wrapper');
+
+        if (isDesktop && isAdmin) {
+            document.body.classList.toggle('sidebar-collapsed');
+        } else {
+            // Mobile/Tablet sidebar toggle drawer behavior
+            sideNav.classList.toggle('sidebar--open');
+            const overlay = document.getElementById('dashboardSidebarOverlay') || document.getElementById('sidebar-overlay');
+            if (overlay) overlay.classList.toggle('active');
+        }
+    };
+
+    if (hamburger) {
+        hamburger.addEventListener('click', handleToggle);
     }
 
     // Sidebar Close button
@@ -47,6 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             closeSidebar();
         });
+    }
+
+    // Toggle button closes the sidebar if it exists
+    const toggleButton = document.getElementById('toggleButton');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', handleToggle);
     }
 
     // Overlay click dismisses the sidebar
@@ -93,9 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ─────────────────────────────────────────────────────────
        CENTERED SEARCH BAR AUTOCOMPLETE SUGGESTIONS
     ───────────────────────────────────────────────────────── */
-    const searchInput = document.getElementById('searchInput');
-    const searchSuggestions = document.getElementById('searchSuggestions');
-
     const searchablePages = [
         { name: "Dashboard Overview", url: "/dashboard", icon: "dashboard" },
         { name: "Control Panel Center", url: "/control-panel", icon: "admin_panel_settings" },
@@ -112,52 +129,78 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: "About LebEstates", url: "/about", icon: "info" }
     ];
 
-    if (searchInput && searchSuggestions) {
-        searchInput.addEventListener('input', () => {
-            const query = searchInput.value.toLowerCase().trim();
-            searchSuggestions.innerHTML = ''; // clear suggestions
+    function setupSearchAutocomplete(inputId, suggestionsId) {
+        const inputEl = document.getElementById(inputId);
+        const suggestionsEl = document.getElementById(suggestionsId);
+        if (inputEl && suggestionsEl) {
+            inputEl.addEventListener('input', () => {
+                const query = inputEl.value.toLowerCase().trim();
+                suggestionsEl.innerHTML = ''; // clear suggestions
 
-            if (query.length === 0) {
-                searchSuggestions.style.display = 'none';
-                return;
-            }
+                if (query.length === 0) {
+                    suggestionsEl.style.display = 'none';
+                    return;
+                }
 
-            const matches = searchablePages.filter(page =>
-                page.name.toLowerCase().includes(query)
-            );
+                // Check role: admin/employee sees admin pages, others don't
+                const isAdmin = !!document.querySelector('.admin-layout-wrapper');
+                let filteredPages = searchablePages;
+                if (!isAdmin) {
+                    filteredPages = searchablePages.filter(page => 
+                        !page.url.startsWith('/dashboard') && !page.url.startsWith('/control-panel')
+                    );
+                }
 
-            if (matches.length === 0) {
-                const emptyItem = document.createElement('div');
-                emptyItem.className = 'search-suggestion-item';
-                emptyItem.style.cursor = 'default';
-                emptyItem.innerHTML = `
-                    <span class="material-symbols-outlined">search_off</span>
-                    <span>No results found</span>
-                `;
-                searchSuggestions.appendChild(emptyItem);
-            } else {
-                matches.forEach(match => {
-                    const suggItem = document.createElement('a');
-                    suggItem.href = match.url;
-                    suggItem.className = 'search-suggestion-item';
-                    suggItem.innerHTML = `
-                        <span class="material-symbols-outlined">${match.icon}</span>
-                        <span>${match.name}</span>
+                const matches = filteredPages.filter(page =>
+                    page.name.toLowerCase().includes(query)
+                );
+
+                if (matches.length === 0) {
+                    const emptyItem = document.createElement('div');
+                    emptyItem.className = 'search-suggestion-item';
+                    emptyItem.style.cursor = 'default';
+                    emptyItem.innerHTML = `
+                        <span class="material-symbols-outlined">search_off</span>
+                        <span>No results found</span>
                     `;
-                    searchSuggestions.appendChild(suggItem);
-                });
-            }
+                    suggestionsEl.appendChild(emptyItem);
+                } else {
+                    matches.forEach(match => {
+                        const suggItem = document.createElement('a');
+                        suggItem.href = match.url;
+                        suggItem.className = 'search-suggestion-item';
+                        suggItem.innerHTML = `
+                            <span class="material-symbols-outlined">${match.icon}</span>
+                            <span>${match.name}</span>
+                        `;
+                        suggestionsEl.appendChild(suggItem);
+                    });
+                }
 
-            searchSuggestions.style.display = 'flex';
-        });
+                suggestionsEl.style.display = 'flex';
+            });
 
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
-                searchSuggestions.style.display = 'none';
-            }
-        });
+            // Redirect on Enter
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const query = inputEl.value.trim();
+                    if (query.length > 0) {
+                        window.location.href = `/properties?q=${encodeURIComponent(query)}`;
+                    }
+                }
+            });
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!inputEl.contains(e.target) && !suggestionsEl.contains(e.target)) {
+                    suggestionsEl.style.display = 'none';
+                }
+            });
+        }
     }
+
+    setupSearchAutocomplete('searchInput', 'searchSuggestions');
+    setupSearchAutocomplete('searchInputMobile', 'searchSuggestionsMobile');
 
     /* ─────────────────────────────────────────────────────────
        USER PROFILE DROPDOWN MENU

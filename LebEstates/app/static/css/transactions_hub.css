@@ -1,0 +1,303 @@
+/* ==========================================================================
+   LEBESTATES TRANSACTIONS PORTAL HUB STYLES (PURE VANILLA CSS)
+   ========================================================================== */
+
+/* Main Container Layout with radial-mesh background */
+.transactions-hub-main {
+  padding: 40px var(--margin-mobile);
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background-color: #f8f9ff;
+  background-image: 
+      radial-gradient(at 0% 0%, hsla(220,100%,98%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(210,100%,97%,1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(200,100%,98%,1) 0, transparent 50%);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .transactions-hub-main {
+    padding: 60px var(--margin-desktop);
+  }
+}
+
+.transactions-hub-container {
+  max-width: 1400px;
+  width: 100%;
+  margin: 40px auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+/* Page Header */
+.hub-header {
+  margin-bottom: 64px;
+  text-align: left;
+}
+
+.hub-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.hub-header-line {
+  width: 40px;
+  height: 3px;
+  background-color: var(--secondary, #735c00);
+  border-radius: 9999px;
+}
+
+.hub-header-tag {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: var(--secondary, #735c00);
+}
+
+.hub-title {
+  font-family: var(--font-headline, 'Montserrat', sans-serif);
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--primary, #00081e);
+  margin: 0 0 16px 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.hub-subtitle {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 18px;
+  color: var(--on-surface-variant, #44464e);
+  margin: 0;
+  line-height: 1.7;
+  max-width: 750px;
+  opacity: 0.85;
+}
+
+/* Control Panel Bento Grid */
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 32px;
+}
+
+@media (min-width: 768px) {
+  .control-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .control-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Control Card Styling */
+.control-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(197, 198, 207, 0.2);
+  border-radius: 24px;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 40px -12px rgba(10, 31, 68, 0.08);
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.control-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px -15px rgba(10, 31, 68, 0.12);
+  border-color: var(--secondary-fixed-dim, #e9c349);
+}
+
+/* Large decorative backdrop icon */
+.decorative-icon {
+  position: absolute;
+  right: -30px;
+  top: -30px;
+  font-size: 192px !important;
+  pointer-events: none;
+  transform: rotate(15deg);
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.4s ease;
+}
+
+#card-all-transactions .decorative-icon {
+  color: rgba(10, 31, 68, 0.14);
+}
+#card-revenue-dashboard .decorative-icon {
+  color: rgba(115, 92, 0, 0.14);
+}
+#card-agent-commissions .decorative-icon {
+  color: rgba(22, 163, 74, 0.14);
+}
+#card-payment-tracking .decorative-icon {
+  color: rgba(147, 51, 234, 0.14);
+}
+#card-commission-settings .decorative-icon {
+  color: rgba(234, 88, 12, 0.14);
+}
+
+.control-card:hover .decorative-icon {
+  transform: rotate(20deg) scale(1.1);
+}
+
+#card-all-transactions:hover .decorative-icon {
+  color: rgba(10, 31, 68, 0.22);
+}
+#card-revenue-dashboard:hover .decorative-icon {
+  color: rgba(115, 92, 0, 0.22);
+}
+#card-agent-commissions:hover .decorative-icon {
+  color: rgba(22, 163, 74, 0.22);
+}
+#card-payment-tracking:hover .decorative-icon {
+  color: rgba(147, 51, 234, 0.22);
+}
+#card-commission-settings:hover .decorative-icon {
+  color: rgba(234, 88, 12, 0.22);
+}
+
+.card-inner {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Icon wrapper circular shape */
+.icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+  transition: transform 0.3s ease;
+}
+
+.control-card:hover .icon-wrapper {
+  transform: scale(1.1);
+}
+
+.icon-main {
+  font-size: 30px !important;
+}
+
+/* Color tints */
+.bg-blue-tint {
+  background-color: rgba(10, 31, 68, 0.08);
+  color: var(--primary-container, #0a1f44);
+}
+
+.bg-gold-tint {
+  background-color: rgba(115, 92, 0, 0.08);
+  color: var(--secondary, #735c00);
+}
+
+.bg-green-tint {
+  background-color: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
+}
+
+.bg-purple-tint {
+  background-color: rgba(147, 51, 234, 0.08);
+  color: #9333ea;
+}
+
+.bg-orange-tint {
+  background-color: rgba(234, 88, 12, 0.08);
+  color: #ea580c;
+}
+
+/* Text styles */
+.card-title {
+  font-family: var(--font-headline, 'Montserrat', sans-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary, #00081e);
+  margin: 0 0 16px 0;
+}
+
+.card-description {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--on-surface-variant, #44464e);
+  margin: 0 0 40px 0;
+  min-height: 72px;
+}
+
+/* Open module button styling */
+.btn-open-module {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--secondary, #735c00);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-top: auto;
+  transition: color 0.3s ease;
+  width: fit-content;
+  text-align: left;
+}
+
+.btn-open-module .icon-arrow {
+  font-size: 18px !important;
+  transition: transform 0.3s ease;
+}
+
+.control-card:hover .btn-open-module .icon-arrow {
+  transform: translateX(6px);
+}
+
+
+
+/* Toast Notification Styles */
+.toast-container {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: 2000;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.toast-container.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast-inner {
+  background-color: var(--primary-container, #0a1f44);
+  color: #ffffff;
+  padding: 14px 28px;
+  border-radius: 9999px;
+  box-shadow: 0 16px 36px rgba(10, 31, 68, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 14px;
+}

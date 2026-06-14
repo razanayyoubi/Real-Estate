@@ -6,7 +6,6 @@ const init = () => {
 
     // Core Elements
     const propertiesGrid = document.getElementById('properties-grid');
-    const propertyCards = Array.from(document.querySelectorAll('.property-card'));
     const propertiesCountSpan = document.getElementById('properties-count');
 
     // Filter Inputs
@@ -38,8 +37,10 @@ const init = () => {
     // Load More Elements & State
     const loadMoreContainer = document.getElementById('load-more-container');
     const btnLoadMore = document.getElementById('btn-load-more');
-    let visibleLimit = 6;
-    let matchingCards = [];
+    
+    let offset = 6;
+    const limit = 6;
+    let totalCount = parseInt(propertiesCountSpan ? propertiesCountSpan.textContent : '0') || 0;
 
     // Empty state element helper
     let emptyStateEl = document.querySelector('.browse-empty-state');
@@ -54,206 +55,280 @@ const init = () => {
         propertiesGrid.appendChild(emptyStateEl);
     }
 
-
     /* ─────────────────────────────────────────────────────────
-           2. APPLY FILTERING LOGIC
-        ───────────────────────────────────────────────────────── */
-    const applyFilters = () => {
-        const query = searchInput.value.toLowerCase().trim();
-        const selectedListingType = listingTypeSelect ? listingTypeSelect.value.toLowerCase() : 'all';
-        const selectedLocation = locationSelect.value.toLowerCase();
+       1. SERVER-SIDE FETCHING & RENDERING LOGIC
+    ───────────────────────────────────────────────────────── */
+    
+    const createPropertyCardHtml = (prop) => {
+        // Format price
+        const formattedPrice = Number(prop.price).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const priceSuffix = prop.listingType === 'Rent' ? '/mo' : '';
+        
+        // Format area
+        const formattedArea = Number(prop.area).toFixed(0);
+        
+        // Image handling
+        let imageHtml = '';
+        if (prop.images && prop.images.length > 0) {
+            imageHtml = `<img class="card-img" src="${prop.images[0].imageURL}" alt="${prop.title}" />`;
+        } else {
+            imageHtml = `
+                <div class="card-img-placeholder">
+                    <span class="material-symbols-outlined">image</span>
+                </div>
+            `;
+        }
+        
+        // Badge exclusive
+        const exclusiveBadge = Number(prop.price) > 1000000 
+            ? `<span class="card-badge badge-exclusive">Exclusive</span>`
+            : '';
+            
+        // Favorite active class
+        const favoriteClass = prop.is_favorited ? 'active-favorite' : '';
+        
+        // Image URLs list for details modal
+        const imageUrls = prop.images ? prop.images.map(img => img.imageURL).join(',') : '';
+        
+        return `
+            <div class="property-card" data-id="${prop.propertyID}" data-title="${prop.title}"
+                data-price="${prop.price}" data-type="${prop.propertyType}"
+                data-listing-type="${prop.listingType}" data-location="${prop.location}"
+                data-created="${prop.createdAt}" data-beds="${prop.rooms || 0}"
+                data-baths="${prop.bathrooms || 0}" data-area="${prop.area}"
+                data-floor="${prop.floorNumber || 0}"
+                data-parking="${prop.parkingAvailable ? 'true' : 'false'}"
+                data-address="${prop.address || ''}" data-latitude="${prop.latitude || ''}"
+                data-longitude="${prop.longitude || ''}" data-description="${prop.description || ''}"
+                data-owner-id="${prop.ownerID}" data-creator-id="${prop.createdBy}"
+                data-image-urls="${imageUrls}">
 
-        // Gather selected property types
+                <div class="card-image-wrapper">
+                    ${imageHtml}
+                    <div class="card-badge-container">
+                        ${exclusiveBadge}
+                        <span class="card-badge badge-listing-type">For ${prop.listingType}</span>
+                    </div>
+                    <button type="button" class="btn-favorite ${favoriteClass}" data-id="${prop.propertyID}" title="Add to Favorites">
+                        <span class="material-symbols-outlined">favorite</span>
+                    </button>
+                    <div class="card-title-overlay">
+                        <h3 class="card-title">${prop.title}</h3>
+                        <p class="card-location">
+                            <span class="material-symbols-outlined">location_on</span> ${prop.location}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="card-price-specs">
+                        <span class="card-price">$${formattedPrice}${priceSuffix}</span>
+                        <div class="card-specs">
+                            <span class="spec-item" title="Beds"><span
+                                    class="material-symbols-outlined">bed</span> ${prop.rooms || 0}</span>
+                            <span class="spec-item" title="Baths"><span
+                                    class="material-symbols-outlined">bathtub</span> ${prop.bathrooms || 0}</span>
+                            <span class="spec-item" title="Area"><span
+                                    class="material-symbols-outlined">square_foot</span> ${formattedArea}m²</span>
+                        </div>
+                    </div>
+                    <div class="card-buttons">
+                        <button type="button" class="btn-card-action btn-card-details"
+                            data-id="${prop.propertyID}">View Details</button>
+                        <button type="button" class="btn-card-action btn-card-visit"
+                            data-id="${prop.propertyID}">Request Visit</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    const fetchProperties = (isAppend = false) => {
+        if (!isAppend) {
+            offset = 0;
+        }
+
+        // Gather all current filter values
+        const query = searchInput ? searchInput.value.trim() : '';
+        const selectedListingType = listingTypeSelect ? listingTypeSelect.value : 'All';
+        const selectedLocation = locationSelect ? locationSelect.value : 'All';
+
         const checkedTypes = Array.from(typeCheckboxes)
             .filter(cb => cb.checked)
-            .map(cb => cb.value.toLowerCase());
+            .map(cb => cb.value);
 
-        // Gather price range boundary
-        const minPrice = parseFloat(priceMinInput.value) || 0;
-        const maxPrice = parseFloat(priceMaxInput.value) || Infinity;
+        const minPrice = priceMinInput ? priceMinInput.value : '';
+        const maxPrice = priceMaxInput ? priceMaxInput.value : '';
 
-        // Gather area range boundary
-        const minArea = parseFloat(areaMinInput.value) || 0;
-        const maxArea = parseFloat(areaMaxInput.value) || Infinity;
+        const minArea = areaMinInput ? areaMinInput.value : '';
+        const maxArea = areaMaxInput ? areaMaxInput.value : '';
 
-        // Gather rooms, bathrooms, floor, parking
-        const minRooms = parseInt(roomsInput.value) || 0;
-        const minBathrooms = parseInt(bathroomsInput.value) || 0;
-        const floorFilter = floorInput.value !== '' ? parseInt(floorInput.value) : null;
-        const selectedParking = parkingSelect ? parkingSelect.value.toLowerCase() : 'any';
+        const minRooms = roomsInput ? roomsInput.value : '';
+        const minBathrooms = bathroomsInput ? bathroomsInput.value : '';
+        const floorFilter = floorInput ? floorInput.value : '';
+        const selectedParking = parkingSelect ? parkingSelect.value : 'Any';
+        const sortOrder = sortSelect ? sortSelect.value : 'newest';
 
-        visibleLimit = 6; // Reset load more limit on new filter
-        matchingCards = []; // Reset matching cards
+        const payload = {
+            q: query,
+            listing_type: selectedListingType,
+            location: selectedLocation,
+            property_types: checkedTypes,
+            price_min: minPrice,
+            price_max: maxPrice,
+            area_min: minArea,
+            area_max: maxArea,
+            rooms: minRooms,
+            bathrooms: minBathrooms,
+            floor: floorFilter,
+            parking: selectedParking,
+            sort: sortOrder,
+            offset: offset,
+            limit: limit
+        };
 
-        propertyCards.forEach(card => {
-            const d = card.dataset;
-            const title = d.title.toLowerCase();
-            const desc = d.description.toLowerCase();
-            const listingType = d.listingType ? d.listingType.toLowerCase() : '';
-            const location = d.location.toLowerCase();
-            const type = d.type.toLowerCase();
-            const price = parseFloat(d.price) || 0;
-            const area = parseFloat(d.area) || 0;
-            const beds = parseInt(d.beds) || 0;
-            const baths = parseInt(d.baths) || 0;
-            const floor = d.floor !== 'None' && d.floor !== '' ? parseInt(d.floor) || 0 : 0;
-            const parking = d.parking === 'true';
+        if (btnLoadMore) btnLoadMore.disabled = true;
 
-            // Search string matching
-            const searchMatch = query === '' ||
-                title.includes(query) ||
-                desc.includes(query) ||
-                location.includes(query);
+        fetch('/properties/api/list', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btnLoadMore) btnLoadMore.disabled = false;
 
-            // Listing type matching
-            const listingTypeMatch = selectedListingType === 'all' || listingType === selectedListingType;
+            if (data && data.success) {
+                totalCount = data.total_count;
+                if (propertiesCountSpan) {
+                    propertiesCountSpan.textContent = totalCount;
+                }
 
-            // Location dropdown matching
-            const locationMatch = selectedLocation === 'all' || location === selectedLocation;
+                if (!isAppend) {
+                    // Reset grid HTML
+                    propertiesGrid.innerHTML = '';
+                }
 
-            // Property type matching
-            const typeMatch = checkedTypes.length === 0 || checkedTypes.includes(type);
+                // Render properties
+                if (data.properties && data.properties.length > 0) {
+                    data.properties.forEach(prop => {
+                        const cardHtml = createPropertyCardHtml(prop);
+                        propertiesGrid.insertAdjacentHTML('beforeend', cardHtml);
+                    });
+                }
 
-            // Pricing range matching
-            const priceMatch = price >= minPrice && price <= maxPrice;
+                // Update offset state
+                offset += (data.properties ? data.properties.length : 0);
 
-            // Area matching
-            const areaMatch = area >= minArea && area <= maxArea;
+                // Update empty state display
+                if (emptyStateEl) {
+                    emptyStateEl.style.display = (totalCount === 0) ? 'block' : 'none';
+                    if (totalCount === 0 && !propertiesGrid.contains(emptyStateEl)) {
+                        propertiesGrid.appendChild(emptyStateEl);
+                    }
+                }
 
-            // Rooms & Bathrooms matching
-            const roomsMatch = beds >= minRooms;
-            const bathroomsMatch = baths >= minBathrooms;
-
-            // Floor number matching
-            const floorMatch = floorFilter === null || floor === floorFilter;
-
-            // Parking matching
-            const parkingMatch = selectedParking === 'any' || (selectedParking === 'available' && parking);
-
-            // Combine all filter checks
-            if (searchMatch && listingTypeMatch && locationMatch && typeMatch && priceMatch && areaMatch && roomsMatch && bathroomsMatch && floorMatch && parkingMatch) {
-                matchingCards.push(card);
+                // Show/hide Load More button
+                if (loadMoreContainer) {
+                    loadMoreContainer.style.display = (totalCount > offset) ? 'block' : 'none';
+                }
             } else {
-                card.style.display = 'none';
+                console.error('API responded with error:', data ? data.error : 'Unknown error');
             }
+        })
+        .catch(err => {
+            if (btnLoadMore) btnLoadMore.disabled = false;
+            console.error('Error fetching properties:', err);
         });
-
-        renderVisibleCards();
     };
 
-    const renderVisibleCards = () => {
-        matchingCards.forEach((card, index) => {
-            if (index < visibleLimit) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-
-        // Update count display
-        if (propertiesCountSpan) {
-            propertiesCountSpan.textContent = matchingCards.length;
-        }
-
-        // Show/hide empty state message
-        if (emptyStateEl) {
-            emptyStateEl.style.display = (matchingCards.length === 0) ? 'block' : 'none';
-        }
-
-        // Show/hide Load More button
-        if (loadMoreContainer) {
-            loadMoreContainer.style.display = (matchingCards.length > visibleLimit) ? 'block' : 'none';
-        }
-    };
-
+    // Trigger offset page loading on click
     if (btnLoadMore) {
         btnLoadMore.addEventListener('click', () => {
-            visibleLimit += 6;
-            renderVisibleCards();
+            fetchProperties(true);
         });
     }
 
-
-
-
     /* ─────────────────────────────────────────────────────────
-       1. SYNCHRONIZE PRICE SLIDER & INPUTS
+       2. SYNCHRONIZE PRICE SLIDER & INPUTS
     ───────────────────────────────────────────────────────── */
     const updatePriceInputsFromSlider = () => {
         const val = parseInt(priceSlider.value);
-        sliderMaxDisplay.textContent = val.toLocaleString();
-        priceMaxInput.value = val;
+        if (sliderMaxDisplay) sliderMaxDisplay.textContent = val.toLocaleString();
+        if (priceMaxInput) priceMaxInput.value = val;
     };
 
     const updateSliderFromPriceInputs = () => {
         const maxVal = parseFloat(priceMaxInput.value);
         if (!isNaN(maxVal) && maxVal >= 0 && maxVal <= parseInt(priceSlider.max)) {
             priceSlider.value = maxVal;
-            sliderMaxDisplay.textContent = maxVal.toLocaleString();
+            if (sliderMaxDisplay) sliderMaxDisplay.textContent = maxVal.toLocaleString();
         } else if (priceMaxInput.value === '') {
-            // default fallback to max slider if empty
             priceSlider.value = priceSlider.max;
-            sliderMaxDisplay.textContent = parseInt(priceSlider.max).toLocaleString();
+            if (sliderMaxDisplay) sliderMaxDisplay.textContent = parseInt(priceSlider.max).toLocaleString();
         }
     };
 
     if (priceSlider) {
         priceSlider.addEventListener('input', () => {
             updatePriceInputsFromSlider();
-            applyFilters();
+            fetchProperties(false);
         });
     }
 
     if (priceMaxInput) {
         priceMaxInput.addEventListener('change', () => {
             updateSliderFromPriceInputs();
-            applyFilters();
+            fetchProperties(false);
         });
     }
 
     if (priceMinInput) {
-        priceMinInput.addEventListener('change', applyFilters);
+        priceMinInput.addEventListener('change', () => fetchProperties(false));
     }
 
-
-
-    // Attach filter listeners
-    if (applyFiltersBtn) applyFiltersBtn.addEventListener('click', applyFilters);
-    if (listingTypeSelect) listingTypeSelect.addEventListener('change', applyFilters);
-    if (locationSelect) locationSelect.addEventListener('change', applyFilters);
-    if (parkingSelect) parkingSelect.addEventListener('change', applyFilters);
+    // Attach filter change listeners
+    if (applyFiltersBtn) applyFiltersBtn.addEventListener('click', () => fetchProperties(false));
+    if (listingTypeSelect) listingTypeSelect.addEventListener('change', () => fetchProperties(false));
+    if (locationSelect) locationSelect.addEventListener('change', () => fetchProperties(false));
+    if (parkingSelect) parkingSelect.addEventListener('change', () => fetchProperties(false));
+    if (sortSelect) sortSelect.addEventListener('change', () => fetchProperties(false));
 
     const inputEvents = ['input', 'change'];
     const numericInputs = [priceMinInput, priceMaxInput, areaMinInput, areaMaxInput, roomsInput, bathroomsInput, floorInput];
     numericInputs.forEach(input => {
         if (input) {
-            inputEvents.forEach(evt => input.addEventListener(evt, applyFilters));
+            inputEvents.forEach(evt => input.addEventListener(evt, () => fetchProperties(false)));
         }
     });
 
-    typeCheckboxes.forEach(cb => cb.addEventListener('change', applyFilters));
+    typeCheckboxes.forEach(cb => cb.addEventListener('change', () => fetchProperties(false)));
 
     if (searchInput) {
         searchInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') applyFilters();
+            if (e.key === 'Enter') fetchProperties(false);
         });
     }
-    if (searchBtn) searchBtn.addEventListener('click', applyFilters);
+    if (searchBtn) searchBtn.addEventListener('click', () => fetchProperties(false));
 
     /* ─────────────────────────────────────────────────────────
        3. CLEAR FILTERS LOGIC
     ───────────────────────────────────────────────────────── */
     const clearFilters = () => {
-        searchInput.value = '';
+        if (searchInput) searchInput.value = '';
         if (listingTypeSelect) listingTypeSelect.value = 'All';
-        locationSelect.value = 'All';
+        if (locationSelect) locationSelect.value = 'All';
 
         typeCheckboxes.forEach(cb => cb.checked = false);
 
-        priceMinInput.value = '';
-        priceMaxInput.value = '';
-        priceSlider.value = priceSlider.max;
-        sliderMaxDisplay.textContent = parseInt(priceSlider.max).toLocaleString();
+        if (priceMinInput) priceMinInput.value = '';
+        if (priceMaxInput) priceMaxInput.value = '';
+        if (priceSlider) {
+            priceSlider.value = priceSlider.max;
+            if (sliderMaxDisplay) sliderMaxDisplay.textContent = parseInt(priceSlider.max).toLocaleString();
+        }
 
         if (areaMinInput) areaMinInput.value = '';
         if (areaMaxInput) areaMaxInput.value = '';
@@ -262,166 +337,150 @@ const init = () => {
         if (floorInput) floorInput.value = '';
         if (parkingSelect) parkingSelect.value = 'Any';
 
-        applyFilters();
+        fetchProperties(false);
     };
 
     if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
 
     /* ─────────────────────────────────────────────────────────
-       4. DYNAMIC SORTING
+       4. INTERACTIVE EVENT DELEGATION FOR DETAIL & FAVORITE
     ───────────────────────────────────────────────────────── */
-    const sortProperties = () => {
-        const criteria = sortSelect.value;
+    if (propertiesGrid) {
+        propertiesGrid.addEventListener('click', (e) => {
+            // Check Favorite button click
+            const favBtn = e.target.closest('.btn-favorite');
+            if (favBtn) {
+                e.stopPropagation();
+                
+                const propertyId = favBtn.dataset.id;
+                if (!propertyId) return;
 
-        // Sort cards array
-        propertyCards.sort((a, b) => {
-            const priceA = parseFloat(a.dataset.price) || 0;
-            const priceB = parseFloat(b.dataset.price) || 0;
+                favBtn.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    favBtn.style.transform = 'scale(1)';
+                }, 200);
 
-            const areaA = parseFloat(a.dataset.area) || 0;
-            const areaB = parseFloat(b.dataset.area) || 0;
+                fetch('/properties/favorite/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ property_id: parseInt(propertyId) })
+                })
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        if (data.action === 'added') {
+                            favBtn.classList.add('active-favorite');
+                        } else if (data.action === 'removed') {
+                            favBtn.classList.remove('active-favorite');
+                        }
+                    } else if (data && data.error) {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error toggling favorite:', error);
+                    alert('An error occurred. Please try again.');
+                });
+                return;
+            }
 
-            const dateA = new Date(a.dataset.created);
-            const dateB = new Date(b.dataset.created);
+            // Check View Details button click
+            const detailsBtn = e.target.closest('.btn-card-details');
+            if (detailsBtn) {
+                e.stopPropagation();
+                const card = detailsBtn.closest('.property-card');
+                if (!card) return;
 
-            if (criteria === 'price-desc') {
-                return priceB - priceA;
-            } else if (criteria === 'price-asc') {
-                return priceA - priceB;
-            } else if (criteria === 'area-desc') {
-                return areaB - areaA;
-            } else {
-                // newest
-                return dateB - dateA;
+                const d = card.dataset;
+
+                // Bind values to details modal
+                document.getElementById('details-modal-title').textContent = `#LEB-${d.id} - Exclusive Collection Details`;
+                document.getElementById('details-title-text').textContent = d.title;
+                document.getElementById('details-desc').textContent = d.description || 'No description available for this property.';
+
+                const listingBadge = document.getElementById('details-listing-type');
+                const cardBadgeType = card.querySelector('.badge-listing-type');
+                listingBadge.textContent = cardBadgeType ? cardBadgeType.textContent.trim().toUpperCase() : 'FOR SALE';
+
+                const statusBadge = document.getElementById('details-status');
+                statusBadge.textContent = 'AVAILABLE';
+                statusBadge.className = 'status-badge badge-published';
+
+                const priceNum = parseFloat(d.price) || 0;
+                document.getElementById('details-price-text').textContent = `$${priceNum.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+                document.getElementById('details-beds').textContent = d.beds;
+                document.getElementById('details-baths').textContent = d.baths;
+                document.getElementById('details-area').textContent = d.area;
+                document.getElementById('details-floor').textContent = d.floor || 'N/A';
+                document.getElementById('details-parking').textContent = d.parking === 'true' ? 'Available' : 'None';
+                document.getElementById('details-property-type').textContent = d.type;
+
+                document.getElementById('details-location').textContent = d.location;
+                document.getElementById('details-address').textContent = d.address || 'N/A';
+                document.getElementById('details-lat').textContent = d.latitude || 'N/A';
+                document.getElementById('details-lng').textContent = d.longitude || 'N/A';
+
+                // Populate hero image and gallery thumbnails
+                const heroImg = document.getElementById('details-hero-img');
+                const heroContainer = document.querySelector('.details-hero-container');
+                const galleryContainer = document.getElementById('details-gallery');
+
+                galleryContainer.innerHTML = '';
+
+                if (d.imageUrls && d.imageUrls.trim() !== '') {
+                    const urls = d.imageUrls.split(',');
+
+                    heroContainer.style.display = 'block';
+                    heroImg.src = urls[0];
+
+                    urls.forEach((url, index) => {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.alt = d.title;
+                        if (index === 0) {
+                            img.classList.add('active-thumb');
+                        }
+
+                        // Gallery thumbnails interactive listener
+                        img.addEventListener('click', () => {
+                            heroImg.src = url;
+                            galleryContainer.querySelectorAll('img').forEach(t => t.classList.remove('active-thumb'));
+                            img.classList.add('active-thumb');
+                        });
+
+                        galleryContainer.appendChild(img);
+                    });
+                } else {
+                    heroContainer.style.display = 'none';
+                    galleryContainer.innerHTML = `
+                        <div class="details-gallery-empty">
+                            <span class="material-symbols-outlined">image</span>
+                            <span>No images available for this listing</span>
+                        </div>
+                    `;
+                }
+
+                // Open details modal overlay
+                if (detailsModal) {
+                    detailsModal.classList.remove('hidden');
+                }
             }
         });
-
-        // Re-append sorted cards in propertiesGrid container
-        propertyCards.forEach(card => {
-            // appendChild moves existing element to the end, effectively sorting them in place
-            propertiesGrid.appendChild(card);
-        });
-
-        // Ensure empty state remains at the bottom of the grid
-        if (emptyStateEl) {
-            propertiesGrid.appendChild(emptyStateEl);
-        }
-
-        // Re-apply filters to update the visible cards and limit based on the new sort order
-        applyFilters();
-    };
-
-    if (sortSelect) {
-        sortSelect.addEventListener('change', sortProperties);
     }
 
-    /* ─────────────────────────────────────────────────────────
-       5. INTERACTIVE FAVORITES TOGGLE
-    ───────────────────────────────────────────────────────── */
-    const favoriteBtns = document.querySelectorAll('.btn-favorite');
-    favoriteBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            btn.classList.toggle('active-favorite');
-
-            // Apply scale pop micro-interaction
-            btn.style.transform = 'scale(1.2)';
-            setTimeout(() => {
-                btn.style.transform = 'scale(1)';
-            }, 200);
-
-            // Optional: ajax call to save user favorite could be added here
-        });
-    });
-
-    /* ─────────────────────────────────────────────────────────
-       6. VIEW DETAILS MODAL SERVICE
-    ───────────────────────────────────────────────────────── */
-    const detailsButtons = document.querySelectorAll('.btn-card-details');
-    detailsButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            const card = document.querySelector(`.property-card[data-id="${id}"]`);
-            if (!card) return;
-
-            const d = card.dataset;
-
-            // Bind values to details modal
-            document.getElementById('details-modal-title').textContent = `#LEB-${id} - Exclusive Collection Details`;
-            document.getElementById('details-title-text').textContent = d.title;
-            document.getElementById('details-desc').textContent = d.description || 'No description available for this property.';
-
-            const listingBadge = document.getElementById('details-listing-type');
-            const cardBadgeType = card.querySelector('.badge-listing-type');
-            listingBadge.textContent = cardBadgeType ? cardBadgeType.textContent.trim().toUpperCase() : 'FOR SALE';
-
-            const statusBadge = document.getElementById('details-status');
-            statusBadge.textContent = 'AVAILABLE';
-            statusBadge.className = 'status-badge badge-published';
-
-            const priceNum = parseFloat(d.price) || 0;
-            document.getElementById('details-price-text').textContent = `$${priceNum.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-
-            document.getElementById('details-beds').textContent = d.beds;
-            document.getElementById('details-baths').textContent = d.baths;
-            document.getElementById('details-area').textContent = d.area;
-            document.getElementById('details-floor').textContent = d.floor || 'N/A';
-            document.getElementById('details-parking').textContent = d.parking === 'true' ? 'Available' : 'None';
-            document.getElementById('details-property-type').textContent = d.type;
-
-            document.getElementById('details-location').textContent = d.location;
-            document.getElementById('details-address').textContent = d.address || 'N/A';
-            document.getElementById('details-lat').textContent = d.latitude || 'N/A';
-            document.getElementById('details-lng').textContent = d.longitude || 'N/A';
-
-            // Populate hero image and gallery thumbnails
-            const heroImg = document.getElementById('details-hero-img');
-            const heroContainer = document.querySelector('.details-hero-container');
-            const galleryContainer = document.getElementById('details-gallery');
-
-            galleryContainer.innerHTML = '';
-
-            if (d.imageUrls && d.imageUrls.trim() !== '') {
-                const urls = d.imageUrls.split(',');
-
-                heroContainer.style.display = 'block';
-                heroImg.src = urls[0];
-
-                urls.forEach((url, index) => {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.alt = d.title;
-                    if (index === 0) {
-                        img.classList.add('active-thumb');
-                    }
-
-                    // Gallery thumbnails interactive listener
-                    img.addEventListener('click', () => {
-                        heroImg.src = url;
-                        galleryContainer.querySelectorAll('img').forEach(t => t.classList.remove('active-thumb'));
-                        img.classList.add('active-thumb');
-                    });
-
-                    galleryContainer.appendChild(img);
-                });
-            } else {
-                heroContainer.style.display = 'none';
-                galleryContainer.innerHTML = `
-                    <div class="details-gallery-empty">
-                        <span class="material-symbols-outlined">image</span>
-                        <span>No images available for this listing</span>
-                    </div>
-                `;
-            }
-
-            // Open details modal overlay
-            detailsModal.classList.remove('hidden');
-        });
-    });
-
     const closeDetails = () => {
-        detailsModal.classList.add('hidden');
+        if (detailsModal) {
+            detailsModal.classList.add('hidden');
+        }
     };
 
     if (btnCloseDetailsModal) btnCloseDetailsModal.addEventListener('click', closeDetails);
@@ -432,8 +491,17 @@ const init = () => {
         if (e.target === detailsModal) closeDetails();
     });
 
-    // Run sort on page load to match default filter selection
-    sortProperties();
+    // Check for query parameters on load
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('q') || urlParams.get('search');
+    if (searchParam && searchInput) {
+        searchInput.value = searchParam;
+    }
+
+    // Set initial load more container display
+    if (loadMoreContainer) {
+        loadMoreContainer.style.display = (totalCount > offset) ? 'block' : 'none';
+    }
 };
 
 if (document.readyState === 'loading') {

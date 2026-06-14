@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, request, url_for, flash, jsonify
 from functools import wraps
-from app.services.customer_service import get_all_customers, update_customer, delete_customer
+from app.services.customer_service import get_all_customers, update_customer, delete_customer, get_customer_stats
 from app.services.auth_service import AuthService
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
@@ -21,24 +21,7 @@ def admin_or_employee_required(f):
 @admin_or_employee_required
 def index():
     customers = get_all_customers()
-    
-    # Calculate some stats
-    total_customers = len(customers)
-    active_customers = sum(1 for c in customers if c['status'].lower() == 'active')
-    disabled_customers = sum(1 for c in customers if c['status'].lower() in ['inactive', 'blacklisted'])
-    
-    # Calculate dynamic new customers registered in the current calendar month
-    from datetime import datetime
-    now = datetime.utcnow()
-    new_this_month = sum(1 for c in customers if c['raw_customer'].createdAt and c['raw_customer'].createdAt.year == now.year and c['raw_customer'].createdAt.month == now.month)
-    
-    stats = {
-        'total': total_customers,
-        'active': active_customers,
-        'disabled': disabled_customers,
-        'new_this_month': new_this_month
-    }
-    
+    stats = get_customer_stats(customers)
     return render_template('customers/index.html', customers=customers, stats=stats)
 
 @customers_bp.route('/add', methods=['POST'])
@@ -105,3 +88,4 @@ def delete_customer_route(customer_id):
         return jsonify({'message': message, 'soft_deleted': result.get('soft_deleted', False)}), 200
     else:
         return jsonify({'error': result.get('error', 'Deletion failed')}), result.get('code', 400)
+

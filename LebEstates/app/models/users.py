@@ -49,9 +49,54 @@ class AuditLog(db.Model):
     tableName = db.Column(db.String(100), nullable=False)
     recordID = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
+    ipAddress = db.Column(db.String(45), nullable=True)
+    changes = db.Column(db.Text, nullable=True)
     createdAt = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('Users', foreign_keys=[userID])
+
+    @staticmethod
+    def log_action(action, table_name, record_id, description, user_id=None, changes=None):
+        from flask import session, request
+        from app.models.base import db
+        import json
+        
+        # If user_id is not explicitly passed, try to get it from Flask session
+        if not user_id:
+            try:
+                user_id = session.get('user_id')
+            except Exception:
+                pass
+                
+        # Resolve client IP address automatically
+        ip_addr = None
+        try:
+            ip_addr = request.remote_addr
+        except Exception:
+            pass
+            
+        # Serialize changes to JSON if passed as a dictionary
+        changes_str = None
+        if changes is not None:
+            if isinstance(changes, dict):
+                try:
+                    changes_str = json.dumps(changes)
+                except Exception:
+                    changes_str = str(changes)
+            else:
+                changes_str = str(changes)
+        
+        log = AuditLog(
+            userID=user_id,
+            action=action,
+            tableName=table_name,
+            recordID=record_id,
+            description=description,
+            ipAddress=ip_addr,
+            changes=changes_str,
+            createdAt=datetime.now()
+        )
+        db.session.add(log)
 
 class UserSession(db.Model):
     __tablename__ = 'user_sessions'

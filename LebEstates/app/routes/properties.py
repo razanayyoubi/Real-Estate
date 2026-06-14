@@ -1,7 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, abort, Response
-from app.models.base import db
-from app.models.users import Users
-from app.models.property import Property, PropertyImage
+from app.services.auth_service import AuthService
 from app.services.customer_service import get_all_customers
 from app.services.property_service import PropertyService
 
@@ -12,7 +10,7 @@ def sell_rent_page():
     if 'user_id' not in session:
         return redirect(url_for('auth.login_page'))
         
-    user = Users.query.get(session['user_id'])
+    user = AuthService.get_user_by_id(session['user_id'])
     if not user:
         session.clear()
         return redirect(url_for('auth.login_page'))
@@ -35,7 +33,7 @@ def sell_rent_submit():
     if 'user_id' not in session:
         return jsonify({'error': 'You must be logged in to perform this action.'}), 401
         
-    user = Users.query.get(session['user_id'])
+    user = AuthService.get_user_by_id(session['user_id'])
     if not user:
         return jsonify({'error': 'User not found.'}), 404
         
@@ -52,22 +50,49 @@ def sell_rent_submit():
 
 @properties_bp.route('/properties/image/<int:image_id>', methods=['GET'])
 def get_property_image(image_id):
-    img = PropertyImage.query.get_or_404(image_id)
-    if not img.fileData:
+    file_data, file_type = PropertyService.get_property_image(image_id)
+    if not file_data:
         return abort(404)
-    return Response(img.fileData, mimetype=img.fileType or 'image/jpeg')
+    return Response(file_data, mimetype=file_type)
 
 @properties_bp.route('/properties', methods=['GET'])
 def properties_browse():
-    properties = Property.query.filter_by(status='Published').order_by(Property.createdAt.desc()).all()
-    return render_template('properties_browse.html', properties=properties)
+    q = request.args.get('q', '')
+    location = request.args.get('location', 'All')
+    listing_type = request.args.get('listing_type', 'All')
+    
+    filters = {
+        'q': q,
+        'location': location,
+        'listing_type': listing_type,
+        'sort': 'newest'
+    }
+    
+    user_id = session.get('user_id')
+    properties, favorite_ids, total_count = PropertyService.browse_properties(user_id, filters, limit=6)
+            
+    return render_template(
+        'properties_browse.html', 
+        properties=properties, 
+        favorite_ids=favorite_ids, 
+        total_count=total_count,
+        initial_filters=filters
+    )
+
+@properties_bp.route('/properties/api/list', methods=['POST'])
+def properties_api_list():
+    data = request.get_json() or {}
+    user_id = session.get('user_id')
+    
+    res = PropertyService.get_properties_api(user_id, data)
+    return jsonify(res)
 
 @properties_bp.route('/control-panel/properties', methods=['GET'])
 def properties_list():
     if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
         return redirect(url_for('auth.login_page'))
         
-    user = Users.query.get(session['user_id'])
+    user = AuthService.get_user_by_id(session['user_id'])
     if not user:
         session.clear()
         return redirect(url_for('auth.login_page'))
@@ -149,3 +174,32 @@ def edit_property(prop_id):
         })
     else:
         return jsonify({'error': res.get('error')}), res.get('code', 400)
+
+@properties_bp.route('/properties/favorite/toggle', methods=['POST'])
+def toggle_favorite():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'You must be logged in to favorite properties.', 'redirect': url_for('auth.login_page')}), 401
+        
+    data = request.get_json() or {}
+    property_id = data.get('property_id')
+    if not property_id:
+        return jsonify({'success': False, 'error': 'Property ID is required.'}), 400
+        
+    res = PropertyService.toggle_favorite(session['user_id'], property_id)
+    if res.get('success'):
+        return jsonify({'success': True, 'action': res.get('action')})
+    else:
+        return jsonify({'success': False, 'error': res.get('error')}), res.get('code', 500)
+
+@properties_bp.route('/favorites', methods=['GET'])
+def favorites_page():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login_page'))
+        
+    user = AuthService.get_user_by_id(session['user_id'])
+    if not user:
+        session.clear()
+        return redirect(url_for('auth.login_page'))
+
+    favorite_properties = PropertyService.get_favorite_properties(user.userID)
+    return render_template('favorites.html', user=user, properties=favorite_properties)

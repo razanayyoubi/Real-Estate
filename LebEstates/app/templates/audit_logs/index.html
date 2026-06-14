@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}System Audit Logs | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="{{ url_for('static', filename='css/audit_logs.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<main class="audit-container">
+    <!-- Page Header -->
+    <div class="audit-page-header">
+        <div>
+            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">System Audit Logs</h2>
+            <p class="body-md text-on-surface-variant">Trace and inspect administrative operations, user modifications, and security actions.</p>
+        </div>
+        <button class="btn btn-secondary btn-lg" onclick="window.location.reload();" style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined">refresh</span>
+            Refresh Logs
+        </button>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Total Actions</p>
+                <h3 class="headline-md text-primary">{{ stats.total }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon primary">history</span>
+            </div>
+        </div>
+        <div class="stat-card success">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Add Operations</p>
+                <h3 class="headline-md text-primary" style="color: var(--success, #2e7d32);">{{ stats.add }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon success">add_circle</span>
+            </div>
+        </div>
+        <div class="stat-card info">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Edit Operations</p>
+                <h3 class="headline-md text-primary" style="color: var(--info, #0288d1);">{{ stats.edit }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon info">edit_document</span>
+            </div>
+        </div>
+        <div class="stat-card error">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Delete Operations</p>
+                <h3 class="headline-md text-primary" style="color: var(--error);">{{ stats.delete }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span></span>
+                <span class="material-symbols-outlined stat-icon error">delete</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="filter-section">
+        <div class="filter-left">
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input class="search-input" id="filterSearch" value="{{ search_query }}" placeholder="Search by description..." type="text" onkeypress="handleSearchKeyPress(event)"/>
+            </div>
+            <select class="filter-select" id="filterAction" onchange="applyFilters()">
+                <option value="All">All Actions</option>
+                <option value="ADD" {% if action_filter == 'ADD' %}selected{% endif %}>ADD</option>
+                <option value="EDIT" {% if action_filter == 'EDIT' %}selected{% endif %}>EDIT</option>
+                <option value="DELETE" {% if action_filter == 'DELETE' %}selected{% endif %}>DELETE</option>
+            </select>
+            <select class="filter-select" id="filterModule" onchange="applyFilters()">
+                <option value="All">All Modules</option>
+                {% for module in modules %}
+                <option value="{{ module }}" {% if module_filter == module %}selected{% endif %}>{{ module | capitalize }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary-outline" onclick="applyFilters()" style="height: 48px; padding: 0 20px;">
+                Filter
+            </button>
+            {% if search_query or action_filter or module_filter %}
+            <button class="btn btn-text text-error" onclick="clearFilters()" style="height: 48px;">
+                Clear
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+        <div class="table-responsive custom-scrollbar">
+            <table class="audit-table">
+                <thead>
+                    <tr class="table-header-row">
+                        <th class="table-th">Log ID</th>
+                        <th class="table-th">Timestamp</th>
+                        <th class="table-th">Actor</th>
+                        <th class="table-th" style="text-align: center;">Action</th>
+                        <th class="table-th">Module/Table</th>
+                        <th class="table-th" style="text-align: center;">Record ID</th>
+                        <th class="table-th">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                    {% for log in logs %}
+                    <tr class="table-row">
+                        <td class="table-td body-md text-on-surface" style="font-weight: 600;">#LOG-{{ log.logID }}</td>
+                        <td class="table-td">
+                            <p class="text-sm text-on-surface" style="margin: 0;">{{ log.createdAt.strftime("%b %d, %Y") }}</p>
+                            <p class="caption text-on-surface-variant" style="margin: 0;">{{ log.createdAt.strftime("%I:%M:%S %p") }}</p>
+                        </td>
+                        <td class="table-td user-cell popover-container">
+                            {% if log.user %}
+                            <div class="user-profile-trigger">
+                                <img alt="User" class="user-avatar" src="{{ log.user.avatar_url }}"/>
+                                <div>
+                                    <p class="font-semibold text-primary" style="margin: 0; font-weight: 600;">{{ log.user.fullName }}</p>
+                                    <p class="caption text-on-surface-variant" style="margin: 0;">UID: {{ log.userID }}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Actor Profile Popover -->
+                            <div class="popover">
+                                <div class="popover-header">
+                                    <div>
+                                        <h4 class="popover-title">{{ log.user.fullName }}</h4>
+                                        <p class="popover-subtitle">User #{{ log.userID }}</p>
+                                    </div>
+                                    <span class="popover-badge info">{{ log.user.role.roleName | upper }}</span>
+                                </div>
+                                <div class="popover-grid">
+                                    <div class="popover-row">
+                                        <span class="popover-label">Email:</span>
+                                        <span class="popover-value" title="{{ log.user.email }}">{{ log.user.email }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Phone:</span>
+                                        <span class="popover-value">{{ log.user.phoneNumber or 'N/A' }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Role:</span>
+                                        <span class="popover-value">{{ log.user.role.roleName }}</span>
+                                    </div>
+                                    <div class="popover-divider"></div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Account status:</span>
+                                        <span class="popover-value">{{ log.user.status }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="user-profile-trigger">
+                                <div class="user-avatar system-avatar-icon">
+                                    <span class="material-symbols-outlined">settings_accessibility</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-on-surface-variant" style="margin: 0; font-weight: 600;">System/Guest</p>
+                                    <p class="caption text-on-surface-variant" style="margin: 0;">Anonymous Action</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="table-td" style="text-align: center;">
+                            <span class="status-badge {{ log.action | lower }}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td class="table-td">
+                            <span class="module-badge">
+                                {{ log.tableName | capitalize }}
+                            </span>
+                        </td>
+                        <td class="table-td text-center" style="text-align: center; font-weight: 600; color: var(--on-surface-variant);">
+                            {{ log.recordID }}
+                        </td>
+                        <td class="table-td font-medium" style="max-width: 350px; white-space: normal; word-break: break-word; line-height: 1.4;">
+                            {{ log.description }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td class="table-td" colspan="7" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
+                            No audit logs found matching criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <p class="pagination-text">Showing {{ logs|length }} of {{ total_records }} records</p>
+            <div class="pagination-controls">
+                <button class="pagination-btn" {% if current_page <= 1 %}disabled{% endif %} onclick="goToPage({{ current_page - 1 }})">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+                </button>
+                
+                {% for p in range(1, total_pages + 1) %}
+                {% if p == 1 or p == total_pages or (p >= current_page - 2 and p <= current_page + 2) %}
+                <button class="pagination-btn {% if p == current_page %}active{% endif %}" onclick="goToPage({{ p }})">{{ p }}</button>
+                {% elif p == 2 or p == total_pages - 1 %}
+                <span class="pagination-ellipsis">...</span>
+                {% endif %}
+                {% endfor %}
+                
+                <button class="pagination-btn" {% if current_page >= total_pages %}disabled{% endif %} onclick="goToPage({{ current_page + 1 }})">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function handleSearchKeyPress(e) {
+        if (e.key === 'Enter') {
+            applyFilters();
+        }
+    }
+
+    function applyFilters() {
+        const q = document.getElementById('filterSearch').value.trim();
+        const action = document.getElementById('filterAction').value;
+        const module = document.getElementById('filterModule').value;
+        
+        const url = new URL(window.location.origin + window.location.pathname);
+        if (q) url.searchParams.set('q', q);
+        if (action && action !== 'All') url.searchParams.set('action', action);
+        if (module && module !== 'All') url.searchParams.set('module', module);
+        url.searchParams.set('page', 1);
+        window.location.href = url.toString();
+    }
+
+    function clearFilters() {
+        window.location.href = window.location.pathname;
+    }
+
+    function goToPage(page) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page);
+        window.location.href = url.toString();
+    }
+</script>
+{% endblock %}

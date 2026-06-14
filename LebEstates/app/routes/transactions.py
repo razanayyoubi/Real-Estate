@@ -1,12 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
-from app.models.base import db
-from app.models.users import Users, Role
-from app.models.property import Property
-from app.models.customer import Customer
-from app.models.hr import Employee
-from app.models.operations import Transaction
-from sqlalchemy import text, func
-from datetime import datetime, date, timedelta
+from app.services.auth_service import AuthService
+from app.services.transaction_service import TransactionService
 
 transactions_bp = Blueprint('transactions', __name__)
 
@@ -14,40 +8,115 @@ transactions_bp = Blueprint('transactions', __name__)
 def transactions_list():
     if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
         return redirect(url_for('auth.login_page'))
+    user = AuthService.get_user_by_id(session['user_id'])
+    return render_template('transactions.html', user=user)
 
-    # Run migration & auto-seeding
+@transactions_bp.route('/control-panel/transactions/ledger')
+def transactions_ledger():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return redirect(url_for('auth.login_page'))
 
-    # Query all transactions
-    transactions = Transaction.query.order_by(Transaction.transactionDate.desc()).all()
-
-    # Calculate statistics based on real-estate terminology:
-    # 1. Gross Volume: Sum of finalPrice for 'Closed'
-    gross_volume = db.session.query(func.sum(Transaction.finalPrice)).filter_by(paymentStatus='Closed').scalar() or 0.0
-
-    # 2. Total Commissions: Sum of commissionAmount for 'Closed'
-    total_commission = db.session.query(func.sum(Transaction.commissionAmount)).filter_by(paymentStatus='Closed').scalar() or 0.0
-
-    # 3. Pending Escrows: Sum of finalPrice for 'Escrow' and 'Legal'
-    pending_escrows = db.session.query(func.sum(Transaction.finalPrice)).filter(Transaction.paymentStatus.in_(['Escrow', 'Legal'])).scalar() or 0.0
-
-    # 4. Total Deals: Count of 'Closed' transactions
-    total_deals = Transaction.query.filter_by(paymentStatus='Closed').count()
-
-    # Format numbers for presentation
-    stats = {
-        'gross_volume': f"${gross_volume:,.2f}",
-        'total_commission': f"${total_commission:,.2f}",
-        'pending_escrows': f"${pending_escrows:,.2f}",
-        'total_deals': total_deals
-    }
-
-    # Fetch user for base page injection
-    user = Users.query.get(session['user_id'])
+    data = TransactionService.get_ledger_data()
+    user = AuthService.get_user_by_id(session['user_id'])
 
     return render_template(
-        'transactions.html',
+        'transactions_ledger.html',
         user=user,
-        transactions=transactions,
-        stats=stats
+        transactions=data['transactions'],
+        stats=data['stats'],
+        properties=data['properties'],
+        customers=data['customers'],
+        employees=data['employees']
     )
+
+
+# --- COMMISSION SETTINGS MANAGEMENT ---
+
+@transactions_bp.route('/control-panel/commission-settings', methods=['GET'])
+def commission_settings():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return redirect(url_for('auth.login_page'))
+
+    user = AuthService.get_user_by_id(session['user_id'])
+    settings = TransactionService.get_commission_settings()
+
+    return render_template(
+        'commission_settings.html',
+        user=user,
+        rent_rule=settings['rent_rule'],
+        buyer_rate=settings['buyer_rate'],
+        seller_rate=settings['seller_rate'],
+        agent_split=settings['agent_split']
+    )
+
+@transactions_bp.route('/control-panel/commission-settings/save', methods=['POST'])
+def commission_settings_save():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    data = request.get_json() or {}
+    res = TransactionService.save_commission_settings(session['user_id'], data)
+    if res.get('success'):
+        return jsonify({'success': True, 'message': res.get('message')}), 200
+    else:
+        return jsonify({'success': False, 'error': res.get('error')}), res.get('code', 400)
+
+@transactions_bp.route('/control-panel/commission-settings/reset', methods=['POST'])
+def commission_settings_reset():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    res = TransactionService.reset_commission_settings(session['user_id'])
+    if res.get('success'):
+        return jsonify({'success': True, 'message': res.get('message')}), 200
+    else:
+        return jsonify({'success': False, 'error': res.get('error')}), res.get('code', 500)
+
+
+# --- TRANSACTION OPERATIONS ENDPOINTS ---
+
+@transactions_bp.route('/control-panel/transactions/<int:trans_id>/update-status', methods=['POST'])
+def update_transaction_status(trans_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    data = request.get_json() or {}
+    res = TransactionService.update_status(session['user_id'], trans_id, data.get('status'))
+    if res.get('success'):
+        return jsonify({
+            'success': True,
+            'message': res.get('message'),
+            'stats': res.get('stats')
+        }), 200
+    else:
+        return jsonify({'success': False, 'error': res.get('error')}), res.get('code', 400)
+
+
+@transactions_bp.route('/control-panel/transactions/<int:trans_id>/details', methods=['GET'])
+def transaction_details(trans_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    res = TransactionService.get_details(trans_id)
+    if res.get('success'):
+        return jsonify({'success': True, 'details': res.get('details')}), 200
+    else:
+        return jsonify({'success': False, 'error': res.get('error')}), res.get('code', 404)
+
+
+@transactions_bp.route('/control-panel/transactions/create', methods=['POST'])
+def create_transaction():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return redirect(url_for('auth.login_page'))
+
+    res = TransactionService.create_transaction(session['user_id'], request.form)
+    return redirect(url_for('transactions.transactions_ledger'))
+
+@transactions_bp.route('/control-panel/transactions/<int:trans_id>/edit', methods=['POST'])
+def edit_transaction_submit(trans_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return redirect(url_for('auth.login_page'))
+
+    res = TransactionService.edit_transaction(session['user_id'], trans_id, request.form)
+    return redirect(url_for('transactions.transactions_ledger'))
 

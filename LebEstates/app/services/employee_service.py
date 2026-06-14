@@ -96,6 +96,14 @@ def add_employee(data):
             )
             db.session.add(new_salary)
             
+        db.session.flush()
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='ADD',
+            table_name='employee',
+            record_id=new_employee.employeeID,
+            description=f"Added new employee '{full_name}', Position: '{position}', Base Salary: ${base_salary}"
+        )
         db.session.commit()
         return {"success": True}
     except Exception as e:
@@ -153,6 +161,13 @@ def update_employee(employee_id, data):
                 )
                 db.session.add(new_salary)
                 
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='employee',
+            record_id=employee_id,
+            description=f"Updated employee '{user.fullName}' details (Position: '{employee.position}', Status: '{employee.status}', Base Salary: ${base_salary or 'N/A'})"
+        )
         db.session.commit()
         return {"success": True}
     except Exception as e:
@@ -183,6 +198,13 @@ def delete_employee(employee_id):
             # Soft disable: Terminate employee status & Inactive user status
             employee.status = 'Terminated'
             user.status = 'Inactive'
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='employee',
+                record_id=employee_id,
+                description=f"Soft-terminated employee '{user.fullName}' due to active database operational relationships."
+            )
             db.session.commit()
             return {"success": True, "message": "Employee has active operations. Account has been soft-terminated (Terminated) and user deactivated.", "soft_deleted": True}
             
@@ -191,6 +213,13 @@ def delete_employee(employee_id):
             # Delete related Salaries first
             Salary.query.filter_by(employeeID=employee_id).delete()
             
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='DELETE',
+                table_name='employee',
+                record_id=employee_id,
+                description=f"Hard-deleted employee account for '{user.fullName}' (email: '{user.email}')"
+            )
             db.session.delete(employee)
             db.session.delete(user)
             db.session.commit()
@@ -203,6 +232,13 @@ def delete_employee(employee_id):
                 employee, user = employee_and_user
                 employee.status = 'Terminated'
                 user.status = 'Inactive'
+                from app.models.users import AuditLog
+                AuditLog.log_action(
+                    action='EDIT',
+                    table_name='employee',
+                    record_id=employee_id,
+                    description=f"Soft-terminated employee '{user.fullName}' due to constraint conflict."
+                )
                 db.session.commit()
                 return {"success": True, "message": "Constraint error. Account soft-terminated instead.", "soft_deleted": True}
             return {"success": False, "error": "Failed to delete or terminate employee.", "code": 500}
@@ -211,3 +247,17 @@ def delete_employee(employee_id):
         db.session.rollback()
         print(f"Delete employee error: {e}")
         return {"success": False, "error": "An internal error occurred while deleting the employee.", "code": 500}
+
+def get_employee_stats(employees):
+    """Calculate employee stats based on retrieved employee list."""
+    total_staff = len(employees)
+    active_staff = sum(1 for e in employees if e['status'].lower() == 'active')
+    on_leave = sum(1 for e in employees if e['status'].lower() == 'onleave')
+    terminated = sum(1 for e in employees if e['status'].lower() == 'terminated')
+    
+    return {
+        'total': total_staff,
+        'active': active_staff,
+        'on_leave': on_leave,
+        'terminated': terminated
+    }

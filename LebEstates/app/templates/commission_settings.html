@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Commission Settings | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/commission_settings.css') }}">
+{% endblock %}
+
+{% block scripts %}
+<script defer src="{{ url_for('static', filename='js/commission_settings.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<main class="main-content" id="mainContent">
+    <div class="main-content__body">
+        
+        <!-- Breadcrumbs & Heading -->
+        <div class="page-heading">
+            <nav aria-label="Breadcrumb" class="breadcrumb">
+                <ol class="breadcrumb__list">
+                    <li class="breadcrumb__item">Settings</li>
+                    <li class="breadcrumb__separator">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </li>
+                    <li class="breadcrumb__item breadcrumb__item--active">Commission Settings</li>
+                </ol>
+            </nav>
+            <div class="page-heading__header">
+                <h2 class="page-heading__title">Commission Management</h2>
+                <p class="page-heading__subtitle">Configure global default commission rules, sales split parameters, and calculate payouts in real-time.</p>
+            </div>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="commission-grid">
+            
+            <!-- Left Side: Settings Panel -->
+            <div class="settings-panel">
+                <form id="commission-form" class="premium-card">
+                    <div class="card-header">
+                        <div class="card-header__icon">
+                            <span class="material-symbols-outlined">tune</span>
+                        </div>
+                        <div class="card-header__text">
+                            <h3>Standard Parameters</h3>
+                            <p>Configure property-specific commission rules and global agent splits</p>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- Alert Banner -->
+                        <div id="settings-alert-box" class="alert-box" style="display: none;"></div>
+
+                        <!-- Rental Commission Rule Section -->
+                        <section class="settings-section">
+                            <div class="section-title">
+                                <span class="material-symbols-outlined">home_work</span>
+                                <h4>Rental Commission</h4>
+                                <div class="section-divider"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="input-rent-rule" class="form-label">Calculation Rule</label>
+                                    <div class="select-wrapper">
+                                        <select id="input-rent-rule" name="rent_rule" class="form-select">
+                                            <option value="1 Month" {% if rent_rule == '1 Month' %}selected{% endif %}>One Month Rent</option>
+                                            <option value="5% of Annual" {% if rent_rule == '5% of Annual' %}selected{% endif %}>5% of Annual Rent</option>
+                                            <option value="10% of Annual" {% if rent_rule == '10% of Annual' %}selected{% endif %}>10% of Annual Rent</option>
+                                        </select>
+                                        <span class="material-symbols-outlined select-chevron">expand_more</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Sales Commission Section -->
+                        <section class="settings-section">
+                            <div class="section-title">
+                                <span class="material-symbols-outlined">payments</span>
+                                <h4>Sales Commission</h4>
+                                <div class="section-divider"></div>
+                            </div>
+                            <div class="form-row form-row--two-cols">
+                                <div class="form-group">
+                                    <label for="input-buyer-rate" class="form-label">Buyer Commission Rate</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="input-buyer-rate" name="buyer_rate" step="0.1" min="0" max="100" class="form-input" value="{{ buyer_rate }}">
+                                        <span class="input-suffix">%</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="input-seller-rate" class="form-label">Seller Commission Rate</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="input-seller-rate" name="seller_rate" step="0.1" min="0" max="100" class="form-input" value="{{ seller_rate }}">
+                                        <span class="input-suffix">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Agent Revenue Split Section -->
+                        <section class="settings-section">
+                            <div class="section-title">
+                                <span class="material-symbols-outlined">groups</span>
+                                <h4>Agent Revenue Split</h4>
+                                <div class="section-divider"></div>
+                            </div>
+                            <div class="split-card">
+                                <div class="split-card__content">
+                                    <p class="split-card__title">Global Default Agent Payout</p>
+                                    <p class="split-card__description">Percentage of gross agency commission allocated directly to the closing agent.</p>
+                                </div>
+                                <div class="split-card__action">
+                                    <div class="input-wrapper input-wrapper--large">
+                                        <input type="number" id="input-agent-share" name="agent_split" step="1" min="0" max="100" class="form-input text-center" value="{{ agent_split }}">
+                                        <span class="input-suffix text-gold">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="footer-actions-left">
+                            <button type="button" id="btn-discard" class="btn btn--text">Discard Changes</button>
+                            <button type="button" id="btn-reset" class="btn btn--outline">Reset to Default</button>
+                        </div>
+                        <button type="submit" id="btn-save" class="btn btn--primary">
+                            <span class="material-symbols-outlined">save</span>
+                            <span>Save Commission Structure</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Side: Live Calculator Panel -->
+            <div class="calculator-panel">
+                <div class="premium-card calculator-card">
+                    <div class="card-header calculator-header">
+                        <span class="material-symbols-outlined header-icon">calculate</span>
+                        <div class="calculator-header__title">
+                            <h3>Live Calculator</h3>
+                            <p>Estimate net margins dynamically</p>
+                        </div>
+                    </div>
+
+                    <div class="card-body calculator-body">
+                        <!-- Mode Selector Toggles -->
+                        <div class="toggle-btn">
+                            <div class="toggle-slider" id="slider"></div>
+                            <div class="toggle-option active" id="opt-sale">Sale</div>
+                            <div class="toggle-option" id="opt-rent">Rent</div>
+                        </div>
+
+                        <!-- Price Input -->
+                        <div class="form-group calculator-input-group">
+                            <label for="calc-price" class="form-label" id="calc-price-label">Listed Property Price ($)</label>
+                            <input type="number" id="calc-price" class="form-input calculator-input" placeholder="0.00" step="5000" value="500000">
+                        </div>
+
+                        <!-- Sides Calculations -->
+                        <div class="calculator-sides">
+                            <div class="side-card">
+                                <div class="side-card__label">
+                                    <span class="material-symbols-outlined">person_check</span>
+                                    <span>Buyer Side</span>
+                                </div>
+                                <span class="side-card__value" id="res-buyer">$12,500</span>
+                            </div>
+                            <div class="side-card">
+                                <div class="side-card__label">
+                                    <span class="material-symbols-outlined">person_search</span>
+                                    <span>Seller Side</span>
+                                </div>
+                                <span class="side-card__value" id="res-seller">$12,500</span>
+                            </div>
+                        </div>
+
+                        <div class="calculator-divider"></div>
+
+                        <!-- Gross & Agent share card -->
+                        <div class="payout-summary">
+                            <div class="payout-row">
+                                <span class="payout-label">Agency Gross Commission</span>
+                                <span class="payout-value" id="res-gross">$25,000</span>
+                            </div>
+                            <div class="payout-row payout-row--subtracted">
+                                <span class="payout-label">
+                                    Agent Payout <span class="payout-percentage">(<span id="res-agent-perc">30</span>%)</span>
+                                </span>
+                                <span class="payout-value" id="res-agent-val">-$7,500</span>
+                            </div>
+                        </div>
+
+                        <!-- Net Profit Card -->
+                        <div class="net-revenue-card">
+                            <div class="net-revenue-card__header">
+                                <span class="net-revenue-card__title">Net Agency Revenue</span>
+                                <span class="material-symbols-outlined text-gold">verified</span>
+                            </div>
+                            <p class="net-revenue-card__value" id="res-net">$17,500</p>
+                            <p class="net-revenue-card__description">Projected company profit after agent share payouts under standard parameters.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Footer Help Banner -->
+        <div class="info-footer">
+            <span class="material-symbols-outlined info-icon">info</span>
+            <p class="info-text">These parameters are global defaults. Changes will affect <strong>new listings</strong> only. Signed agreements and locked contracts are not retroactively modified. For specialized deals, use the 'Override Commission' feature within the specific property transaction page.</p>
+        </div>
+
+    </div>
+</main>
+{% endblock %}

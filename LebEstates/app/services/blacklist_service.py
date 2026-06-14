@@ -96,6 +96,16 @@ def blacklist_user(user_id, reason, blacklisted_by):
         
         # Update user status
         user.status = 'Blacklisted'
+        db.session.flush()
+        
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='ADD',
+            table_name='blacklist',
+            record_id=entry.blacklistID,
+            description=f"Blacklisted user '{user.fullName}' (ID: {user_id}). Reason: {reason}",
+            user_id=blacklisted_by
+        )
         
         db.session.commit()
         return {"success": True, "blacklist_id": entry.blacklistID}
@@ -125,6 +135,13 @@ def resolve_blacklist_entry(blacklist_id):
             if not other_active:
                 user.status = 'Active'
                 
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='blacklist',
+            record_id=blacklist_id,
+            description=f"Resolved blacklist entry for user '{user.fullName if user else 'Unknown'}'"
+        )
         db.session.commit()
         return {"success": True}
     except Exception as e:
@@ -157,6 +174,13 @@ def update_blacklist_reason(blacklist_id, reason, status):
                 elif status == 'Active':
                     user.status = 'Blacklisted'
                     
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='blacklist',
+            record_id=blacklist_id,
+            description=f"Updated blacklist entry details for user '{user.fullName if user else 'Unknown'}' (New Status: {status or entry.status})"
+        )
         db.session.commit()
         return {"success": True}
     except Exception as e:
@@ -182,6 +206,13 @@ def delete_blacklist_entry(blacklist_id):
             if not other_active:
                 user.status = 'Active'
                 
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='DELETE',
+            table_name='blacklist',
+            record_id=blacklist_id,
+            description=f"Deleted blacklist entry for user '{user.fullName if user else 'Unknown'}' (Reason was: {entry.reason})"
+        )
         db.session.delete(entry)
         db.session.commit()
         return {"success": True}
@@ -189,3 +220,16 @@ def delete_blacklist_entry(blacklist_id):
         db.session.rollback()
         print(f"Delete blacklist error: {e}")
         return {"success": False, "error": "An internal database error occurred.", "code": 500}
+
+def search_users_for_blacklist(q):
+    """Query users matching search query (name or email) who are not blacklisted."""
+    users = Users.query.filter(
+        (Users.fullName.like(f"%{q}%")) | (Users.email.like(f"%{q}%")),
+        Users.status != 'Blacklisted'
+    ).limit(10).all()
+    
+    return [{
+        'userID': u.userID,
+        'fullName': u.fullName,
+        'email': u.email
+    } for u in users]

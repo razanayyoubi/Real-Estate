@@ -60,6 +60,13 @@ def update_customer(customer_id, data):
         if location is not None:
             customer.address = location
             
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='customer',
+            record_id=customer_id,
+            description=f"Updated customer profile for '{user.fullName}' (email: '{user.email}')"
+        )
         db.session.commit()
         return {"success": True}
     except Exception as e:
@@ -99,6 +106,13 @@ def delete_customer(customer_id):
         if has_actions:
             # Soft-disable the customer by setting status to Inactive
             user.status = 'Inactive'
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='customer',
+                record_id=customer_id,
+                description=f"Soft-disabled customer profile for '{user.fullName}' due to active database relationships."
+            )
             db.session.commit()
             return {"success": True, "message": "Customer has active database records. Account has been soft-disabled (Inactive).", "soft_deleted": True}
             
@@ -108,6 +122,13 @@ def delete_customer(customer_id):
             from app.models.customer import CustomerDocument
             CustomerDocument.query.filter_by(customerID=customer_id).delete()
             
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='DELETE',
+                table_name='customer',
+                record_id=customer_id,
+                description=f"Hard-deleted customer profile for '{user.fullName}' (email: '{user.email}')"
+            )
             db.session.delete(customer)
             db.session.delete(user)
             db.session.commit()
@@ -120,6 +141,13 @@ def delete_customer(customer_id):
             if customer_and_user:
                 customer, user = customer_and_user
                 user.status = 'Inactive'
+                from app.models.users import AuditLog
+                AuditLog.log_action(
+                    action='EDIT',
+                    table_name='customer',
+                    record_id=customer_id,
+                    description=f"Soft-disabled customer profile for '{user.fullName}' due to constraint conflict."
+                )
                 db.session.commit()
                 return {"success": True, "message": "Constraint conflict. Account soft-disabled instead.", "soft_deleted": True}
             return {"success": False, "error": "Failed to delete or disable customer.", "code": 500}
@@ -128,3 +156,20 @@ def delete_customer(customer_id):
         db.session.rollback()
         print(f"Delete customer error: {e}")
         return {"success": False, "error": "An internal error occurred while deleting the customer.", "code": 500}
+
+def get_customer_stats(customers):
+    """Calculate stats based on retrieve customer list."""
+    from datetime import datetime
+    total_customers = len(customers)
+    active_customers = sum(1 for c in customers if c['status'].lower() == 'active')
+    disabled_customers = sum(1 for c in customers if c['status'].lower() in ['inactive', 'blacklisted'])
+    
+    now = datetime.utcnow()
+    new_this_month = sum(1 for c in customers if c['raw_customer'].createdAt and c['raw_customer'].createdAt.year == now.year and c['raw_customer'].createdAt.month == now.month)
+    
+    return {
+        'total': total_customers,
+        'active': active_customers,
+        'disabled': disabled_customers,
+        'new_this_month': new_this_month
+    }

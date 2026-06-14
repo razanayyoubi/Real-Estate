@@ -619,6 +619,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     recalculateValuation();
                     applyFilters();
+                    if (data.message) {
+                        alert(data.message);
+                    }
                 } else {
                     alert(data.error || 'Failed to update property status.');
                     dropdown.value = oldStatus;

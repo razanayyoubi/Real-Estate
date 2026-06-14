@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, request, url_for, flash, jsonify
 from functools import wraps
-from app.services.employee_service import get_all_employees, add_employee, update_employee, delete_employee
+from app.services.employee_service import get_all_employees, add_employee, update_employee, delete_employee, get_employee_stats
 
 employees_bp = Blueprint('employees', __name__, url_prefix='/employees')
 
@@ -20,20 +20,7 @@ def admin_or_employee_required(f):
 @admin_or_employee_required
 def index():
     employees = get_all_employees()
-    
-    # Calculate Employee Stats
-    total_staff = len(employees)
-    active_staff = sum(1 for e in employees if e['status'].lower() == 'active')
-    on_leave = sum(1 for e in employees if e['status'].lower() == 'onleave')
-    terminated = sum(1 for e in employees if e['status'].lower() == 'terminated')
-    
-    stats = {
-        'total': total_staff,
-        'active': active_staff,
-        'on_leave': on_leave,
-        'terminated': terminated
-    }
-    
+    stats = get_employee_stats(employees)
     return render_template('employees/index.html', employees=employees, stats=stats)
 
 @employees_bp.route('/add', methods=['POST'])
@@ -124,3 +111,4 @@ def delete_employee_route(employee_id):
         return jsonify({'message': message, 'soft_deleted': result.get('soft_deleted', False)}), 200
     else:
         return jsonify({'error': result.get('error', 'Deletion failed')}), result.get('code', 400)
+

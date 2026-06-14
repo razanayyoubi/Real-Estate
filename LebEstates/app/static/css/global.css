@@ -60,7 +60,9 @@
   --font-body: 'Inter', sans-serif;
 }
 
-
+body {
+  font-family: var(--font-body);
+}
 
 * {
   margin: 0;
@@ -167,7 +169,8 @@
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 24px; /* clean 24px spacing for premium breathing room */
+  gap: 24px;
+  /* clean 24px spacing for premium breathing room */
 }
 
 @media (min-width: 1025px) {
@@ -201,7 +204,8 @@
   }
 
   .nav-link-icon {
-    display: none; /* hide icons on desktop */
+    display: none;
+    /* hide icons on desktop */
   }
 }
 
@@ -378,7 +382,8 @@
   }
 
   /* Override desktop absolute dropdown inside mobile sidebar */
-  .nav-menu .profile-dropdown, .sidebar .profile-dropdown {
+  .nav-menu .profile-dropdown,
+  .sidebar .profile-dropdown {
     position: static !important;
     width: 100% !important;
     box-shadow: none !important;
@@ -401,6 +406,7 @@
     display: none;
     z-index: 200 !important;
   }
+
   .header .profile-dropdown.profile-dropdown--open {
     display: flex !important;
   }
@@ -763,7 +769,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -772,6 +778,10 @@
 
 .header__hamburger:hover {
   background-color: var(--surface-container-low);
+}
+
+.admin-hamburger {
+  display: flex !important;
 }
 
 .header__hamburger .material-symbols-outlined {
@@ -1066,11 +1076,13 @@
   .header__links {
     gap: 12px;
   }
+
   .header__links .nav-link {
     font-size: 13.5px;
     padding: 6px 8px;
     gap: 4px;
   }
+
   .header__links .nav-link .material-symbols-outlined {
     font-size: 18px;
   }
@@ -1085,7 +1097,7 @@
     display: flex;
     justify-content: space-between;
   }
-  
+
   .header__links {
     display: none !important;
   }
@@ -1093,14 +1105,15 @@
   .header__search-container {
     display: none !important;
   }
-  
+
   .header__hamburger {
     display: flex !important;
   }
 }
 
 /* Force Admin pages body to behave as a vertical column to prevent horizontal squishing */
-body.dashboard-body, body.control-panel-body {
+body.dashboard-body,
+body.control-panel-body {
   display: flex !important;
   flex-direction: column !important;
   min-height: 100vh;
@@ -1112,6 +1125,7 @@ body.dashboard-body, body.control-panel-body {
    GLOBAL SIDEBAR STYLES (Admin & Employee roles)
    ------------------------------------------------------------- */
 .sidebar {
+  font-family: var(--font-body);
   position: fixed;
   left: -288px;
   top: 0;
@@ -1359,7 +1373,7 @@ body.dashboard-body, body.control-panel-body {
   flex-shrink: 0;
 }
 
-.sidebar__group--expanded > .sidebar__group-btn .chevron-icon {
+.sidebar__group--expanded>.sidebar__group-btn .chevron-icon {
   transform: rotate(180deg);
 }
 
@@ -1377,7 +1391,7 @@ body.dashboard-body, body.control-panel-body {
   margin-top: 4px;
 }
 
-.sidebar__group--expanded > .sidebar__submenu {
+.sidebar__group--expanded>.sidebar__submenu {
   max-height: 1000px;
   opacity: 1;
 }
@@ -1423,7 +1437,7 @@ body.dashboard-body, body.control-panel-body {
   flex-shrink: 0;
 }
 
-.sidebar__subgroup--expanded > .sidebar__subgroup-btn .chevron-icon {
+.sidebar__subgroup--expanded>.sidebar__subgroup-btn .chevron-icon {
   transform: rotate(180deg);
 }
 
@@ -1439,7 +1453,7 @@ body.dashboard-body, body.control-panel-body {
   padding: 4px 0;
 }
 
-.sidebar__subgroup--expanded > .sidebar__child-menu {
+.sidebar__subgroup--expanded>.sidebar__child-menu {
   max-height: 200px;
   opacity: 1;
 }
@@ -1502,4 +1516,182 @@ body.dashboard-body, body.control-panel-body {
 .sidebar__logout-label {
   font-size: 14px;
   white-space: nowrap;
+}
+
+/* -------------------------------------------------------------
+   RESPONSIVE LAYOUT & MOBILE SEARCH BAR STYLING
+   ------------------------------------------------------------- */
+
+/* Desktop Docking for Admin Sidebar */
+@media (min-width: 1025px) {
+  .admin-body .sidebar {
+    left: 0 !important;
+    transition: width 0.3s ease, left 0.3s ease;
+  }
+  .admin-body .admin-layout-wrapper {
+    margin-left: 288px;
+    width: calc(100% - 288px);
+    transition: margin-left 0.3s ease, width 0.3s ease;
+  }
+  .admin-body .sidebar-overlay {
+    display: none !important;
+  }
+  .header__search-mobile {
+    display: none !important;
+  }
+  /* Always show hamburger button on desktop only for admin/employee screens */
+  .admin-body .header__hamburger {
+    display: flex !important;
+  }
+
+  /* Administrative Sidebar Collapsed State (Desktop) */
+  .admin-body.sidebar-collapsed .sidebar {
+    width: 80px !important;
+  }
+  .admin-body.sidebar-collapsed .admin-layout-wrapper {
+    margin-left: 80px !important;
+    width: calc(100% - 80px) !important;
+  }
+
+  /* Hide texts and brand labels inside collapsed sidebar */
+  .admin-body.sidebar-collapsed .sidebar__brand-text,
+  .admin-body.sidebar-collapsed .sidebar__nav-label,
+  .admin-body.sidebar-collapsed .sidebar__cta-label,
+  .admin-body.sidebar-collapsed .sidebar__logout-label {
+    display: none !important;
+  }
+
+  /* Center items inside collapsed sidebar */
+  .admin-body.sidebar-collapsed .sidebar__brand-container {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+  .admin-body.sidebar-collapsed .sidebar__brand {
+    gap: 0 !important;
+  }
+  
+  .admin-body.sidebar-collapsed .sidebar__nav-item {
+    justify-content: center !important;
+    padding: 12px 0 !important;
+    border-left: none !important;
+  }
+  
+  .admin-body.sidebar-collapsed .sidebar__cta-container {
+    padding: 0 8px !important;
+  }
+  .admin-body.sidebar-collapsed .sidebar__cta {
+    padding: 14px 0 !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    margin: 0 auto !important;
+  }
+
+  .admin-body.sidebar-collapsed .sidebar__footer {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    align-items: center !important;
+  }
+  .admin-body.sidebar-collapsed .sidebar__logout-link {
+    justify-content: center !important;
+    padding: 12px 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* Mobile & Tablet Layout and Search Visibility */
+@media (max-width: 1024px) {
+  .header {
+    display: flex !important;
+    flex-direction: row !important;
+    height: 70px !important;
+    padding: 0 16px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .header__left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .header__logo {
+    margin-left: 4px !important;
+    font-size: 18px !important;
+  }
+
+  .header__search-container {
+    display: flex !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    max-width: 380px !important;
+    margin: 0 8px !important;
+  }
+
+  .header__links {
+    display: none !important;
+  }
+
+  .header__search-mobile {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  /* Compact Search bar on mobile */
+  .header__search-mobile .header__search {
+    width: 100% !important;
+  }
+
+  .header__search-mobile .header__search-input {
+    height: 36px !important;
+    padding: 8px 12px 8px 36px !important;
+    font-size: 13px !important;
+    border-radius: 20px !important;
+  }
+
+  .header__search-mobile .header__search-icon {
+    font-size: 18px !important;
+    left: 12px !important;
+  }
+
+  .header__actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .header__divider {
+    display: none !important;
+  }
+
+  .header__hamburger {
+    display: flex !important;
+  }
+}
+
+/* Maintain profile name visibility down to 480px */
+@media (max-width: 640px) and (min-width: 481px) {
+  .header__profile-text {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header__profile-text {
+    display: none !important;
+  }
+}
+
+/* Hide header search bar on very small screens (phone) */
+@media (max-width: 500px) {
+  .header__search-container,
+  .header__search-mobile {
+    display: none !important;
+  }
 }

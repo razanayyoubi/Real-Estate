@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, request, url_for, flash, jsonify
 from functools import wraps
-from app.services.role_service import get_all_roles, get_staff_users_paginated, change_user_role
+from app.services.role_service import get_all_roles, get_staff_users_paginated, change_user_role, get_staff_stats
 
 roles_bp = Blueprint('roles', __name__, url_prefix='/roles')
 
@@ -32,25 +32,7 @@ def index():
     # Exclude customer role from the dropdown selector options in the template
     filtered_roles = [r for r in roles if r.roleName.lower() != 'customer']
     
-    # Calculate some stats for the dashboard dynamically from DB
-    from app.models.users import Users, Role
-    customer_role = Role.query.filter_by(roleName='Customer').first()
-    query = Users.query
-    if customer_role:
-        query = query.filter(Users.roleID != customer_role.roleID)
-        
-    total_staff = query.count()
-    admin_role = Role.query.filter_by(roleName='Admin').first()
-    employee_role = Role.query.filter_by(roleName='Employee').first()
-    
-    admins = query.filter_by(roleID=admin_role.roleID).count() if admin_role else 0
-    employees = query.filter_by(roleID=employee_role.roleID).count() if employee_role else 0
-    
-    stats = {
-        'total': total_staff,
-        'admins': admins,
-        'employees': employees
-    }
+    stats = get_staff_stats()
     
     total_pages = math.ceil(total / per_page) if total > 0 else 1
     
@@ -83,3 +65,4 @@ def change_role_route(user_id):
         return jsonify({'message': 'User role updated successfully!'}), 200
     else:
         return jsonify({'error': result.get('error', 'Failed to update role.')}), result.get('code', 400)
+
