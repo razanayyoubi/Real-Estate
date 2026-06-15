@@ -29,6 +29,68 @@ def transactions_ledger():
         employees=data['employees']
     )
 
+@transactions_bp.route('/control-panel/transactions/revenue-dashboard')
+def transactions_revenue_dashboard():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return redirect(url_for('auth.login_page'))
+
+    data = TransactionService.get_revenue_dashboard_data()
+    user = AuthService.get_user_by_id(session['user_id'])
+
+    return render_template(
+        'transactions_revenue.html',
+        user=user,
+        kpis=data['kpis'],
+        charts=data['charts'],
+        top_agents=data['top_agents'],
+        insights=data['insights'],
+        recent_transactions=data['recent_transactions'],
+        profitability=data['profitability']
+    )
+
+@transactions_bp.route('/control-panel/transactions/revenue-dashboard/data')
+def transactions_revenue_dashboard_data():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    try:
+        data = TransactionService.get_revenue_dashboard_data()
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@transactions_bp.route('/control-panel/transactions/payment-tracking')
+def transactions_payment_tracking():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return redirect(url_for('auth.login_page'))
+
+    data = TransactionService.get_payment_tracking_data()
+    user = AuthService.get_user_by_id(session['user_id'])
+
+    return render_template(
+        'transactions_payments.html',
+        user=user,
+        kpis=data['kpis'],
+        charts=data['charts'],
+        critical_balances=data['critical_balances'],
+        aging_report=data['aging_report'],
+        ledger=data['ledger']
+    )
+
+
+@transactions_bp.route('/control-panel/transactions/payment-tracking/data')
+def transactions_payment_tracking_data():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    try:
+        data = TransactionService.get_payment_tracking_data()
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 
 # --- COMMISSION SETTINGS MANAGEMENT ---
 

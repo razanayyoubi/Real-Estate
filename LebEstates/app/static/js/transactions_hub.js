@@ -34,9 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (action === 'ledger') {
                 // Navigate to the transaction list ledger table
                 window.location.href = '/control-panel/transactions/ledger';
+            } else if (action === 'revenue-dashboard') {
+                // Navigate to the revenue dashboard
+                window.location.href = '/control-panel/transactions/revenue-dashboard';
             } else if (action === 'commission-settings') {
                 // Navigate to the commission settings page
                 window.location.href = '/control-panel/commission-settings';
+            } else if (action === 'payment-tracking') {
+                // Navigate to the payment tracking page
+                window.location.href = '/control-panel/transactions/payment-tracking';
             } else if (action === 'toast' && message) {
                 // Show construction toast alert
                 showToast(message);

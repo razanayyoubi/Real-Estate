@@ -1,0 +1,839 @@
+{% extends "base.html" %}
+
+{% block title %}Revenue Dashboard | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/transactions_revenue.css') }}" />
+{% endblock %}
+
+{% block head_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<main class="main-content" id="mainContent">
+    <div class="revenue-dashboard-main">
+        <!-- Page Header -->
+        <div class="revenue-header">
+            <div class="revenue-title-area">
+                <h2 class="revenue-title">Revenue Dashboard</h2>
+                <p class="revenue-subtitle">Visual financial analytics and agency profitability reporting for LebEstates.</p>
+            </div>
+            <div class="sync-controls">
+                <div class="sync-status-badge">
+                    <div class="sync-dot pulsing" id="syncDot"></div>
+                    <span id="syncStatusText">Syncing live</span>
+                </div>
+                <button class="btn-sync" id="manualSyncBtn" title="Force Sync Data" onclick="fetchDashboardData(true)">
+                    <span class="material-symbols-outlined">sync</span>
+                </button>
+                <div class="date-selector-badge">
+                    <span class="material-symbols-outlined" style="margin-right: 8px;">calendar_today</span>
+                    <span id="currentDateRange">{{ charts.trend_labels[0] }} - {{ charts.trend_labels[-1] }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Metrics Row -->
+        <section class="kpi-metrics-grid">
+            <!-- Total Revenue -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box primary">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <span class="kpi-trend up">
+                        <span class="material-symbols-outlined text-[14px]">trending_up</span>{{ kpis.trend_pct_revenue }}
+                    </span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Total Commission Revenue</p>
+                    <h3 class="kpi-value" id="kpi-total-revenue">{{ kpis.total_revenue }}</h3>
+                </div>
+            </div>
+
+            <!-- Revenue This Month -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box secondary">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                    </div>
+                    <span class="kpi-trend up" id="kpi-trend-month-container">
+                        <span class="material-symbols-outlined text-[14px]">trending_up</span><span id="kpi-trend-month-val">{{ kpis.trend_pct_month }}</span>
+                    </span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Revenue This Month</p>
+                    <h3 class="kpi-value" id="kpi-revenue-month">{{ kpis.revenue_this_month }}</h3>
+                </div>
+            </div>
+
+            <!-- Total Transactions -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box secondary">
+                        <span class="material-symbols-outlined">handshake</span>
+                    </div>
+                    <span class="kpi-trend up">
+                        <span class="material-symbols-outlined text-[14px]">trending_up</span>{{ kpis.trend_pct_tx }}
+                    </span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Total Transactions</p>
+                    <h3 class="kpi-value" id="kpi-total-transactions">{{ kpis.total_transactions }}</h3>
+                </div>
+            </div>
+
+            <!-- Average Deal Value -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box secondary">
+                        <span class="material-symbols-outlined">analytics</span>
+                    </div>
+                    <span class="kpi-trend down">
+                        <span class="material-symbols-outlined text-[14px]">trending_down</span>{{ kpis.trend_pct_deal }}
+                    </span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Avg Deal Value</p>
+                    <h3 class="kpi-value" id="kpi-avg-deal-value">{{ kpis.avg_deal_value }}</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Section: Revenue Trend -->
+        <section class="trend-section">
+            <div class="trend-section-header">
+                <div>
+                    <h4 class="trend-title">Revenue Trend</h4>
+                    <p class="trend-subtitle">Monthly commission and deal volume performance trend line</p>
+                </div>
+                <div class="trend-actions">
+                    <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+                </div>
+            </div>
+            <div class="chart-container-large">
+                <canvas id="revenueTrendChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Secondary Section: Sources & Leaderboard -->
+        <section class="analytics-double-row">
+            <!-- Revenue Sources (Doughnut) -->
+            <div class="sources-card">
+                <h4 class="card-title" style="margin-bottom: 24px;">Revenue Sources</h4>
+                <div class="donut-chart-box">
+                    <canvas id="revenueSourcesChart"></canvas>
+                    <div style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <span style="font-size: 10px; font-weight: 700; opacity: 0.6; letter-spacing: 0.05em; text-transform: uppercase;">Realized</span>
+                        <span id="chart-sources-total" style="font-size: 22px; font-weight: 800; color: var(--primary);">{{ kpis.total_revenue }}</span>
+                    </div>
+                </div>
+                <div class="sources-legend-list">
+                    <div class="legend-item-row">
+                        <div class="legend-label-box">
+                            <div class="legend-color-dot sales"></div>
+                            <span class="legend-text">Sales</span>
+                        </div>
+                        <span class="legend-value" id="legend-sales-val">${{ "{:,.2f}".format(charts.sources_sales) }} ({{ charts.sales_pct }}%)</span>
+                    </div>
+                    <div class="legend-item-row">
+                        <div class="legend-label-box">
+                            <div class="legend-color-dot rentals"></div>
+                            <span class="legend-text">Rentals</span>
+                        </div>
+                        <span class="legend-value" id="legend-rentals-val">${{ "{:,.2f}".format(charts.sources_rentals) }} ({{ charts.rental_pct }}%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Revenue Agents Leaderboard -->
+            <div class="leaderboard-card">
+                <div class="card-headline-row">
+                    <h4 class="card-title">Top Revenue Agents</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th style="text-align: center;">Transactions</th>
+                                <th style="text-align: right;">Sales Volume</th>
+                                <th style="text-align: right;">Total Commission</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-table-body">
+                            {% for agent in top_agents %}
+                            <tr>
+                                <td>
+                                    <div class="agent-profile-cell">
+                                        <img class="agent-avatar-circle" src="{{ agent.avatar_url }}" alt="{{ agent.name }} Profile">
+                                        <div>
+                                            <p class="agent-name-title">{{ agent.name }}</p>
+                                            <p class="agent-meta-position">{{ agent.position }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="text-align: center; font-weight: 600; color: var(--primary);">{{ agent.deal_count }}</td>
+                                <td style="text-align: right; font-weight: 600; color: var(--primary);">{{ agent.revenue }}</td>
+                                <td style="text-align: right; font-weight: 700; color: var(--secondary);">{{ agent.commission }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Revenue Insights Section -->
+        <section class="insights-section">
+            <h4 class="insights-headline">Revenue Insights</h4>
+            <div class="insights-grid-list">
+                <div class="insight-item-card">
+                    <div class="insight-icon-box gold">
+                        <span class="material-symbols-outlined">calendar_month</span>
+                    </div>
+                    <div class="insight-content-box">
+                        <span class="insight-label-caption">Best Month</span>
+                        <span class="insight-value-bold" id="insight-best-month">{{ insights.best_month_name }} ({{ insights.best_month_val }})</span>
+                    </div>
+                </div>
+                <div class="insight-item-card">
+                    <div class="insight-icon-box blue">
+                        <span class="material-symbols-outlined">diamond</span>
+                    </div>
+                    <div class="insight-content-box">
+                        <span class="insight-label-caption">Largest Transaction</span>
+                        <span class="insight-value-bold" id="insight-largest-trans-title">{{ insights.largest_transaction_title }}</span>
+                        <span class="caption text-muted" id="insight-largest-trans-agent" style="font-size: 11px; margin-top: 2px;">Agent: {{ insights.largest_transaction_agent }}</span>
+                    </div>
+                </div>
+                <div class="insight-item-card">
+                    <div class="insight-icon-box gray">
+                        <span class="material-symbols-outlined">person_celebrate</span>
+                    </div>
+                    <div class="insight-content-box">
+                        <span class="insight-label-caption">Top Agent</span>
+                        <span class="insight-value-bold" id="insight-best-agent">{{ insights.best_agent_name }} ({{ insights.best_agent_val }})</span>
+                    </div>
+                </div>
+                <div class="insight-item-card">
+                    <div class="insight-icon-box variant">
+                        <span class="material-symbols-outlined">apartment</span>
+                    </div>
+                    <div class="insight-content-box">
+                        <span class="insight-label-caption">Highest Revenue Prop</span>
+                        <span class="insight-value-bold" id="insight-highest-revenue-prop">{{ insights.highest_revenue_prop_title }} ({{ insights.highest_revenue_prop_val }})</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Revenue Transactions Table -->
+        <section class="recent-transactions-card">
+            <div class="table-controls-row">
+                <h4 class="card-title">Recent Revenue Transactions</h4>
+                <div class="search-field-box">
+                    <span class="material-symbols-outlined search-field-icon">search</span>
+                    <input type="text" id="recent-search" class="search-field-input" placeholder="Search ID, Client, Agent..." onkeyup="filterRecentTable()">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="recent-table-element" id="recent-transactions-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Property</th>
+                            <th>Client</th>
+                            <th>Agent</th>
+                            <th style="text-align: right;">Value</th>
+                            <th style="text-align: right;">Commission</th>
+                            <th style="text-align: center;">Status</th>
+                            <th style="text-align: right;">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-transactions-table-body">
+                        {% for t in recent_transactions %}
+                        <tr data-search-text="{{ t.id.lower() }} {{ t.property_title.lower() }} {{ t.client_name.lower() }} {{ t.agent_name.lower() }}">
+                            <td style="font-weight: 700; color: var(--primary-container);">{{ t.id }}</td>
+                            <td>
+                                <div class="recent-prop-cell">
+                                    <div class="recent-prop-icon">
+                                        <span class="material-symbols-outlined">apartment</span>
+                                    </div>
+                                    <span class="recent-prop-title">{{ t.property_title }}</span>
+                                </div>
+                            </td>
+                            <td>{{ t.client_name }}</td>
+                            <td>{{ t.agent_name }}</td>
+                            <td style="text-align: right; font-weight: 700; color: var(--primary);">{{ t.final_price_formatted }}</td>
+                            <td style="text-align: right; font-weight: 700; color: var(--secondary);">{{ t.commission_formatted }}</td>
+                            <td style="text-align: center;">
+                                <span class="recent-badge-status {{ 'completed' if t.status == 'Completed' else 'pending' if t.status == 'Pending' else 'inprogress' if t.status == 'In progress' else 'cancelled' }}">
+                                    {{ t.status }}
+                                </span>
+                            </td>
+                            <td style="text-align: right; color: var(--on-surface-variant); font-size: 13px;">{{ t.date }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--on-surface-variant); padding: 32px;">
+                                No transactions found in database.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Profit Analytics (Bottom Section) -->
+        <section class="profit-analytics-double-row">
+            <!-- Metrics Grid -->
+            <div class="profitability-overview-card">
+                <h4 class="card-title" style="margin-bottom: 24px;">Profitability Overview</h4>
+                <div class="profitability-grid-metrics">
+                    <div class="profit-metric-item">
+                        <span class="profit-metric-label">Gross Sales Volume</span>
+                        <span class="profit-metric-value" id="profit-gross-revenue">{{ profitability.gross_revenue }}</span>
+                        <div class="profit-bar-wrapper">
+                            <div id="bar-gross-revenue" class="profit-bar-fill pri" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="profit-metric-item">
+                        <span class="profit-metric-label">Commission Revenue</span>
+                        <span class="profit-metric-value sec" id="profit-commission-revenue">{{ profitability.commission_revenue }}</span>
+                        <div class="profit-bar-wrapper">
+                            <div id="bar-commission-revenue" class="profit-bar-fill sec" style="width: 75%;"></div>
+                        </div>
+                    </div>
+                    <div class="profit-metric-item">
+                        <span class="profit-metric-label">Expenses &amp; Payroll</span>
+                        <span class="profit-metric-value err" id="profit-expenses">{{ profitability.expenses }}</span>
+                        <div class="profit-bar-wrapper">
+                            <div id="bar-expenses" class="profit-bar-fill err" style="width: 25%;"></div>
+                        </div>
+                    </div>
+                    <div class="profit-metric-item">
+                        <span class="profit-metric-label">Net Profit</span>
+                        <span class="profit-metric-value succ" id="profit-net-profit">{{ profitability.net_profit }}</span>
+                        <span class="profit-badge-margin" id="profit-margin-badge">{{ profitability.profit_margin }}% Profit Margin</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue vs Profit Bar Chart -->
+            <div class="rev-vs-prof-card">
+                <h4 class="rev-vs-prof-title">Revenue vs Profit</h4>
+                <div class="rev-vs-prof-chart-container">
+                    <canvas id="revVsProfitChart"></canvas>
+                </div>
+                <div class="rev-vs-prof-legend">
+                    <div class="legend-color-box">
+                        <div class="legend-indicator-square rev"></div>
+                        <span>Gross Commission</span>
+                    </div>
+                    <div class="legend-color-box">
+                        <div class="legend-indicator-square prof"></div>
+                        <span>Net Profit</span>
+                    </div>
+                </div>
+                <div class="background-vector-decoration">
+                    <span class="material-symbols-outlined">trending_up</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Global chart references and dynamic data
+    let revenueTrendChart = null;
+    let revenueSourcesChart = null;
+    let revVsProfitChart = null;
+    let dashboardData = null;
+    let isFetching = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Parse initial server-side rendered data passed via Jinja
+        dashboardData = {
+            kpis: {{ kpis | tojson }},
+            charts: {{ charts | tojson }},
+            top_agents: {{ top_agents | tojson }},
+            insights: {{ insights | tojson }},
+            recent_transactions: {{ recent_transactions | tojson }},
+            profitability: {{ profitability | tojson }}
+        };
+
+        // Initialize Charts with global variables
+        const ctxTrend = document.getElementById('revenueTrendChart').getContext('2d');
+        revenueTrendChart = new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: dashboardData.charts.trend_labels,
+                datasets: [
+                    {
+                        label: 'Commission Revenue ($)',
+                        data: dashboardData.charts.trend_revenue,
+                        borderColor: '#735c00',
+                        backgroundColor: 'rgba(115, 92, 0, 0.05)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#735c00',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        tension: 0.35,
+                        fill: true
+                    },
+                    {
+                        label: 'Total Contract Volume ($)',
+                        data: dashboardData.charts.trend_volume,
+                        borderColor: '#0a1f44',
+                        backgroundColor: 'rgba(10, 31, 68, 0.02)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        tension: 0.35,
+                        fill: false,
+                        yAxisID: 'yVolume'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { family: 'Inter', size: 12 },
+                            color: '#44464e'
+                        }
+                    },
+                    tooltip: {
+                        padding: 12,
+                        backgroundColor: '#00081e',
+                        titleFont: { family: 'Montserrat', weight: 'bold' },
+                        bodyFont: { family: 'Inter' }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        grid: { color: 'rgba(197, 198, 207, 0.15)' },
+                        ticks: {
+                            color: '#44464e',
+                            font: { family: 'Inter' },
+                            callback: function(value) {
+                                if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+                                if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+                                return '$' + value;
+                            }
+                        }
+                    },
+                    yVolume: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            color: '#0a1f44',
+                            font: { family: 'Inter' },
+                            callback: function(value) {
+                                if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+                                if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+                                return '$' + value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#44464e', font: { family: 'Inter' } }
+                    }
+                }
+            }
+        });
+
+        const ctxSources = document.getElementById('revenueSourcesChart').getContext('2d');
+        revenueSourcesChart = new Chart(ctxSources, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sales', 'Rentals'],
+                datasets: [{
+                    data: [dashboardData.charts.sources_sales, dashboardData.charts.sources_rentals],
+                    backgroundColor: ['#0a1f44', '#fed65b'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        padding: 10,
+                        backgroundColor: '#00081e',
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.raw || 0;
+                                return ' ' + label + ': $' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const ctxQuarterly = document.getElementById('revVsProfitChart').getContext('2d');
+        revVsProfitChart = new Chart(ctxQuarterly, {
+            type: 'bar',
+            data: {
+                labels: dashboardData.charts.quarterly.map(q => q.label),
+                datasets: [
+                    {
+                        label: 'Gross Commission ($)',
+                        data: dashboardData.charts.quarterly.map(q => q.revenue),
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: 6,
+                        borderWidth: 0
+                    },
+                    {
+                        label: 'Net Profit ($)',
+                        data: dashboardData.charts.quarterly.map(q => q.profit),
+                        backgroundColor: '#fed65b',
+                        borderRadius: 6,
+                        borderWidth: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        padding: 10,
+                        backgroundColor: '#00081e',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: { family: 'Inter', size: 10 },
+                            callback: function(value) {
+                                if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+                                if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+                                return '$' + value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { family: 'Inter', size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // Initialize state label and progress bars
+        updateLastUpdatedTime();
+        updateDateRangeLabel();
+        updateProgressBars();
+
+        // Setup background auto-polling every 30 seconds
+        setInterval(() => {
+            fetchDashboardData(false);
+        }, 30000);
+    });
+
+    // Animate DOM text modifications using the css transition keys
+    function animateValueUpdate(elementId, newValue) {
+        const el = document.getElementById(elementId);
+        if (el && el.textContent !== String(newValue)) {
+            el.classList.remove('fade-update');
+            void el.offsetWidth; // Force element reflow
+            el.textContent = newValue;
+            el.classList.add('fade-update');
+        }
+    }
+
+    function updateDateRangeLabel() {
+        if (dashboardData && dashboardData.charts && dashboardData.charts.trend_labels) {
+            const labels = dashboardData.charts.trend_labels;
+            if (labels.length > 0) {
+                document.getElementById('currentDateRange').textContent = `${labels[0]} - ${labels[labels.length - 1]}`;
+            }
+        }
+    }
+
+    function updateLastUpdatedTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const syncStatusText = document.getElementById('syncStatusText');
+        const syncDot = document.getElementById('syncDot');
+
+        if (syncStatusText) {
+            syncStatusText.textContent = `Last synced: ${hours}:${minutes}:${seconds}`;
+        }
+        if (syncDot) {
+            syncDot.classList.add('pulsing');
+        }
+    }
+
+    function updateProgressBars() {
+        const barGross = document.getElementById('bar-gross-revenue');
+        const barComm = document.getElementById('bar-commission-revenue');
+        const barExp = document.getElementById('bar-expenses');
+
+        if (dashboardData && dashboardData.charts) {
+            const grossSalesVal = dashboardData.charts.trend_volume.reduce((a, b) => a + b, 0) || 1.0; 
+            const totalCommVal = dashboardData.charts.trend_revenue.reduce((a, b) => a + b, 0) || 1.0;
+            const totalExpVal = dashboardData.charts.trend_expenses.reduce((a, b) => a + b, 0) || 0.0;
+
+            if (barGross) barGross.style.width = '100%';
+            if (barComm) {
+                const commPct = Math.min(100, Math.round((totalCommVal / grossSalesVal) * 100)) || 75;
+                barComm.style.width = `${commPct}%`;
+            }
+            if (barExp) {
+                const expPct = Math.min(100, Math.round((totalExpVal / totalCommVal) * 100)) || 25;
+                barExp.style.width = `${expPct}%`;
+            }
+        }
+    }
+
+    function fetchDashboardData(isManual = false) {
+        if (isFetching) return;
+        isFetching = true;
+
+        const syncDot = document.getElementById('syncDot');
+        const syncStatusText = document.getElementById('syncStatusText');
+        const syncBtn = document.getElementById('manualSyncBtn');
+
+        if (syncBtn) syncBtn.classList.add('spinning');
+        if (syncStatusText) syncStatusText.textContent = "Syncing...";
+        if (syncDot) syncDot.classList.remove('pulsing');
+
+        fetch('/control-panel/transactions/revenue-dashboard/data')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(res => {
+                if (res.success && res.data) {
+                    dashboardData = res.data;
+                    renderDashboard(dashboardData);
+                    updateLastUpdatedTime();
+                } else {
+                    console.error("Dashboard JSON response failed:", res.error);
+                    if (syncStatusText) syncStatusText.textContent = "Sync failed";
+                }
+            })
+            .catch(err => {
+                console.error("Error polling dashboard metrics:", err);
+                if (syncStatusText) syncStatusText.textContent = "Connection lost";
+            })
+            .finally(() => {
+                isFetching = false;
+                if (syncBtn) syncBtn.classList.remove('spinning');
+            });
+    }
+
+    function renderDashboard(data) {
+        // 1. Update KPIs
+        animateValueUpdate('kpi-total-revenue', data.kpis.total_revenue);
+        animateValueUpdate('kpi-revenue-month', data.kpis.revenue_this_month);
+        animateValueUpdate('kpi-total-transactions', data.kpis.total_transactions);
+        animateValueUpdate('kpi-avg-deal-value', data.kpis.avg_deal_value);
+
+        const trendMonthVal = document.getElementById('kpi-trend-month-val');
+        if (trendMonthVal) {
+            trendMonthVal.textContent = data.kpis.trend_pct_month;
+            const trendContainer = document.getElementById('kpi-trend-month-container');
+            if (trendContainer) {
+                const isDown = data.kpis.trend_pct_month.startsWith('-');
+                trendContainer.className = `kpi-trend ${isDown ? 'down' : 'up'}`;
+                const icon = trendContainer.querySelector('.material-symbols-outlined');
+                if (icon) {
+                    icon.textContent = isDown ? 'trending_down' : 'trending_up';
+                }
+            }
+        }
+
+        updateDateRangeLabel();
+
+        // 2. Update Charts
+        if (revenueTrendChart) {
+            revenueTrendChart.data.labels = data.charts.trend_labels;
+            revenueTrendChart.data.datasets[0].data = data.charts.trend_revenue;
+            revenueTrendChart.data.datasets[1].data = data.charts.trend_volume;
+            revenueTrendChart.update();
+        }
+
+        if (revenueSourcesChart) {
+            revenueSourcesChart.data.datasets[0].data = [data.charts.sources_sales, data.charts.sources_rentals];
+            revenueSourcesChart.update();
+        }
+        animateValueUpdate('chart-sources-total', data.kpis.total_revenue);
+
+        const formatMoney = (val) => '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        animateValueUpdate('legend-sales-val', `${formatMoney(data.charts.sources_sales)} (${data.charts.sales_pct}%)`);
+        animateValueUpdate('legend-rentals-val', `${formatMoney(data.charts.sources_rentals)} (${data.charts.rental_pct}%)`);
+
+        // 3. Update Leaderboard
+        const leaderboardBody = document.getElementById('leaderboard-table-body');
+        if (leaderboardBody) {
+            leaderboardBody.innerHTML = '';
+            if (data.top_agents && data.top_agents.length > 0) {
+                data.top_agents.forEach(agent => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="agent-profile-cell">
+                                <img class="agent-avatar-circle" src="${agent.avatar_url}" alt="${agent.name} Profile">
+                                <div>
+                                    <p class="agent-name-title">${agent.name}</p>
+                                    <p class="agent-meta-position">${agent.position}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align: center; font-weight: 600; color: var(--primary);">${agent.deal_count}</td>
+                        <td style="text-align: right; font-weight: 600; color: var(--primary);">${agent.revenue}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--secondary);">${agent.commission}</td>
+                    `;
+                    leaderboardBody.appendChild(tr);
+                });
+            } else {
+                leaderboardBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--on-surface-variant); padding: 16px;">
+                            No active agents found.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 4. Update Insights
+        animateValueUpdate('insight-best-month', `${data.insights.best_month_name} (${data.insights.best_month_val})`);
+        animateValueUpdate('insight-largest-trans-title', data.insights.largest_transaction_title);
+        animateValueUpdate('insight-largest-trans-agent', `Agent: ${data.insights.largest_transaction_agent}`);
+        animateValueUpdate('insight-best-agent', `${data.insights.best_agent_name} (${data.insights.best_agent_val})`);
+        animateValueUpdate('insight-highest-revenue-prop', `${data.insights.highest_revenue_prop_title} (${data.insights.highest_revenue_prop_val})`);
+
+        // 5. Update Recent Transactions
+        const recentBody = document.getElementById('recent-transactions-table-body');
+        if (recentBody) {
+            recentBody.innerHTML = '';
+            if (data.recent_transactions && data.recent_transactions.length > 0) {
+                data.recent_transactions.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-search-text', `${t.id.toLowerCase()} ${t.property_title.toLowerCase()} ${t.client_name.toLowerCase()} ${t.agent_name.toLowerCase()}`);
+                    const statusClass = t.status.toLowerCase().replace(/\s+/g, '');
+                    tr.innerHTML = `
+                        <td style="font-weight: 700; color: var(--primary-container);">${t.id}</td>
+                        <td>
+                            <div class="recent-prop-cell">
+                                <div class="recent-prop-icon">
+                                    <span class="material-symbols-outlined">apartment</span>
+                                </div>
+                                <span class="recent-prop-title">${t.property_title}</span>
+                            </div>
+                        </td>
+                        <td>${t.client_name}</td>
+                        <td>${t.agent_name}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--primary);">${t.final_price_formatted}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--secondary);">${t.commission_formatted}</td>
+                        <td style="text-align: center;">
+                            <span class="recent-badge-status ${statusClass}">
+                                ${t.status}
+                            </span>
+                        </td>
+                        <td style="text-align: right; color: var(--on-surface-variant); font-size: 13px;">${t.date}</td>
+                    `;
+                    recentBody.appendChild(tr);
+                });
+            } else {
+                recentBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--on-surface-variant); padding: 32px;">
+                            No transactions found.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 6. Update Profitability Metrics
+        animateValueUpdate('profit-gross-revenue', data.profitability.gross_revenue);
+        animateValueUpdate('profit-commission-revenue', data.profitability.commission_revenue);
+        animateValueUpdate('profit-expenses', data.profitability.expenses);
+        animateValueUpdate('profit-net-profit', data.profitability.net_profit);
+        animateValueUpdate('profit-margin-badge', `${data.profitability.profit_margin}% Profit Margin`);
+        updateProgressBars();
+
+        if (revVsProfitChart) {
+            revVsProfitChart.data.labels = data.charts.quarterly.map(q => q.label);
+            revVsProfitChart.data.datasets[0].data = data.charts.quarterly.map(q => q.revenue);
+            revVsProfitChart.data.datasets[1].data = data.charts.quarterly.map(q => q.profit);
+            revVsProfitChart.update();
+        }
+    }
+
+    // Client-side quick filter for the recent transactions list
+    function filterRecentTable() {
+        const searchInput = document.getElementById('recent-search').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#recent-transactions-table tbody tr');
+
+        rows.forEach(row => {
+            const text = row.getAttribute('data-search-text');
+            if (text && text.includes(searchInput)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // CSV exporter helper
+    function exportCSV() {
+        if (!dashboardData || !dashboardData.charts) return;
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Month,Commission Revenue ($),Total Sales Volume ($),Net Profit ($)\n";
+
+        const labels = dashboardData.charts.trend_labels;
+        const rev = dashboardData.charts.trend_revenue;
+        const vol = dashboardData.charts.trend_volume;
+        const prof = dashboardData.charts.trend_profit;
+
+        for (let i = 0; i < labels.length; i++) {
+            csvContent += `"${labels[i]}",${rev[i]},${vol[i]},${prof[i]}\n`;
+        }
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "LebEstates_Revenue_Trend_Report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

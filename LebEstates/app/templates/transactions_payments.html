@@ -1,0 +1,841 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Tracking | LebEstates{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/transactions_payments.css') }}" />
+{% endblock %}
+
+{% block head_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<main class="main-content" id="mainContent">
+    <div class="payment-tracking-main">
+        <!-- Page Header -->
+        <div class="payment-header">
+            <div class="payment-title-area">
+                <h2 class="payment-title">Payment Tracking</h2>
+                <p class="payment-subtitle">Monitor accounts receivable, pending collections, and complete payment reconciliation workflows.</p>
+            </div>
+            <div class="sync-controls">
+                <div class="sync-status-badge">
+                    <div class="sync-dot pulsing" id="syncDot"></div>
+                    <span id="syncStatusText">Syncing live</span>
+                </div>
+                <button class="btn-sync" id="manualSyncBtn" title="Force Sync Data" onclick="fetchPaymentData(true)">
+                    <span class="material-symbols-outlined">sync</span>
+                </button>
+                <div class="date-range-badge">
+                    <span class="material-symbols-outlined" style="margin-right: 8px;">calendar_today</span>
+                    <span id="currentDateRange">{{ charts.trend_labels[0] }} - {{ charts.trend_labels[-1] }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <section class="kpi-grid">
+            <!-- Total Receivables -->
+            <div class="kpi-card border-primary">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-wrapper primary">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                    </div>
+                    <span class="kpi-badge neutral">Active</span>
+                </div>
+                <div class="kpi-label">Total Receivables</div>
+                <h3 class="kpi-val" id="kpi-total-receivables">{{ kpis.total_receivables }}</h3>
+            </div>
+
+            <!-- Collected This Month -->
+            <div class="kpi-card border-secondary">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-wrapper secondary">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <span class="kpi-badge up">+12.5%</span>
+                </div>
+                <div class="kpi-label">Collected This Month</div>
+                <h3 class="kpi-val" id="kpi-collected-month">{{ kpis.collected_this_month }}</h3>
+            </div>
+
+            <!-- Overdue Amount -->
+            <div class="kpi-card border-error">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-wrapper error">
+                        <span class="material-symbols-outlined">priority_high</span>
+                    </div>
+                    <span class="kpi-badge down">8%</span>
+                </div>
+                <div class="kpi-label">Overdue Amount</div>
+                <h3 class="kpi-val" id="kpi-overdue-amount">{{ kpis.overdue_amount }}</h3>
+            </div>
+
+            <!-- Collection Rate -->
+            <div class="kpi-card border-info">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-wrapper info">
+                        <span class="material-symbols-outlined">pie_chart</span>
+                    </div>
+                    <span class="kpi-badge neutral" style="font-weight: 600;">Target 95%</span>
+                </div>
+                <div class="kpi-label">Collection Rate</div>
+                <h3 class="kpi-val" id="kpi-collection-rate">{{ kpis.collection_rate }}%</h3>
+            </div>
+        </section>
+
+        <!-- Charts Grid -->
+        <section class="charts-grid">
+            <!-- Payment Collection Trends -->
+            <div class="chart-card">
+                <div class="chart-header-row">
+                    <h4 class="chart-title">Payment Collection Trends</h4>
+                    <div class="chart-legend-row">
+                        <span class="legend-indicator">
+                            <span class="legend-square collected"></span>
+                            <span>Collected</span>
+                        </span>
+                        <span class="legend-indicator">
+                            <span class="legend-square outstanding"></span>
+                            <span>Outstanding</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="chart-canvas-container">
+                    <canvas id="collectionTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Status Distribution -->
+            <div class="chart-card">
+                <h4 class="chart-title" style="margin-bottom: 24px;">Status Distribution</h4>
+                <div class="chart-canvas-container" style="height: 180px;">
+                    <canvas id="statusDistributionChart"></canvas>
+                </div>
+                <div class="distribution-list">
+                    <div class="distribution-item">
+                        <span class="distribution-label">
+                            <span class="distribution-dot paid"></span>
+                            <span>Paid Full</span>
+                        </span>
+                        <span class="distribution-val" id="dist-paid-pct">{{ charts.paid_pct }}%</span>
+                    </div>
+                    <div class="distribution-item">
+                        <span class="distribution-label">
+                            <span class="distribution-dot partial"></span>
+                            <span>Partial</span>
+                        </span>
+                        <span class="distribution-val" id="dist-partial-pct">{{ charts.partial_pct }}%</span>
+                    </div>
+                    <div class="distribution-item">
+                        <span class="distribution-label">
+                            <span class="distribution-dot overdue"></span>
+                            <span>Overdue</span>
+                        </span>
+                        <span class="distribution-val overdue" id="dist-overdue-pct">{{ charts.overdue_pct }}%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leaderboard & Aging -->
+        <section class="insights-grid">
+            <!-- Aging Report Summary -->
+            <div class="aging-card">
+                <h4 class="chart-title">Aging Report</h4>
+                <div class="aging-report-list">
+                    <!-- Current -->
+                    <div class="aging-item">
+                        <div class="aging-label-row">
+                            <span class="aging-label">Current (&lt; 30 Days)</span>
+                            <span class="aging-val" id="aging-val-current">{{ aging_report.current }}</span>
+                        </div>
+                        <div class="aging-bar-outer">
+                            <div id="aging-bar-current" class="aging-bar-inner current" style="width: {{ aging_report.current_pct }}%;"></div>
+                        </div>
+                    </div>
+                    <!-- 31 - 60 Days -->
+                    <div class="aging-item">
+                        <div class="aging-label-row">
+                            <span class="aging-label">31 - 60 Days</span>
+                            <span class="aging-val" id="aging-val-31-60">{{ aging_report.days_31_60 }}</span>
+                        </div>
+                        <div class="aging-bar-outer">
+                            <div id="aging-bar-31-60" class="aging-bar-inner bracket2" style="width: {{ aging_report.days_31_60_pct }}%;"></div>
+                        </div>
+                    </div>
+                    <!-- 61 - 90 Days -->
+                    <div class="aging-item">
+                        <div class="aging-label-row">
+                            <span class="aging-label">61 - 90 Days</span>
+                            <span class="aging-val" id="aging-val-61-90">{{ aging_report.days_61_90 }}</span>
+                        </div>
+                        <div class="aging-bar-outer">
+                            <div id="aging-bar-61-90" class="aging-bar-inner bracket3" style="width: {{ aging_report.days_61_90_pct }}%;"></div>
+                        </div>
+                    </div>
+                    <!-- 90+ Days -->
+                    <div class="aging-item">
+                        <div class="aging-label-row overdue">
+                            <span class="aging-label">90+ Days</span>
+                            <span class="aging-val" id="aging-val-90-plus">{{ aging_report.days_90_plus }}</span>
+                        </div>
+                        <div class="aging-bar-outer">
+                            <div id="aging-bar-90-plus" class="aging-bar-inner overdue" style="width: {{ aging_report.days_90_plus_pct }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outstanding Leaderboard (Critical Balances) -->
+            <div class="leaderboard-card-premium">
+                <div class="leaderboard-header">
+                    <h4 class="leaderboard-title-text">Critical Balances</h4>
+                    <span class="link-view-all" onclick="filterLedgerTab('Overdue')">View All</span>
+                </div>
+                <div class="leaderboard-items-grid" id="critical-balances-list">
+                    {% for cb in critical_balances %}
+                    <div class="client-balance-card">
+                        <div class="client-details-row">
+                            <div class="client-initials-avatar">
+                                <img src="{{ cb.avatar_url }}" alt="{{ cb.name }} Avatar">
+                            </div>
+                            <div class="client-meta-info">
+                                <span class="client-name-bold">{{ cb.name }}</span>
+                                <span class="client-property-sub">{{ cb.property }}</span>
+                            </div>
+                        </div>
+                        <div class="client-balance-val-col">
+                            <span class="balance-value-text {{ 'overdue' if cb.status == 'Overdue' else 'pending' }}">{{ cb.amount }}</span>
+                            <div class="balance-days-sub">Overdue: {{ cb.overdue_days }} Days</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p style="grid-column: span 2; text-align: center; opacity: 0.6; padding: 24px 0;">No active overdue collections.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Payment Ledger Table -->
+        <section class="ledger-section-card">
+            <div class="ledger-table-header">
+                <div class="flex items-center gap-4">
+                    <h4 class="chart-title">Payment Ledger</h4>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <div class="ledger-tab-group">
+                        <button class="btn-ledger-tab active" id="tab-all" onclick="filterLedgerTab('All')">All</button>
+                        <button class="btn-ledger-tab" id="tab-overdue" onclick="filterLedgerTab('Overdue')">Overdue</button>
+                        <button class="btn-ledger-tab" id="tab-pending" onclick="filterLedgerTab('Pending')">Pending</button>
+                    </div>
+                    <div class="relative" style="position: relative;">
+                        <span class="material-symbols-outlined" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--on-surface-variant); font-size: 18px;">search</span>
+                        <input type="text" id="ledger-search" placeholder="Search client..." onkeyup="filterLedger()" style="background-color: var(--surface-container-low); border: none; border-radius: 50px; padding: 8px 16px 8px 38px; font-size: 13px; outline: none; width: 200px; color: var(--on-surface);">
+                    </div>
+                </div>
+            </div>
+            <div class="ledger-table-wrapper">
+                <table class="payment-ledger-table" id="payment-ledger-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Client Name</th>
+                            <th>Total Value</th>
+                            <th>Amount Paid</th>
+                            <th>Balance Due</th>
+                            <th>Next Due Date</th>
+                            <th>Status</th>
+                            <th style="text-align: right; padding-right: 32px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-table-body">
+                        {% for row in ledger %}
+                        <tr class="ledger-row {{ 'overdue-row' if row.status == 'OVERDUE' }}" data-status="{{ row.status }}" data-search-text="{{ row.id.lower() }} {{ row.client.lower() }}">
+                            <td class="price-bold">{{ row.id }}</td>
+                            <td class="client-name-cell">{{ row.client }}</td>
+                            <td class="price-bold">{{ row.total }}</td>
+                            <td class="price-collected">{{ row.paid }}</td>
+                            <td class="price-due {{ 'overdue' if row.status == 'OVERDUE' else 'pending' }}">{{ row.balance }}</td>
+                            <td class="date-cell {{ 'overdue' if row.status == 'OVERDUE' }}">{{ row.due_date }}</td>
+                            <td>
+                                <span class="payment-status-badge {{ row.status.lower() }}">
+                                    {{ row.status }}
+                                </span>
+                            </td>
+                            <td style="text-align: right; padding-right: 24px;">
+                                <div class="table-btn-actions">
+                                    <button class="btn-inline-action" title="View Details" onclick="openPaymentDetailsModal({{ row.raw_id }})">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </button>
+                                    {% if row.status != 'PAID' and row.status != 'CANCELLED' %}
+                                    <button class="btn-inline-action" title="Record Payment" onclick="recordPayment({{ row.raw_id }})">
+                                        <span class="material-symbols-outlined">add_card</span>
+                                    </button>
+                                    <button class="btn-inline-action critical" title="Send Reminder" onclick="sendReminder('{{ row.client }}', '{{ row.balance }}')">
+                                        <span class="material-symbols-outlined">notifications_active</span>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
+                                No transactions mapped in the ledger.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr id="ledger-empty-state" style="display: none;">
+                            <td colspan="8" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
+                                No transactions match your search filters.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Details Modal -->
+<div class="modal-overlay hidden" id="payment-details-modal" onclick="handleOverlayClick(event, 'payment-details-modal')">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title" id="modal-ref-id">Ref: TR-xxxxx</h3>
+                <p class="modal-subtitle" id="modal-prop-title">Premium Property Title</p>
+            </div>
+            <button class="btn-close" onclick="closeModal('payment-details-modal')">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="payment-details-col">
+                    <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Client Name</span>
+                    <p style="font-weight: 700; margin-top: 4px; font-size: 15px;" id="modal-client-name">-</p>
+                </div>
+                <div class="payment-details-col">
+                    <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Agent Assigned</span>
+                    <p style="font-weight: 700; margin-top: 4px; font-size: 15px;" id="modal-agent-name">-</p>
+                </div>
+                <div class="payment-details-col">
+                    <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Deal Value</span>
+                    <p style="font-weight: 700; margin-top: 4px; font-size: 15px; color: var(--primary);" id="modal-total-val">-</p>
+                </div>
+                <div class="payment-details-col">
+                    <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Amount Paid</span>
+                    <p style="font-weight: 700; margin-top: 4px; font-size: 15px; color: var(--secondary);" id="modal-paid-val">-</p>
+                </div>
+                <div class="payment-details-col">
+                    <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Balance Due</span>
+                    <p style="font-weight: 700; margin-top: 4px; font-size: 15px; color: var(--error);" id="modal-due-val">-</p>
+                </div>
+                <div class="payment-details-col">
+                    <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Next Due Date</span>
+                    <p style="font-weight: 700; margin-top: 4px; font-size: 15px;" id="modal-due-date">-</p>
+                </div>
+                <div class="payment-details-col" style="grid-column: span 2;">
+                    <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Payment Status</span>
+                    <p style="font-weight: 700; margin-top: 4px; font-size: 15px;" id="modal-status-text">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('payment-details-modal')" style="background-color: var(--surface-container-high); border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Global Toast Notification Container -->
+<div class="toast-container" id="toast" style="position: fixed; bottom: 32px; right: 32px; z-index: 2000; transform: translateY(100px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);">
+    <div style="background-color: #00081e; color: #ffffff; padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0px 20px 40px rgba(0, 8, 30, 0.15); border: 1px solid rgba(255, 255, 255, 0.1);">
+        <span class="material-symbols-outlined" id="toastIcon" style="color: var(--secondary-fixed);">check_circle</span>
+        <span class="label-md" id="toastText" style="font-size: 14px; font-weight: 500;">Action completed successfully</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let trendChart = null;
+    let distributionChart = null;
+    let paymentData = null;
+    let isFetching = false;
+    let currentTab = 'All';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Parse server rendered initial context
+        paymentData = {
+            kpis: {{ kpis | tojson }},
+            charts: {{ charts | tojson }},
+            critical_balances: {{ critical_balances | tojson }},
+            aging_report: {{ aging_report | tojson }},
+            ledger: {{ ledger | tojson }}
+        };
+
+        // 1. Initialize Trend Line Chart (Collected vs Outstanding)
+        const ctxTrend = document.getElementById('collectionTrendChart').getContext('2d');
+        trendChart = new Chart(ctxTrend, {
+            type: 'bar',
+            data: {
+                labels: paymentData.charts.trend_labels,
+                datasets: [
+                    {
+                        label: 'Collected',
+                        data: paymentData.charts.trend_collected,
+                        backgroundColor: '#0a1f44', // Primary Container
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'Outstanding',
+                        data: paymentData.charts.trend_outstanding,
+                        backgroundColor: '#fed65b', // Secondary Container (Gold)
+                        borderRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => '$' + (value >= 1000000 ? (value / 1000000).toFixed(1) + 'M' : (value / 1000).toFixed(0) + 'K'),
+                            font: { family: 'Inter', size: 11 },
+                            color: '#44464e'
+                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Inter', size: 11 }, color: '#44464e' }
+                    }
+                }
+            }
+        });
+
+        // 2. Initialize Status Distribution Doughnut Chart
+        const ctxDoughnut = document.getElementById('statusDistributionChart').getContext('2d');
+        distributionChart = new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Paid', 'Partial', 'Overdue'],
+                datasets: [{
+                    data: [paymentData.charts.paid_count, paymentData.charts.partial_count, paymentData.charts.overdue_count],
+                    backgroundColor: ['#0a1f44', '#fed65b', '#ba1a1a'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        updateLastUpdatedTime();
+
+        // 3. Setup Auto-polling every 30 seconds
+        setInterval(() => {
+            fetchPaymentData(false);
+        }, 30000);
+    });
+
+    // Animate metrics changes
+    function animateValueUpdate(elementId, newValue) {
+        const el = document.getElementById(elementId);
+        if (el && el.textContent !== String(newValue)) {
+            el.classList.remove('fade-update');
+            void el.offsetWidth; // Force Reflow
+            el.textContent = newValue;
+            el.classList.add('fade-update');
+        }
+    }
+
+    function updateLastUpdatedTime() {
+        const now = new Date();
+        const hrs = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const secs = String(now.getSeconds()).padStart(2, '0');
+        
+        const text = document.getElementById('syncStatusText');
+        const dot = document.getElementById('syncDot');
+
+        if (text) text.textContent = `Last synced: ${hrs}:${mins}:${secs}`;
+        if (dot) dot.classList.add('pulsing');
+    }
+
+    // AJAX fetching dashboard data
+    function fetchPaymentData(isManual = false) {
+        if (isFetching) return;
+        isFetching = true;
+
+        const btn = document.getElementById('manualSyncBtn');
+        const text = document.getElementById('syncStatusText');
+        const dot = document.getElementById('syncDot');
+
+        if (btn) btn.classList.add('spinning');
+        if (text) text.textContent = 'Syncing...';
+        if (dot) dot.classList.remove('pulsing');
+
+        fetch('/control-panel/transactions/payment-tracking/data')
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(response => {
+                if (response.success && response.data) {
+                    paymentData = response.data;
+                    renderPaymentDashboard(paymentData);
+                    updateLastUpdatedTime();
+                    if (isManual) {
+                        showToast('Sync Successful', 'Payment dashboard updated in real-time.', 'success');
+                    }
+                } else {
+                    if (text) text.textContent = 'Sync failed';
+                }
+            })
+            .catch(err => {
+                console.error("Payment sync failed:", err);
+                if (text) text.textContent = 'Connection lost';
+            })
+            .finally(() => {
+                isFetching = false;
+                if (btn) btn.classList.remove('spinning');
+            });
+    }
+
+    // Render updated datasets in DOM
+    function renderPaymentDashboard(data) {
+        // Update KPIs
+        animateValueUpdate('kpi-total-receivables', data.kpis.total_receivables);
+        animateValueUpdate('kpi-collected-month', data.kpis.collected_this_month);
+        animateValueUpdate('kpi-overdue-amount', data.kpis.overdue_amount);
+        animateValueUpdate('kpi-collection-rate', `${data.kpis.collection_rate}%`);
+
+        // Update Date range label
+        const labels = data.charts.trend_labels;
+        if (labels.length > 0) {
+            document.getElementById('currentDateRange').textContent = `${labels[0]} - ${labels[labels.length - 1]}`;
+        }
+
+        // Update charts
+        if (trendChart) {
+            trendChart.data.labels = data.charts.trend_labels;
+            trendChart.data.datasets[0].data = data.charts.trend_collected;
+            trendChart.data.datasets[1].data = data.charts.trend_outstanding;
+            trendChart.update();
+        }
+
+        if (distributionChart) {
+            distributionChart.data.datasets[0].data = [data.charts.paid_count, data.charts.partial_count, data.charts.overdue_count];
+            distributionChart.update();
+        }
+
+        document.getElementById('dist-paid-pct').textContent = `${data.charts.paid_pct}%`;
+        document.getElementById('dist-partial-pct').textContent = `${data.charts.partial_pct}%`;
+        document.getElementById('dist-overdue-pct').textContent = `${data.charts.overdue_pct}%`;
+
+        // Update aging progress bars
+        animateValueUpdate('aging-val-current', data.aging_report.current);
+        animateValueUpdate('aging-val-31-60', data.aging_report.days_31_60);
+        animateValueUpdate('aging-val-61-90', data.aging_report.days_61_90);
+        animateValueUpdate('aging-val-90-plus', data.aging_report.days_90_plus);
+
+        document.getElementById('aging-bar-current').style.width = `${data.aging_report.current_pct}%`;
+        document.getElementById('aging-bar-31-60').style.width = `${data.aging_report.days_31_60_pct}%`;
+        document.getElementById('aging-bar-61-90').style.width = `${data.aging_report.days_61_90_pct}%`;
+        document.getElementById('aging-bar-90-plus').style.width = `${data.aging_report.days_90_plus_pct}%`;
+
+        // Update Critical leaderboard
+        const cbList = document.getElementById('critical-balances-list');
+        if (cbList) {
+            cbList.innerHTML = '';
+            if (data.critical_balances && data.critical_balances.length > 0) {
+                data.critical_balances.forEach(cb => {
+                    const statusClass = cb.status === 'Overdue' ? 'overdue' : 'pending';
+                    cbList.innerHTML += `
+                        <div class="client-balance-card">
+                            <div class="client-details-row">
+                                <div class="client-initials-avatar">
+                                    <img src="${cb.avatar_url}" alt="${cb.name} Avatar">
+                                </div>
+                                <div class="client-meta-info">
+                                    <span class="client-name-bold">${cb.name}</span>
+                                    <span class="client-property-sub">${cb.property}</span>
+                                </div>
+                            </div>
+                            <div class="client-balance-val-col">
+                                <span class="balance-value-text ${statusClass}">${cb.amount}</span>
+                                <div class="balance-days-sub">Overdue: ${cb.overdue_days} Days</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                cbList.innerHTML = '<p style="grid-column: span 2; text-align: center; opacity: 0.6; padding: 24px 0;">No active overdue collections.</p>';
+            }
+        }
+
+        // Update table list
+        const tableBody = document.getElementById('ledger-table-body');
+        const emptyState = document.getElementById('ledger-empty-state');
+        if (tableBody) {
+            // Remove previous ledger rows, keep the empty state row
+            const rowsToRemove = tableBody.querySelectorAll('tr:not(#ledger-empty-state)');
+            rowsToRemove.forEach(r => r.remove());
+
+            if (data.ledger && data.ledger.length > 0) {
+                data.ledger.forEach(row => {
+                    const statusClass = row.status.toLowerCase();
+                    const isOverdue = row.status === 'OVERDUE';
+                    const isPaid = row.status === 'PAID';
+                    const isCancelled = row.status === 'CANCELLED';
+
+                    let actionsHTML = `
+                        <button class="btn-inline-action" title="View Details" onclick="openPaymentDetailsModal(${row.raw_id})">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                    `;
+
+                    if (!isPaid && !isCancelled) {
+                        actionsHTML += `
+                            <button class="btn-inline-action" title="Record Payment" onclick="recordPayment(${row.raw_id})">
+                                <span class="material-symbols-outlined">add_card</span>
+                            </button>
+                            <button class="btn-inline-action critical" title="Send Reminder" onclick="sendReminder('${row.client.replace(/'/g, "\\'")}', '${row.balance}')">
+                                <span class="material-symbols-outlined">notifications_active</span>
+                            </button>
+                        `;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = `ledger-row ${isOverdue ? 'overdue-row' : ''}`;
+                    tr.setAttribute('data-status', row.status);
+                    tr.setAttribute('data-search-text', `${row.id.toLowerCase()} ${row.client.toLowerCase()}`);
+
+                    tr.innerHTML = `
+                        <td class="price-bold">${row.id}</td>
+                        <td class="client-name-cell">${row.client}</td>
+                        <td class="price-bold">${row.total}</td>
+                        <td class="price-collected">${row.paid}</td>
+                        <td class="price-due ${isOverdue ? 'overdue' : 'pending'}">${row.balance}</td>
+                        <td class="date-cell ${isOverdue ? 'overdue' : ''}">${row.due_date}</td>
+                        <td>
+                            <span class="payment-status-badge ${statusClass}">
+                                ${row.status}
+                            </span>
+                        </td>
+                        <td style="text-align: right; padding-right: 24px;">
+                            <div class="table-btn-actions">${actionsHTML}</div>
+                        </td>
+                    `;
+                    // Insert before the empty state row
+                    tableBody.insertBefore(tr, emptyState);
+                });
+            } else {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="8" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">No transactions mapped in the ledger.</td>';
+                tableBody.insertBefore(tr, emptyState);
+            }
+        }
+
+        // Re-run filtering based on active selections
+        filterLedger();
+    }
+
+    // Click tabs filtering logic
+    function filterLedgerTab(tab) {
+        currentTab = tab;
+        
+        // Remove active class from all tabs
+        document.querySelectorAll('.btn-ledger-tab').forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked tab
+        if (tab === 'All') document.getElementById('tab-all').classList.add('active');
+        if (tab === 'Overdue') document.getElementById('tab-overdue').classList.add('active');
+        if (tab === 'Pending') document.getElementById('tab-pending').classList.add('active');
+
+        filterLedger();
+    }
+
+    // Search and Tab filtering engine
+    function filterLedger() {
+        const query = document.getElementById('ledger-search').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.ledger-row');
+        let count = 0;
+
+        rows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const searchText = row.getAttribute('data-search-text');
+
+            const matchesTab = (currentTab === 'All') ||
+                               (currentTab === 'Overdue' && status === 'OVERDUE') ||
+                               (currentTab === 'Pending' && status === 'PARTIAL');
+
+            const matchesSearch = !query || searchText.includes(query);
+
+            if (matchesTab && matchesSearch) {
+                row.style.display = '';
+                count++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const empty = document.getElementById('ledger-empty-state');
+        if (count === 0) {
+            empty.style.display = '';
+        } else {
+            empty.style.display = 'none';
+        }
+    }
+
+    // Record Payment (Closed)
+    function recordPayment(transId) {
+        if (!confirm('Are you sure you want to record the final payment for this transaction? This will mark it as Completed/Paid.')) return;
+
+        fetch(`/control-panel/transactions/${transId}/update-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Completed' })
+        })
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                showToast('Success', 'Payment recorded successfully. Ledger updated.', 'success');
+                fetchPaymentData(false);
+            } else {
+                showToast('Error', response.error || 'Failed to update transaction status.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('Connection Error', 'Failed to update status. Check backend connection.', 'error');
+        });
+    }
+
+    // Send Reminder Action
+    function sendReminder(clientName, balance) {
+        showToast('Reminder Sent', `Collection notification email dispatched to ${clientName} for ${balance}.`, 'success');
+    }
+
+    // Toast Alert
+    function showToast(title, message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const text = document.getElementById('toastText');
+        const icon = document.getElementById('toastIcon');
+
+        if (!toast || !text) return;
+
+        text.textContent = `${title}: ${message}`;
+        if (type === 'error') {
+            icon.textContent = 'error';
+            icon.style.color = '#ff8a80';
+        } else {
+            icon.textContent = 'check_circle';
+            icon.style.color = 'var(--secondary-fixed)';
+        }
+
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+        toast.style.pointerEvents = 'auto';
+
+        setTimeout(() => {
+            toast.style.transform = 'translateY(100px)';
+            toast.style.opacity = '0';
+            toast.style.pointerEvents = 'none';
+        }, 4000);
+    }
+
+    // Details Modal handlers
+    function openPaymentDetailsModal(transId) {
+        fetch(`/control-panel/transactions/${transId}/details`)
+            .then(res => res.json())
+            .then(response => {
+                if (response.success && response.details) {
+                    const d = response.details;
+                    
+                    document.getElementById('modal-ref-id').textContent = `Ref: TR-${d.transactionID}`;
+                    document.getElementById('modal-prop-title').textContent = d.propertyTitle;
+                    document.getElementById('modal-client-name').textContent = d.buyerName;
+                    document.getElementById('modal-agent-name').textContent = d.agentName;
+                    
+                    const price = d.finalPrice;
+                    let paid = 0;
+                    let balance = 0;
+                    let statusLabel = 'PAID';
+
+                    if (d.paymentStatus === 'Completed') {
+                        paid = price;
+                        balance = 0;
+                        statusLabel = 'PAID';
+                    } else if (d.paymentStatus === 'Pending') {
+                        paid = price * 0.5;
+                        balance = price * 0.5;
+                        statusLabel = 'PARTIAL (Escrow)';
+                    } else if (d.paymentStatus === 'In progress') {
+                        paid = price * 0.7;
+                        balance = price * 0.3;
+                        statusLabel = 'OVERDUE (Legal)';
+                    } else if (d.paymentStatus === 'Cancelled') {
+                        paid = 0;
+                        balance = 0;
+                        statusLabel = 'CANCELLED';
+                    }
+
+                    const formatVal = val => '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    
+                    document.getElementById('modal-total-val').textContent = formatVal(price);
+                    document.getElementById('modal-paid-val').textContent = formatVal(paid);
+                    document.getElementById('modal-due-val').textContent = formatVal(balance);
+                    document.getElementById('modal-due-date').textContent = d.paymentStatus === 'Completed' || d.paymentStatus === 'Cancelled' ? '—' : d.transactionDate;
+                    document.getElementById('modal-status-text').textContent = statusLabel;
+
+                    // Style status colors
+                    const statusText = document.getElementById('modal-status-text');
+                    if (d.paymentStatus === 'Completed') statusText.style.color = '#2e7d32';
+                    else if (d.paymentStatus === 'Pending') statusText.style.color = '#735c00';
+                    else if (d.paymentStatus === 'In progress') statusText.style.color = '#ba1a1a';
+                    else statusText.style.color = 'var(--on-surface-variant)';
+
+                    toggleModal('payment-details-modal');
+                } else {
+                    showToast('Error', 'Failed to retrieve payment details.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error', 'Failed to communicate with server details service.', 'error');
+            });
+    }
+
+    function toggleModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.toggle('hidden');
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function handleOverlayClick(event, modalId) {
+        if (event.target.id === modalId) {
+            closeModal(modalId);
+        }
+    }
+</script>
+{% endblock %}
