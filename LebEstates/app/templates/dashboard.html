@@ -18,6 +18,218 @@
     <!-- Main Body -->
     <div class="dashboard-body__content">
 
+        {% if session.get('role_name', '').lower() == 'accountant' %}
+        <!-- Page Heading -->
+        <div class="page-heading">
+            <div class="page-heading__info">
+                <h1 class="page-heading__title">Financial Overview</h1>
+                <p class="page-heading__subtitle">Welcome back, Accountant. Oversee the financial health and payouts of LebEstates.</p>
+            </div>
+            <div class="page-heading__actions">
+                <span class="date-badge">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    Reconciliation Mode
+                </span>
+            </div>
+        </div>
+
+        <!-- KPI Cards Grid -->
+        <section class="kpi-grid">
+            <!-- KPI Card 1 -->
+            <div class="kpi-card">
+                <div class="kpi-card__background-decorator"></div>
+                <div class="kpi-card__top">
+                    <div class="kpi-card__icon-container">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <span class="badge badge--success">+18.4%</span>
+                </div>
+                <div class="kpi-card__bottom">
+                    <p class="kpi-card__label">Gross Transactions Volume</p>
+                    <h3 class="kpi-card__value">$18.4M</h3>
+                </div>
+            </div>
+
+            <!-- KPI Card 2 -->
+            <div class="kpi-card">
+                <div class="kpi-card__background-decorator"></div>
+                <div class="kpi-card__top">
+                    <div class="kpi-card__icon-container">
+                        <span class="material-symbols-outlined">account_balance</span>
+                    </div>
+                    <span class="badge badge--success">+9.2%</span>
+                </div>
+                <div class="kpi-card__bottom">
+                    <p class="kpi-card__label">Company Revenue</p>
+                    <h3 class="kpi-card__value">$920K</h3>
+                </div>
+            </div>
+
+            <!-- KPI Card 3 -->
+            <div class="kpi-card">
+                <div class="kpi-card__background-decorator"></div>
+                <div class="kpi-card__top">
+                    <div class="kpi-card__icon-container">
+                        <span class="material-symbols-outlined">percent</span>
+                    </div>
+                    <span class="badge badge--neutral">Stable</span>
+                </div>
+                <div class="kpi-card__bottom">
+                    <p class="kpi-card__label">Commissions Paid</p>
+                    <h3 class="kpi-card__value">$276K</h3>
+                </div>
+            </div>
+
+            <!-- KPI Card 4 -->
+            <div class="kpi-card">
+                <div class="kpi-card__background-decorator"></div>
+                <div class="kpi-card__top">
+                    <div class="kpi-card__icon-container">
+                        <span class="material-symbols-outlined">paid</span>
+                    </div>
+                    <span class="badge badge--success">+12.5%</span>
+                </div>
+                <div class="kpi-card__bottom">
+                    <p class="kpi-card__label">Net Agency Profit</p>
+                    <h3 class="kpi-card__value">$644K</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Visualization Row -->
+        <section class="visual-row">
+            <!-- Revenue & Payouts Growth Card -->
+            <div class="visual-card visual-card--large">
+                <div class="visual-card__header">
+                    <div class="visual-card__title-area">
+                        <h3 class="visual-card__title">Monthly Net Profit</h3>
+                        <p class="visual-card__subtitle">Revenue trend (Last 30 Days)</p>
+                    </div>
+                </div>
+
+                <div class="custom-chart">
+                    <div class="custom-chart__bars">
+                        <div class="chart-bar-container group" style="--bar-height: 45%;">
+                            <div class="chart-bar">
+                                <div class="chart-bar__tooltip">Week 1: $65k</div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-container group" style="--bar-height: 70%;">
+                            <div class="chart-bar">
+                                <div class="chart-bar__tooltip">Week 2: $110k</div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-container group" style="--bar-height: 55%;">
+                            <div class="chart-bar">
+                                <div class="chart-bar__tooltip">Week 3: $80k</div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-container group" style="--bar-height: 90%;">
+                            <div class="chart-bar">
+                                <div class="chart-bar__tooltip">Week 4: $145k</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="custom-chart__axis">
+                        <span class="custom-chart__label">Week 1</span>
+                        <span class="custom-chart__label">Week 2</span>
+                        <span class="custom-chart__label">Week 3</span>
+                        <span class="custom-chart__label">Week 4</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Distribution Card -->
+            <div class="visual-card">
+                <h3 class="visual-card__title">Reconciliation</h3>
+                <p class="visual-card__subtitle visual-card__subtitle--spaced">Transaction Types</p>
+
+                <div class="donut-chart-container">
+                    <div class="donut-chart">
+                        <svg class="donut-chart__svg" viewBox="0 0 100 100">
+                            <circle class="donut-chart__bg" cx="50" cy="50" r="40" />
+                            <circle class="donut-chart__segment" cx="50" cy="50" r="40" style="stroke: #00081e; stroke-dasharray: 70 30; stroke-dashoffset: 25; fill: transparent; stroke-width: 8;" />
+                            <circle class="donut-chart__segment" cx="50" cy="50" r="40" style="stroke: #d4af37; stroke-dasharray: 30 70; stroke-dashoffset: -45; fill: transparent; stroke-width: 8;" />
+                        </svg>
+                        <div class="donut-chart__content">
+                            <span class="donut-chart__number">100%</span>
+                            <span class="donut-chart__label">Audited</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="donut-legend">
+                    <div class="donut-legend__item">
+                        <div class="donut-legend__indicator" style="background-color: #00081e;"></div>
+                        <span class="donut-legend__text">Sales Deals (70%)</span>
+                    </div>
+                    <div class="donut-legend__item">
+                        <div class="donut-legend__indicator" style="background-color: #d4af37;"></div>
+                        <span class="donut-legend__text">Rental Deals (30%)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Secondary Details Row -->
+        <section class="secondary-row">
+            <!-- Recent Transactions Ledger -->
+            <div class="details-card details-card--large" style="grid-column: span 2;">
+                <div class="details-card__header">
+                    <div class="details-card__title-area">
+                        <span class="material-symbols-outlined text-primary">receipt_long</span>
+                        <h3 class="details-card__title">Recent Audit Log</h3>
+                    </div>
+                    <span class="badge badge--success-light">4 Audited Payments</span>
+                </div>
+
+                <div class="table-container">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Ref ID</th>
+                                <th>Property Description</th>
+                                <th>Gross Commission</th>
+                                <th>Net Revenue</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="schedule-table__time">#LEB-1021</td>
+                                <td>Luxury Penthouse Ashrafieh</td>
+                                <td>$45,000</td>
+                                <td>$31,500</td>
+                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
+                            </tr>
+                            <tr>
+                                <td class="schedule-table__time">#LEB-1024</td>
+                                <td>Modern Office Downtown</td>
+                                <td>$15,000</td>
+                                <td>$10,500</td>
+                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
+                            </tr>
+                            <tr>
+                                <td class="schedule-table__time">#LEB-1031</td>
+                                <td>Faraya Chalet</td>
+                                <td>$8,000</td>
+                                <td>$5,600</td>
+                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
+                            </tr>
+                            <tr>
+                                <td class="schedule-table__time">#LEB-1044</td>
+                                <td>Beachfront Villa Batroun</td>
+                                <td>$120,000</td>
+                                <td>$84,000</td>
+                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        {% else %}
         <!-- Page Heading -->
         <div class="page-heading">
             <div class="page-heading__info">
@@ -429,6 +641,7 @@
                 </div>
             </div>
         </section>
+        {% endif %}
     </div>
 </main>
 

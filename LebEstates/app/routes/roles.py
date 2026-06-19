@@ -13,7 +13,7 @@ def admin_required(f):
         role = session.get('role_name', '').lower()
         if role != 'admin':
             flash("Access denied. Only administrators are allowed to manage system roles.", "error")
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.homepage'))
         return f(*args, **kwargs)
     return decorated_function
 

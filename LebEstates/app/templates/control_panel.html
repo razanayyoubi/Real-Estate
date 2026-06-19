@@ -25,10 +25,12 @@
                 specialized tools and administrative configurations.</p>
         </div>
 
+        {% set role = session.get('role_name', '').lower() %}
         <!-- Section: Core Operations -->
         <div class="modules-section">
             <h3 class="modules-section__title">Core Operations</h3>
             <div class="modules-grid">
+                {% if role in ['admin', 'employee'] %}
                 <!-- Property Management -->
                 <div class="module-card" data-icon="real_estate_agent"
                     data-href="{{ url_for('properties.properties_list') }}" style="cursor: pointer;">
@@ -55,6 +57,7 @@
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Consultations -->
                 <div class="module-card" data-icon="chat_bubble">
@@ -83,6 +86,7 @@
             </div>
         </div>
 
+        {% if role in ['admin', 'employee'] %}
         <!-- Section: User & Role Administration -->
         <div class="modules-section">
             <h3 class="modules-section__title">User & Role Administration</h3>
@@ -160,6 +164,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
 
     </div>

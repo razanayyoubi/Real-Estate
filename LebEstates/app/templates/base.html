@@ -25,7 +25,7 @@
     <!-- Sidebar Dark Overlay -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
+    {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
     <!-- Sidebar Navigation for Admin/Employee globally on all pages -->
     <aside class="sidebar" id="sideNav">
         <div class="sidebar__brand-container">
@@ -54,6 +54,7 @@
                 <span class="material-symbols-outlined">admin_panel_settings</span>
                 <span class="sidebar__nav-label">Control Panel</span>
             </a>
+            {% if session.get('role_name', '').lower() in ['admin', 'employee'] %}
             <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/properties') or request.blueprint == 'properties' and request.path != '/sell-rent' %}sidebar__nav-item--active{% endif %}"
                 href="{{ url_for('properties.properties_browse') }}">
                 <span class="material-symbols-outlined">apartment</span>
@@ -64,19 +65,27 @@
                 <span class="material-symbols-outlined">group</span>
                 <span class="sidebar__nav-label">Users</span>
             </a>
+            {% endif %}
             <a class="sidebar__nav-item" href="#">
                 <span class="material-symbols-outlined">chat_bubble</span>
                 <span class="sidebar__nav-label">Consultations</span>
             </a>
+            {% if session.get('role_name', '').lower() in ['admin', 'employee'] %}
             <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/visits') or request.blueprint == 'visits' %}sidebar__nav-item--active{% endif %}"
                 href="{{ url_for('visits.visits_list') }}">
                 <span class="material-symbols-outlined">calendar_month</span>
                 <span class="sidebar__nav-label">Visits</span>
             </a>
+            {% endif %}
             <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/transactions') or request.blueprint == 'transactions' %}sidebar__nav-item--active{% endif %}"
                 href="{{ url_for('transactions.transactions_list') }}">
                 <span class="material-symbols-outlined">payments</span>
                 <span class="sidebar__nav-label">Transactions</span>
+            </a>
+            <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/commissions') or request.blueprint == 'commissions' %}sidebar__nav-item--active{% endif %}"
+                href="{{ url_for('commissions.commissions_dashboard') }}">
+                <span class="material-symbols-outlined">percent</span>
+                <span class="sidebar__nav-label">Commissions</span>
             </a>
             <a class="sidebar__nav-item {% if request.path == '/control-panel/commission-settings' %}sidebar__nav-item--active{% endif %}"
                 href="{{ url_for('transactions.commission_settings') }}">
@@ -85,18 +94,20 @@
             </a>
         </nav>
 
+        {% if session.get('role_name', '').lower() in ['admin', 'employee'] %}
         <div class="sidebar__cta-container">
             <button class="sidebar__cta" onclick="window.location.href='/sell-rent'">
                 <span class="material-symbols-outlined">add_business</span>
                 <span class="sidebar__cta-label">Post New Property</span>
             </button>
         </div>
+        {% endif %}
     </aside>
     <!-- Sidebar overlay backdrop -->
     <div class="sidebar-overlay" id="dashboardSidebarOverlay"></div>
     {% endif %}
 
-    {% if not (session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee']) %}
+    {% if not (session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant']) %}
     <!-- Customer / Guest Sidebar for mobile view -->
     <aside class="sidebar" id="sideNav">
         <div class="sidebar__brand-container">
@@ -168,7 +179,7 @@
     <!-- TopNavBar (Premium Header) -->
     <header class="header">
         <div class="header__left">
-            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
+            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
             <!-- Always show hamburger button for admin/employee to toggle the aside sideNav -->
             <button class="header__hamburger hamburger admin-hamburger" id="hamburger" aria-label="Toggle navigation">
                 <span class="material-symbols-outlined">menu</span>
@@ -183,7 +194,7 @@
         </div>
 
         <div class="header__search-container">
-            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee'] %}
+            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
             <!-- Centered search bar for logged in Employee/Admin -->
             <div class="header__search">
                 <span class="material-symbols-outlined header__search-icon">search</span>
@@ -254,7 +265,7 @@
                     <a href="/favorites" class="profile-dropdown__item">
                         <span class="material-symbols-outlined">favorite</span> Favorite Properties
                     </a>
-                    {% if session.get('role_name', '').lower() in ['admin', 'employee'] %}
+                    {% if session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
                     <a href="/dashboard" class="profile-dropdown__item">
                         <span class="material-symbols-outlined">dashboard</span> Dashboard
                     </a>
@@ -274,6 +285,24 @@
     </header>
 
     <!-- Main Content -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages-container" style="max-width: 1200px; margin: 24px auto 0 auto; padding: 0 24px;">
+          {% for category, message in messages %}
+            <div class="flash-message flash-message--{{ category }}" style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 12px; margin-bottom: 16px; font-family: var(--font-body, 'Inter', sans-serif); font-size: 14px; font-weight: 500; box-shadow: var(--shadow-sm); {% if category == 'error' %}background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;{% else %}background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;{% endif %}">
+              <span class="material-symbols-outlined" style="font-size: 20px;">
+                {% if category == 'error' %}error{% else %}check_circle{% endif %}
+              </span>
+              <span>{{ message }}</span>
+              <button onclick="this.parentElement.remove()" style="margin-left: auto; background: none; border: none; cursor: pointer; color: inherit; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     {% block content %}
     {% endblock %}
 

@@ -149,6 +149,13 @@
     <!-- Section 3: Transactions Table -->
     <div class="table-section">
         <div class="table-card">
+            <div class="ledger-header" style="margin-bottom: 20px; padding: 20px 24px 0 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: none;">
+                <h3 style="font-family: var(--font-headline); font-size: 20px; font-weight: 700; color: var(--primary);">Recent Transactions List</h3>
+                <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')" style="background-color: var(--secondary); color: var(--on-secondary); padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; height: 38px; box-shadow: none;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                    <span>New Transaction</span>
+                </button>
+            </div>
             <div class="table-responsive">
                 <table class="transactions-table">
                     <thead>
@@ -270,6 +277,68 @@
                 <div class="pagination-buttons" id="pagination-buttons">
                     <!-- Dynamic Buttons Inject via JS -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agency Operations Ledger Section -->
+    <div class="table-section operations-ledger-section" style="margin-top: 40px; margin-bottom: 40px;">
+        <div class="table-card">
+            <div class="ledger-header" style="margin-bottom: 20px; padding: 20px 24px 0 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: none;">
+                <div class="header-details">
+                    <h3 style="font-family: var(--font-headline); font-size: 20px; font-weight: 700; color: var(--primary);">Agency Operations Ledger</h3>
+                    <p class="ledger-subtitle" style="font-size: 13px; color: var(--on-surface-variant); margin-top: 4px;">Reconcile office expenses, marketing spend, and operational payroll.</p>
+                </div>
+                <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                    <div class="input-icon-wrapper" style="width: 250px;">
+                        <span class="material-symbols-outlined input-icon">search</span>
+                        <input type="text" id="expense-search-input" class="filter-input" placeholder="Search expense..." onkeyup="filterExpenses()" style="height: 38px; padding-top: 0; padding-bottom: 0;">
+                    </div>
+                    <!-- Button beside table to add transaction -->
+                    <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')" style="background-color: var(--secondary); color: var(--on-secondary); padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; height: 38px; box-shadow: none;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                        <span>New Transaction</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="transactions-table" id="expenses-ledger-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Expense ID</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Expense Item</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Category</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container); text-align: right;">Amount</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container); text-align: center;">Status</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expense-table-body">
+                        {% for exp in expenses %}
+                        <tr class="trans-row-main expense-row" data-search="{{ exp.id.lower() }} {{ exp.item.lower() }} {{ exp.category.lower() }}" style="transition: background-color 0.2s ease;">
+                            <td class="td-id" style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); font-weight: 700;">#{{ exp.id }}</td>
+                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); font-weight: 600;">{{ exp.item }}</td>
+                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15);">
+                                <span class="badge" style="background-color: var(--surface-container); color: var(--on-surface-variant); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">{{ exp.category }}</span>
+                            </td>
+                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); text-align: right; color: var(--error); font-weight: 700;">{{ exp.amount_formatted }}</td>
+                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); text-align: center;">
+                                <span class="badge {{ 'badge-sold' if exp.status == 'Paid' else 'badge-rented' }}">
+                                    {{ exp.status }}
+                                </span>
+                            </td>
+                            <td class="text-muted" style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); font-size: 13px;">{{ exp.date }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="no-records-cell" style="text-align: center; padding: 40px;">
+                                No operations expenses recorded.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

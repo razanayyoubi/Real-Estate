@@ -3,23 +3,29 @@
 {% block title %}Property Inventory | LebEstates{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="/static/css/properties_mgmt.css" />
+<link rel="stylesheet" href="/static/css/properties_mgmt.css?v=1.1" />
 {% endblock %}
 
 {% block content %}
 <main class="properties-mgmt-main">
 
     <!-- Page Header -->
-    <header class="mgmt-header">
-        <div class="mgmt-header-text">
-            <h2 class="mgmt-title">Property Inventory</h2>
-            <p class="mgmt-subtitle">Manage, audit, and curate Lebanon's most prestigious real estate portfolio.</p>
+    <div class="hub-header">
+        <div class="hub-header-content-wrapper">
+            <div class="hub-header-details">
+                <div class="hub-header-top">
+                    <span class="hub-header-line"></span>
+                    <span class="hub-header-tag">Portfolio Management</span>
+                </div>
+                <h2 class="hub-title">Property Inventory</h2>
+                <p class="hub-subtitle">Manage, audit, and curate Lebanon's most prestigious real estate portfolio.</p>
+            </div>
+            <button class="btn-new-listing" onclick="window.location.href='/sell-rent'">
+                <span class="material-symbols-outlined">add</span>
+                New Listing
+            </button>
         </div>
-        <button class="btn-new-listing" onclick="window.location.href='/sell-rent'">
-            <span class="material-symbols-outlined">add</span>
-            New Listing
-        </button>
-    </header>
+    </div>
 
     <!-- Stats Bar -->
     <section class="mgmt-stats-grid">
@@ -258,36 +264,36 @@
             </div>
         </div>
 
-        <!-- Database Schema Quick Look -->
+        <!-- Listing Guidelines & Compliance -->
         <div class="insights-card schema-card bg-primary-dark">
-            <h3 class="insights-title text-white">Schema Overview</h3>
+            <h3 class="insights-title text-white">Listing Compliance</h3>
             <div class="schema-list">
                 <div class="schema-item">
                     <div class="schema-item-header">
-                        <span class="material-symbols-outlined text-secondary">table_chart</span>
-                        <span class="schema-item-title text-white">property</span>
+                        <span class="material-symbols-outlined text-secondary">verified</span>
+                        <span class="schema-item-title text-white">Verification Standard</span>
                     </div>
                     <div class="schema-item-details">
-                        <span>26 Columns</span>
-                        <span>{{ total_count }} Rows</span>
-                        <span>Last Sync: Just now</span>
+                        <span>Min. 1 image required</span>
+                        <span>Correct geocoding</span>
+                        <span>Verified owner contact</span>
                     </div>
                 </div>
                 <div class="schema-item">
                     <div class="schema-item-header">
-                        <span class="material-symbols-outlined text-secondary">image</span>
-                        <span class="schema-item-title text-white">property_image</span>
+                        <span class="material-symbols-outlined text-secondary">photo_library</span>
+                        <span class="schema-item-title text-white">Portfolio Media</span>
                     </div>
                     <div class="schema-item-details">
-                        <span>8 Columns</span>
-                        <span>{{ image_count }} Files</span>
+                        <span>{{ image_count }} Total Images</span>
                         <span>BLOB Storage: Active</span>
+                        <span>WebP Format Recommended</span>
                     </div>
                 </div>
             </div>
             <!-- Decorative Graphic -->
             <div class="schema-decorative-icon">
-                <span class="material-symbols-outlined">dataset</span>
+                <span class="material-symbols-outlined">rule_folder</span>
             </div>
         </div>
     </section>

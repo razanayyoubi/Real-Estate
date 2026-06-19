@@ -204,7 +204,7 @@ class AuthService:
             db.session.commit()
 
             role_name = user.role.roleName if user.role else 'Customer'
-            redirect_url = '/dashboard' if role_name.lower() in ['admin', 'employee'] else '/'
+            redirect_url = '/dashboard' if role_name.lower() in ['admin', 'employee', 'accountant'] else '/'
 
             return {
                 "success": True,

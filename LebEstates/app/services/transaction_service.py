@@ -36,7 +36,7 @@ class TransactionService:
             'paid_transactions': paid_count
         }
 
-        properties = Property.query.order_by(Property.title.asc()).all()
+        properties = Property.query.filter_by(status='Published').order_by(Property.title.asc()).all()
         customers = Customer.query.all()
         employees = Employee.query.filter_by(status='Active').all()
 
@@ -326,6 +326,10 @@ class TransactionService:
 
             owner_id = property_obj.ownerID
 
+            # Fetch current global agent split setting
+            agent_split_setting = CommissionSetting.query.filter_by(commissionType='agent_split').first()
+            agent_split = float(agent_split_setting.ratePercentage) if agent_split_setting else 30.0
+
             new_trans = Transaction(
                 propertyID=int(property_id),
                 customerID=int(customer_id),
@@ -335,6 +339,7 @@ class TransactionService:
                 finalPrice=final_price,
                 commissionRate=commission_rate,
                 commissionAmount=commission_amount,
+                agentCommissionRate=agent_split,
                 paymentStatus='Escrow',
                 paymentType=payment_type,
                 paymentMethod=payment_method,

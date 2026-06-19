@@ -43,6 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (action === 'payment-tracking') {
                 // Navigate to the payment tracking page
                 window.location.href = '/control-panel/transactions/payment-tracking';
+            } else if (action === 'commissions') {
+                // Navigate to the agent commissions page
+                window.location.href = '/control-panel/commissions';
+            } else if (action === 'salaries') {
+                // Navigate to the treasury salaries page
+                window.location.href = '/control-panel/salaries';
             } else if (action === 'toast' && message) {
                 // Show construction toast alert
                 showToast(message);

@@ -36,6 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (openModal) toggleModal(openModal.id);
         }
     });
+
+    // 4. Auto-open modal if query string dictates
+    if (window.location.search.includes('open_new=true')) {
+        toggleModal('new-transaction-modal');
+    }
 });
 
 /* ===== MODAL TOGGLE & LAYOUT CONTROLS ===== */
@@ -540,4 +545,36 @@ function animateCardsOnLoad() {
             card.style.transform = 'translateY(0)';
         }, index * 80);
     });
+}
+
+function filterExpenses() {
+    const searchVal = (document.getElementById('expense-search-input')?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#expense-table-body .expense-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowSearch = row.getAttribute('data-search') || '';
+        if (searchVal === '' || rowSearch.includes(searchVal)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const tableBody = document.getElementById('expense-table-body');
+    const existingNoRecordsRow = document.getElementById('expense-no-records-row');
+
+    if (visibleCount === 0 && rows.length > 0) {
+        if (!existingNoRecordsRow) {
+            const noRecordsRow = document.createElement('tr');
+            noRecordsRow.id = 'expense-no-records-row';
+            noRecordsRow.innerHTML = `
+                <td colspan="6" class="no-records-cell" style="text-align: center; padding: 40px; color: var(--on-surface-variant);">No matching operations items found.</td>
+            `;
+            tableBody.appendChild(noRecordsRow);
+        }
+    } else if (existingNoRecordsRow) {
+        existingNoRecordsRow.remove();
+    }
 }

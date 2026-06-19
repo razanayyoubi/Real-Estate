@@ -4,136 +4,74 @@
 
 /* Main Layout */
 .visits-mgmt-main {
-  padding: 40px var(--margin-mobile);
+  padding: 40px var(--margin-desktop);
   max-width: 1600px;
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
   min-height: 100vh;
   box-sizing: border-box;
 }
 
-@media (min-width: 768px) {
+@media (max-width: 1024px) {
   .visits-mgmt-main {
-    padding: 60px var(--margin-desktop);
+    padding: 32px var(--margin-mobile);
+  }
+}
+
+@media (max-width: 768px) {
+  .visits-mgmt-main {
+    padding: 20px var(--margin-mobile);
   }
 }
 
 /* Page Header */
-.mgmt-header {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
+.hub-header {
   margin-bottom: 40px;
-  gap: 16px;
+  text-align: left;
 }
 
-@media (min-width: 768px) {
-  .mgmt-header {
-    flex-direction: row;
-    align-items: center;
-  }
-}
-
-.mgmt-header-v2 {
-  margin-bottom: 40px;
-  padding: 32px 40px;
-  background: linear-gradient(135deg, var(--surface-container-lowest) 0%, var(--surface-container-low) 100%);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 30px rgba(10, 31, 68, 0.05), inset 0 2px 0 rgba(255, 255, 255, 0.8);
-  position: relative;
-  overflow: hidden;
-}
-
-.mgmt-header-v2::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -5%;
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, var(--primary-container) 0%, transparent 70%);
-  opacity: 0.2;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.mgmt-header-content {
+.hub-header-top {
   display: flex;
   align-items: center;
-  gap: 24px;
-  position: relative;
-  z-index: 1;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.mgmt-header-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--on-primary);
-  box-shadow: 0 12px 24px rgba(0, 8, 30, 0.2);
-  position: relative;
-  overflow: hidden;
+.hub-header-line {
+  width: 40px;
+  height: 3px;
+  background-color: var(--secondary, #735c00);
+  border-radius: 9999px;
 }
 
-.mgmt-header-icon::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
-  pointer-events: none;
-}
-
-.mgmt-header-icon .material-symbols-outlined {
-  font-size: 36px;
-}
-
-.mgmt-title {
-  font-family: var(--font-headline);
-  font-size: 36px;
-  font-weight: 800;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 8px;
-  letter-spacing: -0.5px;
-}
-
-.mgmt-subtitle {
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: var(--on-surface-variant);
-  margin: 0;
-  max-width: 600px;
-  line-height: 1.6;
-}
-
-.header-filter-link {
-  color: var(--on-surface-variant);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  padding-bottom: 4px;
-  transition: all 0.2s ease;
-  margin-right: 24px;
-}
-
-.header-filter-link:hover {
-  color: var(--primary);
-}
-
-.header-filter-link.active {
-  color: var(--primary);
+.hub-header-tag {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
   font-weight: 700;
-  border-bottom: 2px solid var(--primary);
+  color: var(--secondary, #735c00);
+}
+
+.hub-title {
+  font-family: var(--font-headline, 'Montserrat', sans-serif);
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--primary, #00081e);
+  margin: 0 0 16px 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.hub-subtitle {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 18px;
+  color: var(--on-surface-variant, #44464e);
+  margin: 0;
+  line-height: 1.7;
+  max-width: 750px;
+  opacity: 0.85;
 }
 
 .hidden-mobile {
@@ -291,6 +229,7 @@
 
 .controls-left {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   flex: 1;
   min-width: 300px;
@@ -400,6 +339,8 @@
   border-bottom-right-radius: 16px;
   box-shadow: 0px 12px 32px rgba(10, 31, 68, 0.08);
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 .table-responsive {
@@ -408,16 +349,20 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  height: 8px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--surface-container-low);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--surface-container-highest);
-  border-radius: 10px;
+  background: var(--outline-variant);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--outline);
 }
 
 .visits-table {
@@ -426,14 +371,22 @@
   border-collapse: collapse;
 }
 
+@media (min-width: 769px) {
+  .visits-table {
+    min-width: 950px;
+  }
+}
+
 .visits-table th {
-  padding: 16px 24px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
+  background-color: var(--surface-container-low);
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
   color: var(--on-surface-variant);
-  background: var(--surface-container-low);
-  border-bottom: 1px solid var(--outline-variant);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(197, 198, 207, 0.25);
+  white-space: nowrap;
 }
 
 .text-center {
@@ -441,19 +394,16 @@
 }
 
 .visits-table td {
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(197, 198, 207, 0.3);
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(197, 198, 207, 0.12);
+  font-size: 13px;
+  vertical-align: middle;
+  color: var(--on-surface);
+  white-space: nowrap;
 }
 
-.visits-table tbody tr {
-  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-}
-
-.visits-table tbody tr:hover {
-  background-color: rgba(239, 244, 255, 0.5);
-  /* surface-container-low/50 */
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(10, 31, 68, 0.04);
+.visits-table tbody tr:hover td {
+  background-color: var(--surface-container-low);
 }
 
 /* Table cell contents */

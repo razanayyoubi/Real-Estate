@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Payroll | LebEstates Treasury{% endblock %}
+
+{% block styles %}
+<link href="{{ url_for('static', filename='css/salaries_payroll.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<main class="treasury-main">
+    <!-- Immersive Header Section -->
+    <section class="treasury-hero">
+        <div class="treasury-hero__decorator">
+            <svg preserveAspectRatio="none" viewBox="0 0 100 100" style="width: 100%; height: 100%; opacity: 0.05;">
+                <path d="M0 0 L50 20 L100 0 L100 100 L50 80 L0 100 Z" fill="currentColor"></path>
+            </svg>
+        </div>
+        <div class="treasury-hero__content">
+            <div class="treasury-hero__top-row">
+                <div class="treasury-hero__title-area">
+                    <div class="treasury-hero__badge-row">
+                        <span class="cycle-badge">Active Cycle</span>
+                        <span class="cycle-date">{{ selected_month }}</span>
+                    </div>
+                    <h2 class="treasury-hero__title">Monthly Payroll</h2>
+                    <p class="treasury-hero__subtitle">Orchestrating financial excellence across the LebEstates enterprise. Precise management of salaries, elite commissions, and fiscal health.</p>
+                </div>
+                <div class="treasury-hero__action-row">
+                    <button class="btn-treasury btn-treasury--outline" id="btnExportLedger">
+                        <span class="material-symbols-outlined">ios_share</span> Export Ledger
+                    </button>
+                    <button class="btn-treasury btn-treasury--gold" id="btnGenerateBatch">
+                        <span class="material-symbols-outlined">sync</span> Generate Batch
+                    </button>
+                </div>
+            </div>
+
+            <!-- Premium Metrics Ribbon -->
+            <div class="metrics-grid">
+                <!-- Disbursement Trend Card -->
+                <div class="metric-card metric-card--double">
+                    <div class="metric-card__header">
+                        <div>
+                            <p class="metric-card__label">Total Disbursement</p>
+                            <h3 class="metric-card__value" id="totalDisbursementText">${{ "{:,.2f}".format(stats.total_disbursement) }}</h3>
+                        </div>
+                        <div class="metric-card__trend-indicator">
+                            <span class="trend-percentage trend-percentage--up">
+                                <span class="material-symbols-outlined">trending_up</span> +4.2%
+                            </span>
+                            <p class="trend-comparison">vs Last Cycle</p>
+                        </div>
+                    </div>
+                    <div class="trend-graph">
+                        <div class="trend-graph__bar" style="height: 50%;"></div>
+                        <div class="trend-graph__bar" style="height: 60%;"></div>
+                        <div class="trend-graph__bar" style="height: 40%;"></div>
+                        <div class="trend-graph__bar" style="height: 80%;"></div>
+                        <div class="trend-graph__bar" style="height: 75%;"></div>
+                        <div class="trend-graph__bar trend-graph__bar--active" style="height: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Completion Widget -->
+                <div class="metric-card metric-card--centered">
+                    <div class="completion-widget">
+                        <div class="completion-widget__circle-wrapper">
+                            <svg class="completion-widget__circle-svg" viewBox="0 0 36 36">
+                                <path class="completion-widget__track" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="2.5"></path>
+                                <path class="completion-widget__progress" stroke-dasharray="{{ stats.completion_percent }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="2.5"></path>
+                            </svg>
+                            <div class="completion-widget__percentage">{{ stats.completion_percent }}%</div>
+                        </div>
+                        <p class="metric-card__label">Completion</p>
+                        <p class="completion-widget__stats">{{ stats.paid_count }} / {{ stats.total_count }} Disbursed</p>
+                    </div>
+                </div>
+
+                <!-- Secondary Metric -->
+                <div class="metric-card metric-card--split">
+                    <div class="metric-card__top">
+                        <p class="metric-card__label">Total Commissions</p>
+                        <h4 class="metric-card__value-sub">${{ "{:,.2f}".format(stats.commissions_paid) }}</h4>
+                    </div>
+                    <div class="metric-card__footer">
+                        <span class="material-symbols-outlined">stars</span>
+                        <span class="metric-card__footer-text">High Sales Velocity</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Canvas -->
+    <section class="treasury-content">
+        <!-- Control Center Bar -->
+        <div class="control-bar">
+            <div class="control-bar__months">
+                {% for m in months %}
+                <button class="month-btn {% if m.value == selected_month %}month-btn--active{% endif %}" onclick="filterMonth('{{ m.value }}')">
+                    {{ m.label }}
+                </button>
+                {% endfor %}
+            </div>
+            <div class="control-bar__filters">
+                <div class="filter-wrapper">
+                    <select class="custom-select" id="departmentFilter">
+                        <option value="All">All Departments</option>
+                        <option value="Broker">Sales & Brokerage</option>
+                        <option value="Admin">Administration</option>
+                    </select>
+                </div>
+                <div class="vertical-divider"></div>
+                <button class="btn-bulk-approve" id="btnBulkApprove">
+                    <span class="material-symbols-outlined">check_circle</span> Bulk Approve
+                </button>
+            </div>
+        </div>
+
+        <!-- Premium Ledger Table -->
+        <div class="ledger-container">
+            <div class="table-responsive">
+                <table class="ledger-table">
+                    <thead>
+                        <tr>
+                            <th>Stakeholder</th>
+                            <th>Designation</th>
+                            <th>Base Salary</th>
+                            <th>Commission</th>
+                            <th class="text-right">Net Value</th>
+                            <th class="text-center">Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in ledger %}
+                        <tr class="ledger-row" data-position="{{ emp.position }}">
+                            <td>
+                                <div class="stakeholder">
+                                    <div class="stakeholder__avatar">
+                                        {{ emp.initials }}
+                                    </div>
+                                    <div>
+                                        <p class="stakeholder__name">{{ emp.name }}</p>
+                                        <p class="stakeholder__id">{{ emp.tres_id }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <p class="designation-title">{{ emp.position }}</p>
+                                <p class="designation-dept">{% if 'Broker' in emp.position or 'Agent' in emp.position %}Brokerage Div.{% else %}Administration{% endif %}</p>
+                            </td>
+                            <td>
+                                <span class="monospaced-value">${{ "{:,.2f}".format(emp.base_salary) }}</span>
+                            </td>
+                            <td>
+                                <div class="commission-display">
+                                    <span class="monospaced-value highlight-commissions">${{ "{:,.2f}".format(emp.commission) }}</span>
+                                </div>
+                            </td>
+                            <td class="text-right">
+                                <span class="monospaced-value net-payout-value">${{ "{:,.2f}".format(emp.net_value) }}</span>
+                                <span class="currency-tag">USD</span>
+                            </td>
+                            <td class="text-center">
+                                {% if emp.status|lower == 'paid' %}
+                                <span class="payment-status-badge payment-status-badge--paid">Paid</span>
+                                {% else %}
+                                <span class="payment-status-badge payment-status-badge--pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                {% if emp.status|lower != 'paid' %}
+                                <button class="btn-payout-action" onclick="approvePayout('{{ emp.employee_id }}', '{{ selected_month }}')">
+                                    Pay Out
+                                </button>
+                                {% else %}
+                                <button class="btn-payout-action btn-payout-action--disabled" disabled>
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">done</span>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination/Footer details -->
+            <div class="ledger-footer">
+                <p class="ledger-footer__summary">Archiving {{ stats.total_count }} unique records for {{ selected_month }} cycle</p>
+            </div>
+        </div>
+
+        <!-- Footer Analytics Grid -->
+        <div class="analytics-grid">
+            <div class="analytics-grid__main">
+                <h3 class="analytics-title">
+                    <span class="analytics-title__accent"></span> Treasury Insights
+                </h3>
+                <div class="analytics-card flex-center">
+                    <p class="analytics-placeholder">Refined fiscal projection visualization integrated here.</p>
+                </div>
+            </div>
+            <div class="analytics-grid__side">
+                <h3 class="analytics-title">Timeline</h3>
+                <div class="analytics-card timeline-card">
+                    <div class="timeline">
+                        {% for event in timeline %}
+                        <div class="timeline__item">
+                            <div class="timeline__marker"></div>
+                            <div class="timeline__content">
+                                <p class="timeline__title">{{ event.title }}</p>
+                                <p class="timeline__desc">{{ event.description }}</p>
+                                <p class="timeline__date">{{ event.date }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/salaries_payroll.js') }}"></script>
+{% endblock %}

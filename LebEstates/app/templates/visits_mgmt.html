@@ -3,24 +3,21 @@
 {% block title %}Visits Management | LebEstates Admin{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/visits_mgmt.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visits_mgmt.css') }}?v=1.4" />
 {% endblock %}
 
 {% block content %}
 <main class="visits-mgmt-main">
 
     <!-- Page Header -->
-    <header class="mgmt-header-v2">
-        <div class="mgmt-header-content">
-            <div class="mgmt-header-icon">
-                <span class="material-symbols-outlined">calendar_month</span>
-            </div>
-            <div class="mgmt-header-text">
-                <h2 class="mgmt-title">Visits Management</h2>
-                <p class="mgmt-subtitle">Manage and track property visits, schedules, and consultant assignments.</p>
-            </div>
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Agency Operations</span>
         </div>
-    </header>
+        <h2 class="hub-title">Visits Management</h2>
+        <p class="hub-subtitle">Manage and track property visits, schedules, and consultant assignments.</p>
+    </div>
 
     <!-- Summary Stats Section -->
     <section class="mgmt-stats-grid">

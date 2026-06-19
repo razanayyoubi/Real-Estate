@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Agent Commissions | LebEstates Prestige CRM{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/agent_commissions.css') }}" />
+{% endblock %}
+
+{% block content %}
+<main class="main-content" id="mainContent">
+    <div class="commissions-dashboard-main">
+        <!-- Page Header -->
+        <div class="hub-header">
+            <div class="hub-header-top">
+                <span class="hub-header-line"></span>
+                <span class="hub-header-tag">Financial Operations</span>
+            </div>
+            <div class="hub-header-main-flex">
+                <div class="hub-header-details">
+                    <h2 class="hub-title">Agent Commissions</h2>
+                    <p class="hub-subtitle">Track agent earnings, splits, top performers, and agency operations expenses.</p>
+                </div>
+                <div class="sync-controls">
+                    <div class="sync-status-badge">
+                        <div class="sync-dot pulsing" id="syncDot"></div>
+                        <span id="syncStatusText">Syncing live</span>
+                    </div>
+                    <button class="btn-sync" id="manualSyncBtn" title="Force Sync Data" onclick="fetchCommissionsData()">
+                        <span class="material-symbols-outlined">sync</span>
+                    </button>
+                    <div class="date-selector-badge">
+                        <span class="material-symbols-outlined" style="margin-right: 8px;">payments</span>
+                        <span>Agent Share: {{ kpis.agent_split }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Metrics Grid -->
+        <section class="kpi-metrics-grid">
+            <!-- Total Commission Volume -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box primary">
+                        <span class="material-symbols-outlined">insights</span>
+                    </div>
+                    <span class="kpi-tag">Gross Volume</span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Total Commission Volume</p>
+                    <h3 class="kpi-value" id="kpi-total-volume">{{ kpis.total_commission_volume }}</h3>
+                </div>
+            </div>
+
+            <!-- Ready for Payout -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box secondary">
+                        <span class="material-symbols-outlined">paid</span>
+                    </div>
+                    <span class="kpi-tag highlight">Closed Deals</span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Agent Share Payout</p>
+                    <h3 class="kpi-value payout" id="kpi-ready-payout">{{ kpis.ready_for_payout }}</h3>
+                </div>
+            </div>
+
+            <!-- Average Commission Rate -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box tertiary">
+                        <span class="material-symbols-outlined">percent</span>
+                    </div>
+                    <span class="kpi-tag">Sales Avg</span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Avg Commission Rate</p>
+                    <h3 class="kpi-value" id="kpi-avg-rate">{{ kpis.avg_commission_rate }}</h3>
+                </div>
+            </div>
+
+            <!-- Active Sales Agents -->
+            <div class="kpi-metric-card">
+                <div class="kpi-card-header">
+                    <div class="kpi-icon-box quaternary">
+                        <span class="material-symbols-outlined">badge</span>
+                    </div>
+                    <span class="kpi-tag">Active</span>
+                </div>
+                <div class="kpi-card-body">
+                    <p class="kpi-label">Active Sales Agents</p>
+                    <h3 class="kpi-value" id="kpi-active-agents">{{ kpis.active_agents }}</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Performing Agents Gallery -->
+        <section class="performers-section">
+            <h4 class="section-headline">Top Performing Agents</h4>
+            <div class="performers-grid" id="performers-container">
+                {% for agent in top_agents %}
+                <div class="performer-card rank-{{ agent.rank }}">
+                    <div class="performer-rank-badge">#{{ agent.rank }}</div>
+                    <div class="performer-avatar-wrapper">
+                        <img src="{{ agent.avatar_url }}" alt="{{ agent.name }}" class="performer-avatar">
+                    </div>
+                    <div class="performer-info">
+                        <h5 class="performer-name">{{ agent.name }}</h5>
+                        <p class="performer-role">{{ agent.position }}</p>
+                    </div>
+                    <div class="performer-stats-grid">
+                        <div class="perf-stat-item">
+                            <span class="stat-label">Deals Closed</span>
+                            <span class="stat-val">{{ agent.deal_count }}</span>
+                        </div>
+                        <div class="perf-stat-item">
+                            <span class="stat-label">Agent Split</span>
+                            <span class="stat-val highlight">{{ agent.agent_share }}</span>
+                        </div>
+                    </div>
+                    <div class="performer-progress-bar">
+                        <div class="performer-progress-fill" style="width: {% if agent.rank == 1 %}100%{% elif agent.rank == 2 %}75%{% else %}50%{% endif %};"></div>
+                    </div>
+                    <div class="performer-footer">
+                        <span class="stat-label">Total Commission:</span>
+                        <span class="stat-val-sm">{{ agent.total_commission }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-data-card" style="grid-column: span 3;">
+                    <span class="material-symbols-outlined">emoji_events</span>
+                    <p>No agent commission data recorded for closed deals yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Recent Commissions Ledger Section -->
+        <section class="commissions-ledger-section">
+            <h4 class="section-headline">Recent Commissions Ledger</h4>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-card">
+                    <div class="filter-grid">
+                        <!-- Search -->
+                        <div class="filter-group col-span-3">
+                            <label class="filter-label">Search Ledger</label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined input-icon">search</span>
+                                <input type="text" id="ledger-search-input" class="filter-input" placeholder="Search Agent, client, property..." onkeyup="filterLedger()">
+                            </div>
+                        </div>
+                        <!-- Type Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">Transaction Type</label>
+                            <select id="ledger-type-filter" class="filter-select" onchange="filterLedger()">
+                                <option value="All">All Types</option>
+                                <option value="Sell">Sales</option>
+                                <option value="Rent">Rentals</option>
+                            </select>
+                        </div>
+                        <!-- Status Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">Payout Status</label>
+                            <select id="ledger-status-filter" class="filter-select" onchange="filterLedger()">
+                                <option value="All">All Statuses</option>
+                                <option value="Closed">Closed</option>
+                                <option value="Escrow">Escrow</option>
+                                <option value="Legal">Legal</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <!-- Reset Action -->
+                        <div class="filter-actions-group">
+                            <button class="btn btn-reset" onclick="resetLedgerFilters()" style="width: 100%; height: 46px;">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ledger-card">
+                <div class="table-responsive">
+                    <table class="ledger-table" id="commissions-ledger-table">
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Property &amp; Type</th>
+                                <th>Agent</th>
+                                <th>Client</th>
+                                <th class="text-right">Value &amp; Comm.</th>
+                                <th class="text-right highlight font-weight-700">Agent Share</th>
+                                <th class="text-center">Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-table-body">
+                            {% for item in ledger %}
+                            <tr class="ledger-row" 
+                                data-search="{{ item.id.lower() }} {{ item.property_title.lower() }} {{ item.agent_name.lower() }} {{ item.client_name.lower() }}"
+                                data-type="{{ item.type }}"
+                                data-status="{{ item.status }}">
+                                <td class="id-cell">{{ item.id }}</td>
+                                <td class="property-cell" title="{{ item.property_title }}">
+                                    <div class="agent-cell">
+                                        <span class="prop-text" style="font-weight: 600; color: var(--primary);">{{ item.property_title }}</span>
+                                        <span style="font-size: 11px; color: var(--on-surface-variant); font-weight: 500;">{{ 'Sale' if item.type == 'Sell' else 'Rental' }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="agent-cell">
+                                        <span class="agent-name">{{ item.agent_name }}</span>
+                                        <span class="agent-title">{{ item.agent_position }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ item.client_name }}</td>
+                                <td class="text-right">
+                                    <div class="agent-cell" style="align-items: flex-end;">
+                                        <span style="font-weight: 700; color: var(--primary);">{{ item.final_price_formatted }}</span>
+                                        <span style="font-size: 11px; color: var(--on-surface-variant);">Comm: {{ item.commission_amount_formatted }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-right highlight font-weight-700">{{ item.agent_share_formatted }}</td>
+                                <td class="text-center">
+                                    <select class="payment-select-dropdown status-{{ 'completed' if item.status == 'Closed' else 'pending' if item.status == 'Escrow' else 'inprogress' if item.status == 'Legal' else 'cancelled' }}" onchange="updateCommissionTransactionStatus({{ item.raw_id }}, this)">
+                                        <option value="Pending" {% if item.status == 'Escrow' %}selected{% endif %}>Pending</option>
+                                        <option value="In progress" {% if item.status == 'Legal' %}selected{% endif %}>In progress</option>
+                                        <option value="Completed" {% if item.status == 'Closed' %}selected{% endif %}>Completed</option>
+                                        <option value="Cancelled" {% if item.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </td>
+                                <td class="date-cell">{{ item.date }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="no-records">
+                                    No commissions transactions found.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- Server variables for JS integration -->
+<script>
+    const INITIAL_AGENT_SPLIT = "{{ kpis.agent_split }}";
+</script>
+<script src="{{ url_for('static', filename='js/agent_commissions.js') }}"></script>
+{% endblock %}

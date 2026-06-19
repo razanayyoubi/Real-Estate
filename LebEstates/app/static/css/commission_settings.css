@@ -48,10 +48,11 @@
 
 /* Base Body background matching the Admin Panel mesh */
 body {
-  background-color: var(--background);
+  background-color: #f8f9ff;
   background-image: 
-      radial-gradient(at 0% 0%, rgba(217, 226, 255, 0.4) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(255, 224, 136, 0.2) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(220,100%,98%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(210,100%,97%,1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(200,100%,98%,1) 0, transparent 50%);
   background-attachment: fixed;
 }
 
@@ -64,60 +65,54 @@ body {
 }
 
 /* -------------------------------------------------------------
-   BREADCRUMB & PAGE HEADING
+   PAGE HEADING (MATCHES TRANSACTIONS HUB)
    ------------------------------------------------------------- */
-.breadcrumb {
-  margin-bottom: 8px;
+.hub-header {
+  margin-bottom: 64px;
+  text-align: left;
 }
 
-.breadcrumb__list {
+.hub-header-top {
   display: flex;
   align-items: center;
-  list-style: none;
-  gap: 8px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.breadcrumb__item {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 700;
+.hub-header-line {
+  width: 40px;
+  height: 3px;
+  background-color: var(--secondary, #735c00);
+  border-radius: 9999px;
+}
+
+.hub-header-tag {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--on-surface-variant);
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: var(--secondary, #735c00);
 }
 
-.breadcrumb__item--active {
-  color: var(--primary);
-}
-
-.breadcrumb__separator .material-symbols-outlined {
-  font-size: 14px;
-  color: var(--outline-variant);
-  display: block;
-}
-
-.page-heading {
-  margin-bottom: 32px;
-}
-
-.page-heading__header {
-  margin-top: 8px;
-}
-
-.page-heading__title {
-  font-family: var(--font-headline);
-  font-size: 32px;
+.hub-title {
+  font-family: var(--font-headline, 'Montserrat', sans-serif);
+  font-size: 44px;
   font-weight: 800;
-  color: var(--primary);
+  color: var(--primary, #00081e);
+  margin: 0 0 16px 0;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
-.page-heading__subtitle {
-  font-family: var(--font-body);
-  font-size: 15px;
-  color: var(--on-surface-variant);
-  margin-top: 6px;
+.hub-subtitle {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 18px;
+  color: var(--on-surface-variant, #44464e);
+  margin: 0;
+  line-height: 1.7;
+  max-width: 750px;
+  opacity: 0.85;
 }
 
 /* -------------------------------------------------------------

@@ -47,6 +47,7 @@ class Transaction(db.Model):
     finalPrice = db.Column(db.Numeric(15, 2), nullable=False)
     commissionRate = db.Column(db.Numeric(5, 2), nullable=False)
     commissionAmount = db.Column(db.Numeric(15, 2), nullable=False)
+    agentCommissionRate = db.Column(db.Numeric(5, 2), nullable=False, default=30.00)
     paymentStatus = db.Column(db.Enum('Escrow', 'Legal', 'Closed', 'Cancelled', name='trans_pay_status'), default='Escrow')
     paymentType = db.Column(db.String(50), nullable=True, default='Full Payment')
     paymentMethod = db.Column(db.String(50), nullable=True, default='Bank Transfer (Wire)')
