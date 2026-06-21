@@ -13,16 +13,22 @@
 {% block content %}
 <main class="transactions-ledger-main">
     <!-- Page Header -->
-    <div class="ledger-header">
-        <div class="header-details">
-            <h2 class="ledger-title">All Transactions</h2>
-            <p class="ledger-subtitle">View and manage all property sales and rental transactions within the LebEstates ecosystem.</p>
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Financial Operations</span>
         </div>
-        <div class="header-actions">
-            <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')">
-                <span class="material-symbols-outlined">add</span>
-                <span>New Transaction</span>
-            </button>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">All Transactions</h2>
+                <p class="hub-subtitle">View and manage all property sales and rental transactions within the LebEstates ecosystem.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>New Transaction</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -148,7 +154,7 @@
 
     <!-- Section 3: Transactions Table -->
     <div class="table-section">
-        <div class="table-card">
+        <div class="table-card unified-table-container">
             <div class="ledger-header" style="margin-bottom: 20px; padding: 20px 24px 0 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: none;">
                 <h3 style="font-family: var(--font-headline); font-size: 20px; font-weight: 700; color: var(--primary);">Recent Transactions List</h3>
                 <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')" style="background-color: var(--secondary); color: var(--on-secondary); padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; height: 38px; box-shadow: none;">
@@ -157,7 +163,7 @@
                 </button>
             </div>
             <div class="table-responsive">
-                <table class="transactions-table">
+                <table class="transactions-table unified-table">
                     <thead>
                         <tr>
                             <th class="th-id">ID</th>
@@ -283,7 +289,7 @@
 
     <!-- Agency Operations Ledger Section -->
     <div class="table-section operations-ledger-section" style="margin-top: 40px; margin-bottom: 40px;">
-        <div class="table-card">
+        <div class="table-card unified-table-container">
             <div class="ledger-header" style="margin-bottom: 20px; padding: 20px 24px 0 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: none;">
                 <div class="header-details">
                     <h3 style="font-family: var(--font-headline); font-size: 20px; font-weight: 700; color: var(--primary);">Agency Operations Ledger</h3>
@@ -303,7 +309,7 @@
             </div>
 
             <div class="table-responsive">
-                <table class="transactions-table" id="expenses-ledger-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <table class="transactions-table unified-table" id="expenses-ledger-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr>
                             <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Expense ID</th>

@@ -252,19 +252,29 @@ class TransactionService:
         }
         frontend_status = frontend_status_map.get(transaction.paymentStatus, 'Pending')
 
-        progress_map = {
-            'Closed': 100,
-            'Escrow': 50,
-            'Legal': 25,
-            'Cancelled': 0
-        }
-        progress_percent = progress_map.get(transaction.paymentStatus, 0)
-        progress_text = {
-            'Closed': 'Completed',
-            'Escrow': 'Pending',
-            'Legal': 'In progress',
-            'Cancelled': 'Cancelled'
-        }.get(transaction.paymentStatus, 'Unknown')
+        # Dynamic payment status calculations
+        final_price = float(transaction.finalPrice or 0.0)
+        paid = float(transaction.amountPaid or 0.0)
+        balance = final_price - paid
+        due_date = transaction.nextDueDate
+
+        if transaction.paymentStatus == 'Cancelled':
+            status = 'CANCELLED'
+            progress_percent = 0
+            progress_text = 'Cancelled'
+        elif balance <= 0:
+            status = 'PAID'
+            progress_percent = 100
+            progress_text = 'Completed'
+        else:
+            today = datetime.now().date()
+            if due_date and due_date < today:
+                status = 'OVERDUE'
+                progress_text = 'Overdue'
+            else:
+                status = 'PARTIAL'
+                progress_text = 'In progress'
+            progress_percent = int((paid / final_price) * 100) if final_price > 0 else 0
 
         date_str = transaction.transactionDate.strftime('%b %d, %Y')
         
@@ -281,7 +291,7 @@ class TransactionService:
             'agentPosition': transaction.employee.position if transaction.employee else 'Agent',
             'ownerName': transaction.owner.user.fullName if transaction.owner else 'N/A',
             'ownerEmail': transaction.owner.user.email if transaction.owner else 'N/A',
-            'finalPrice': float(transaction.finalPrice),
+            'finalPrice': final_price,
             'commissionRate': float(transaction.commissionRate),
             'commissionAmount': float(transaction.commissionAmount),
             'paymentStatus': frontend_status,
@@ -290,7 +300,10 @@ class TransactionService:
             'transactionDate': date_str,
             'transactionType': transaction.transactionType,
             'paymentType': transaction.paymentType or 'Full Payment',
-            'paymentMethod': transaction.paymentMethod or 'Bank Transfer (Wire)'
+            'paymentMethod': transaction.paymentMethod or 'Bank Transfer (Wire)',
+            'amountPaid': paid,
+            'nextDueDate': due_date.strftime('%Y-%m-%d') if due_date else None,
+            'status': status
         }
 
         return {'success': True, 'details': details}
@@ -829,33 +842,27 @@ class TransactionService:
         for t in transactions:
             final_price = float(t.finalPrice or 0.0)
             age_in_days = (now - t.transactionDate).days
+            due_date = t.nextDueDate
 
-            if t.paymentStatus == 'Closed':
-                paid = final_price
-                balance = 0.0
-                due_date = None
-                status = 'PAID'
-                paid_count += 1
-            elif t.paymentStatus == 'Escrow':
-                paid = final_price * 0.5
-                balance = final_price * 0.5
-                due_date = t.transactionDate + timedelta(days=30)
-                status = 'PARTIAL'
-                partial_count += 1
-            elif t.paymentStatus == 'Legal':
-                paid = final_price * 0.7
-                balance = final_price * 0.3
-                due_date = t.transactionDate + timedelta(days=15)
-                status = 'OVERDUE'
-                overdue_count += 1
-                overdue_amount += balance
-            elif t.paymentStatus == 'Cancelled':
+            if t.paymentStatus == 'Cancelled':
                 paid = 0.0
                 balance = 0.0
-                due_date = None
                 status = 'CANCELLED'
             else:
-                continue
+                paid = float(t.amountPaid or 0.0)
+                balance = final_price - paid
+                if balance <= 0:
+                    status = 'PAID'
+                    paid_count += 1
+                else:
+                    # Overdue if nextDueDate is set and has passed
+                    if due_date and due_date < now.date():
+                        status = 'OVERDUE'
+                        overdue_count += 1
+                        overdue_amount += balance
+                    else:
+                        status = 'PARTIAL'
+                        partial_count += 1
 
             if t.paymentStatus != 'Cancelled':
                 total_receivables += final_price
@@ -889,7 +896,7 @@ class TransactionService:
                         'amount': format_currency(balance),
                         'amount_raw': balance,
                         'overdue_days': age_in_days,
-                        'status': 'Overdue' if t.paymentStatus == 'Legal' else 'Pending',
+                        'status': 'Overdue' if status == 'OVERDUE' else 'Pending',
                         'avatar_url': t.customer.user.avatar_url if t.customer and t.customer.user else 'https://ui-avatars.com/api/?name=Unknown'
                     })
 
@@ -933,14 +940,10 @@ class TransactionService:
             for t in transactions:
                 if t.paymentStatus != 'Cancelled' and t.transactionDate.year == year and t.transactionDate.month == month:
                     final_price = float(t.finalPrice or 0.0)
-                    if t.paymentStatus == 'Closed':
-                        m_collected += final_price
-                    elif t.paymentStatus == 'Escrow':
-                        m_collected += final_price * 0.5
-                        m_outstanding += final_price * 0.5
-                    elif t.paymentStatus == 'Legal':
-                        m_collected += final_price * 0.7
-                        m_outstanding += final_price * 0.3
+                    paid = float(t.amountPaid or 0.0)
+                    balance = final_price - paid
+                    m_collected += paid
+                    m_outstanding += balance
             trend_collected.append(m_collected)
             trend_outstanding.append(m_outstanding)
 

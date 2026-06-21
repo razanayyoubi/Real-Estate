@@ -8,17 +8,22 @@
 
 {% block content %}
 <main class="customer-container">
-    <!-- Header -->
-    <header class="customer-page-header">
-        <div>
-            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Customer Management</h2>
-            <p class="body-md text-on-surface-variant">Manage customer accounts, contact information, and account status</p>
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">User Directory</span>
         </div>
-        <button class="btn-primary" onclick="openModal('addCustomerModal')">
-            <span class="material-symbols-outlined">person_add</span>
-            Add Customer
-        </button>
-    </header>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Customer Management</h2>
+                <p class="hub-subtitle">Manage customer accounts, contact information, and account status</p>
+            </div>
+            <button class="btn btn-secondary btn-lg" onclick="openModal('addCustomerModal')" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span class="material-symbols-outlined">person_add</span>
+                Add Customer
+            </button>
+        </div>
+    </div>
 
     <!-- Stats Row -->
     <div class="stats-grid">
@@ -95,9 +100,9 @@
     </section>
 
     <!-- Data Table -->
-    <section class="table-container">
+    <section class="table-container unified-table-container">
         <div class="table-responsive custom-scrollbar">
-            <table class="customer-table">
+            <table class="customer-table unified-table">
                 <thead>
                     <tr class="table-header-row">
                         <th class="table-th">Customer ID</th>

@@ -116,17 +116,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchablePages = [
         { name: "Dashboard Overview", url: "/dashboard", icon: "dashboard" },
         { name: "Control Panel Center", url: "/control-panel", icon: "admin_panel_settings" },
-        { name: "User / Customer Management", url: "/control-panel#people-mgmt", icon: "groups" },
-        { name: "Employee Directory", url: "/control-panel#people-mgmt", icon: "badge" },
-        { name: "Access & Roles Management", url: "/control-panel#people-mgmt", icon: "security" },
-        { name: "Sales / Sell Ledger", url: "/control-panel#financial-mgmt", icon: "payments" },
-        { name: "Property Listings", url: "/control-panel#property-mgmt", icon: "apartment" },
-        { name: "System Audit Logs", url: "/control-panel#system-admin", icon: "settings_suggest" },
-        { name: "Blacklist Registry", url: "/control-panel#system-admin", icon: "block" },
-        { name: "Customer Support Tickets", url: "/control-panel#support-mgmt", icon: "support_agent" },
+        { name: "User / Customer Management", url: "/customers/", icon: "groups" },
+        { name: "Employee Directory", url: "/employees/", icon: "badge" },
+        { name: "Access & Roles Management", url: "/roles/", icon: "security" },
+        { name: "Property Inventory / Listings", url: "/control-panel/properties", icon: "apartment" },
+        { name: "Public Property Browse", url: "/properties", icon: "search" },
+        { name: "System Audit Logs", url: "/control-panel/audit-logs/", icon: "settings_suggest" },
+        { name: "Blacklist Registry", url: "/blacklist/", icon: "block" },
+        { name: "Visits Management", url: "/control-panel/visits", icon: "calendar_month" },
+        { name: "Transactions Hub", url: "/control-panel/transactions", icon: "payments" },
+        { name: "Sales / Transaction Ledger", url: "/control-panel/transactions/ledger", icon: "menu_book" },
+        { name: "Revenue Dashboard", url: "/control-panel/transactions/revenue-dashboard", icon: "monitoring" },
+        { name: "Payment Tracking", url: "/control-panel/transactions/payment-tracking", icon: "account_balance_wallet" },
+        { name: "Agent Commissions", url: "/control-panel/commissions", icon: "percent" },
+        { name: "Commission Settings", url: "/control-panel/commission-settings", icon: "settings" },
+        { name: "Monthly Payroll / Salaries", url: "/control-panel/salaries", icon: "monetization_on" },
         { name: "Consultation Hub", url: "/consultation", icon: "chat_bubble" },
         { name: "Homepage", url: "/", icon: "home" },
-        { name: "About LebEstates", url: "/about", icon: "info" }
+        { name: "About LebEstates", url: "/about", icon: "info" },
+        { name: "Contact Us", url: "/contact", icon: "contact_support" },
+        { name: "My Favorites", url: "/favorites", icon: "favorite" }
     ];
 
     function setupSearchAutocomplete(inputId, suggestionsId) {
@@ -143,11 +152,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Check role: admin/employee sees admin pages, others don't
-                const isAdmin = !!document.querySelector('.admin-layout-wrapper');
+                const roleEl = document.querySelector('.header__profile-role');
+                const role = roleEl ? roleEl.textContent.trim().toLowerCase() : '';
+                const isAdmin = ['admin', 'employee', 'accountant'].includes(role);
+                
                 let filteredPages = searchablePages;
                 if (!isAdmin) {
                     filteredPages = searchablePages.filter(page => 
-                        !page.url.startsWith('/dashboard') && !page.url.startsWith('/control-panel')
+                        !page.url.startsWith('/dashboard') && 
+                        !page.url.startsWith('/control-panel') &&
+                        !page.url.startsWith('/customers') &&
+                        !page.url.startsWith('/employees') &&
+                        !page.url.startsWith('/roles') &&
+                        !page.url.startsWith('/blacklist')
                     );
                 }
 
@@ -155,16 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     page.name.toLowerCase().includes(query)
                 );
 
-                if (matches.length === 0) {
-                    const emptyItem = document.createElement('div');
-                    emptyItem.className = 'search-suggestion-item';
-                    emptyItem.style.cursor = 'default';
-                    emptyItem.innerHTML = `
-                        <span class="material-symbols-outlined">search_off</span>
-                        <span>No results found</span>
-                    `;
-                    suggestionsEl.appendChild(emptyItem);
-                } else {
+                if (matches.length > 0) {
                     matches.forEach(match => {
                         const suggItem = document.createElement('a');
                         suggItem.href = match.url;
@@ -177,18 +185,88 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
+                // Fetch dynamic suggestions from backend
+                fetch(`/api/search?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (inputEl.value.toLowerCase().trim() === query) {
+                            const existingUrls = new Set(matches.map(m => m.url));
+                            const uniqueDynamic = data.filter(item => !existingUrls.has(item.url));
+                            
+                            uniqueDynamic.forEach(match => {
+                                const suggItem = document.createElement('a');
+                                suggItem.href = match.url;
+                                suggItem.className = 'search-suggestion-item';
+                                suggItem.innerHTML = `
+                                    <span class="material-symbols-outlined">${match.icon}</span>
+                                    <span>${match.name}</span>
+                                `;
+                                suggestionsEl.appendChild(suggItem);
+                            });
+
+                            if (matches.length === 0 && uniqueDynamic.length === 0) {
+                                suggestionsEl.innerHTML = '';
+                                const emptyItem = document.createElement('div');
+                                emptyItem.className = 'search-suggestion-item';
+                                emptyItem.style.cursor = 'default';
+                                emptyItem.innerHTML = `
+                                    <span class="material-symbols-outlined">search_off</span>
+                                    <span>No results found</span>
+                                `;
+                                suggestionsEl.appendChild(emptyItem);
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error fetching dynamic search results:', err));
+
                 suggestionsEl.style.display = 'flex';
             });
 
             // Redirect on Enter
             inputEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    const query = inputEl.value.trim();
-                    if (query.length > 0) {
-                        window.location.href = `/properties?q=${encodeURIComponent(query)}`;
+                    const firstSuggestion = suggestionsEl.querySelector('.search-suggestion-item:not([style*="cursor: default"])');
+                    if (firstSuggestion && firstSuggestion.href) {
+                        window.location.href = firstSuggestion.href;
+                    } else {
+                        const query = inputEl.value.trim();
+                        if (query.length > 0) {
+                            const roleEl = document.querySelector('.header__profile-role');
+                            const role = roleEl ? roleEl.textContent.trim().toLowerCase() : '';
+                            const isAdmin = ['admin', 'employee', 'accountant'].includes(role);
+                            if (isAdmin) {
+                                window.location.href = `/control-panel/properties?q=${encodeURIComponent(query)}`;
+                            } else {
+                                window.location.href = `/properties?q=${encodeURIComponent(query)}`;
+                            }
+                        }
                     }
                 }
             });
+
+            // Click search icon functionality
+            const searchIcon = inputEl.parentElement.querySelector('.header__search-icon');
+            if (searchIcon) {
+                searchIcon.style.cursor = 'pointer';
+                searchIcon.addEventListener('click', () => {
+                    const firstSuggestion = suggestionsEl.querySelector('.search-suggestion-item:not([style*="cursor: default"])');
+                    if (firstSuggestion && firstSuggestion.href) {
+                        window.location.href = firstSuggestion.href;
+                    } else {
+                        const query = inputEl.value.trim();
+                        if (query.length > 0) {
+                            const roleEl = document.querySelector('.header__profile-role');
+                            const role = roleEl ? roleEl.textContent.trim().toLowerCase() : '';
+                            const isAdmin = ['admin', 'employee', 'accountant'].includes(role);
+                            if (isAdmin) {
+                                window.location.href = `/control-panel/properties?q=${encodeURIComponent(query)}`;
+                            } else {
+                                window.location.href = `/properties?q=${encodeURIComponent(query)}`;
+                            }
+                        }
+                    }
+                });
+            }
 
             // Hide suggestions when clicking outside
             document.addEventListener('click', (e) => {

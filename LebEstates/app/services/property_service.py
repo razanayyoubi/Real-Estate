@@ -147,6 +147,31 @@ class PropertyService:
                 user_id=user.userID
             )
             db.session.commit()
+            
+            # Send notifications (wrapped to prevent SMTP/DB errors from failing listing submission)
+            try:
+                from app.services.notification_service import NotificationService
+                from app.models.users import Users, Role
+                
+                # 1. Notify creator
+                NotificationService.create_notification(
+                    user_id=user.userID,
+                    message=f"Your property listing '{title}' has been successfully submitted! Status: {'Published' if is_employee else 'Pending'}.",
+                    action_url="/control-panel/properties" if is_employee else "/dashboard"
+                )
+                
+                # 2. Notify admin/employee staff if listing is pending
+                if not is_employee:
+                    staff_users = Users.query.join(Role).filter(Role.roleName.in_(['admin', 'employee', 'Admin', 'Employee'])).all()
+                    for staff in staff_users:
+                        NotificationService.create_notification(
+                            user_id=staff.userID,
+                            message=f"New property listing '{title}' submitted by customer {user.fullName} requires your approval.",
+                            action_url="/control-panel/properties"
+                        )
+            except Exception as notif_err:
+                print(f"[Warning] Failed to send property submission notifications: {str(notif_err)}")
+                
         except Exception as e:
             db.session.rollback()
             return {'success': False, 'error': f'Database error: {str(e)}', 'code': 500}
@@ -177,6 +202,12 @@ class PropertyService:
         pending_queue = [p for p in all_properties if p.status == 'Pending']
         image_count = PropertyImage.query.count()
 
+        # Count properties by type dynamically
+        type_counts = {}
+        for p in all_properties:
+            t = p.propertyType or 'Other'
+            type_counts[t] = type_counts.get(t, 0) + 1
+
         return {
             'properties': all_properties,
             'total_count': total_properties,
@@ -184,7 +215,8 @@ class PropertyService:
             'pending_count': pending_properties,
             'portfolio_valuation': formatted_valuation,
             'pending_queue': pending_queue,
-            'image_count': image_count
+            'image_count': image_count,
+            'type_counts': type_counts
         }
 
     @staticmethod
@@ -287,6 +319,18 @@ class PropertyService:
             user_id=user_id
         )
         db.session.commit()
+        
+        # Notify the submitter
+        try:
+            from app.services.notification_service import NotificationService
+            NotificationService.create_notification(
+                user_id=prop.createdBy,
+                message=f"Your property listing '{prop.title}' has been approved by our staff and is now published!",
+                action_url="/properties"
+            )
+        except Exception as notif_err:
+            print(f"[Warning] Failed to send approval notification: {str(notif_err)}")
+
         return {'success': True, 'message': 'Property approved successfully.'}
 
     @staticmethod
@@ -307,6 +351,18 @@ class PropertyService:
             description=f"Rejected property listing '{prop.title}'"
         )
         db.session.commit()
+        
+        # Notify the submitter
+        try:
+            from app.services.notification_service import NotificationService
+            NotificationService.create_notification(
+                user_id=prop.createdBy,
+                message=f"Your property listing '{prop.title}' has been rejected by our staff.",
+                action_url="/dashboard"
+            )
+        except Exception as notif_err:
+            print(f"[Warning] Failed to send rejection notification: {str(notif_err)}")
+
         return {'success': True, 'message': 'Property rejected successfully.'}
 
     @staticmethod
@@ -697,5 +753,25 @@ class PropertyService:
             favorites = Favorite.query.filter_by(customerID=customer.customerID).all()
             favorite_properties = [f.property_obj for f in favorites if f.property_obj and f.property_obj.status == 'Published']
         return favorite_properties
+
+    @staticmethod
+    def get_homepage_stats():
+        """
+        Query total sold properties (using Transactions and a base) to showcase dynamic activity.
+        """
+        from app.models.operations import Transaction
+        sold_count = Transaction.query.filter(
+            Transaction.transactionType == 'Sell',
+            Transaction.paymentStatus != 'Cancelled'
+        ).count()
+        total_sold = 2450 + sold_count
+        if total_sold >= 1000:
+            formatted_sold = f"{total_sold/1000:.1f}k+"
+        else:
+            formatted_sold = f"{total_sold}+"
+        return {
+            'properties_sold': formatted_sold
+        }
+
 
 

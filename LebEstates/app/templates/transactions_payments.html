@@ -14,22 +14,28 @@
 <main class="main-content" id="mainContent">
     <div class="payment-tracking-main">
         <!-- Page Header -->
-        <div class="payment-header">
-            <div class="payment-title-area">
-                <h2 class="payment-title">Payment Tracking</h2>
-                <p class="payment-subtitle">Monitor accounts receivable, pending collections, and complete payment reconciliation workflows.</p>
+        <div class="hub-header">
+            <div class="hub-header-top">
+                <span class="hub-header-line"></span>
+                <span class="hub-header-tag">Financial Operations</span>
             </div>
-            <div class="sync-controls">
-                <div class="sync-status-badge">
-                    <div class="sync-dot pulsing" id="syncDot"></div>
-                    <span id="syncStatusText">Syncing live</span>
+            <div class="hub-header-main-flex">
+                <div class="hub-header-details">
+                    <h2 class="hub-title">Payment Tracking</h2>
+                    <p class="hub-subtitle">Monitor accounts receivable, pending collections, and complete payment reconciliation workflows.</p>
                 </div>
-                <button class="btn-sync" id="manualSyncBtn" title="Force Sync Data" onclick="fetchPaymentData(true)">
-                    <span class="material-symbols-outlined">sync</span>
-                </button>
-                <div class="date-range-badge">
-                    <span class="material-symbols-outlined" style="margin-right: 8px;">calendar_today</span>
-                    <span id="currentDateRange">{{ charts.trend_labels[0] }} - {{ charts.trend_labels[-1] }}</span>
+                <div class="sync-controls">
+                    <div class="sync-status-badge">
+                        <div class="sync-dot pulsing" id="syncDot"></div>
+                        <span id="syncStatusText">Syncing live</span>
+                    </div>
+                    <button class="btn-sync" id="manualSyncBtn" title="Force Sync Data" onclick="fetchPaymentData(true)">
+                        <span class="material-symbols-outlined">sync</span>
+                    </button>
+                    <div class="date-range-badge">
+                        <span class="material-symbols-outlined" style="margin-right: 8px;">calendar_today</span>
+                        <span id="currentDateRange">{{ charts.trend_labels[0] }} - {{ charts.trend_labels[-1] }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -236,8 +242,8 @@
                     </div>
                 </div>
             </div>
-            <div class="ledger-table-wrapper">
-                <table class="payment-ledger-table" id="payment-ledger-table">
+            <div class="ledger-table-wrapper unified-table-container">
+                <table class="payment-ledger-table unified-table" id="payment-ledger-table">
                     <thead>
                         <tr>
                             <th>Transaction ID</th>
@@ -270,7 +276,7 @@
                                         <span class="material-symbols-outlined">visibility</span>
                                     </button>
                                     {% if row.status != 'PAID' and row.status != 'CANCELLED' %}
-                                    <button class="btn-inline-action" title="Record Payment" onclick="recordPayment({{ row.raw_id }})">
+                                    <button class="btn-inline-action" title="Record Payment" onclick="openRecordPaymentModal({{ row.raw_id }})">
                                         <span class="material-symbols-outlined">add_card</span>
                                     </button>
                                     <button class="btn-inline-action critical" title="Send Reminder" onclick="sendReminder('{{ row.client }}', '{{ row.balance }}')">
@@ -346,6 +352,64 @@
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('payment-details-modal')" style="background-color: var(--surface-container-high); border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">Close</button>
         </div>
+    </div>
+</div>
+
+<!-- Record Payment Modal -->
+<div class="modal-overlay hidden" id="record-payment-modal" onclick="handleOverlayClick(event, 'record-payment-modal')">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title" id="record-modal-title">Record Payment</h3>
+                <p class="modal-subtitle" id="record-modal-subtitle">Update transaction payments for Ref: TR-xxxxx</p>
+            </div>
+            <button class="btn-close" onclick="closeModal('record-payment-modal')">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="record-payment-form" onsubmit="submitRecordPayment(event)">
+            <input type="hidden" id="record-trans-id" name="trans_id">
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 32px;">
+                <!-- Transaction Info Cards -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="payment-details-col">
+                        <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Client Name</span>
+                        <p style="font-weight: 700; margin-top: 4px; font-size: 14px;" id="record-client-name">-</p>
+                    </div>
+                    <div class="payment-details-col">
+                        <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Total Value</span>
+                        <p style="font-weight: 700; margin-top: 4px; font-size: 14px; color: var(--primary);" id="record-total-val">-</p>
+                    </div>
+                    <div class="payment-details-col">
+                        <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Already Paid</span>
+                        <p style="font-weight: 700; margin-top: 4px; font-size: 14px; color: var(--secondary);" id="record-paid-val">-</p>
+                    </div>
+                    <div class="payment-details-col">
+                        <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase;">Remaining Balance</span>
+                        <p style="font-weight: 700; margin-top: 4px; font-size: 14px; color: var(--error);" id="record-balance-val">-</p>
+                    </div>
+                </div>
+
+                <!-- Input Fields -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="record-amount" style="font-size: 12px; font-weight: 600; color: var(--on-surface-variant);">Payment Amount Received ($)</label>
+                    <input type="number" id="record-amount" required min="0.01" step="0.01" style="background-color: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--on-surface); outline: none; transition: border-color 0.2s;" oninput="handleAmountInput()">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 6px;" id="record-due-date-container">
+                    <label for="record-due-date" style="font-size: 12px; font-weight: 600; color: var(--on-surface-variant);">Next Payment Due Date</label>
+                    <input type="date" id="record-due-date" style="background-color: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--on-surface); outline: none; transition: border-color 0.2s;">
+                    <p style="font-size: 11px; color: var(--on-surface-variant); opacity: 0.8; margin-top: 2px;">Since the payment is partial, please specify the next due date for the remaining balance.</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding: 24px 32px; border-top: 1px solid rgba(197, 198, 207, 0.15);">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('record-payment-modal')" style="background-color: var(--surface-container-high); border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; color: var(--on-surface-variant);">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background-color: var(--primary); color: var(--on-primary); border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">save</span>
+                    <span>Save Payment</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -611,7 +675,7 @@
 
                     if (!isPaid && !isCancelled) {
                         actionsHTML += `
-                            <button class="btn-inline-action" title="Record Payment" onclick="recordPayment(${row.raw_id})">
+                            <button class="btn-inline-action" title="Record Payment" onclick="openRecordPaymentModal(${row.raw_id})">
                                 <span class="material-symbols-outlined">add_card</span>
                             </button>
                             <button class="btn-inline-action critical" title="Send Reminder" onclick="sendReminder('${row.client.replace(/'/g, "\\'")}', '${row.balance}')">
@@ -702,27 +766,97 @@
         }
     }
 
-    // Record Payment (Closed)
-    function recordPayment(transId) {
-        if (!confirm('Are you sure you want to record the final payment for this transaction? This will mark it as Completed/Paid.')) return;
+    // Global variable to keep track of current transaction remaining balance in record modal
+    let currentRecordBalance = 0;
 
-        fetch(`/control-panel/transactions/${transId}/update-status`, {
+    function openRecordPaymentModal(transId) {
+        const ledgerRow = paymentData.ledger.find(row => row.raw_id === transId);
+        if (!ledgerRow) {
+            showToast('Error', 'Transaction data not found in ledger.', 'error');
+            return;
+        }
+
+        document.getElementById('record-trans-id').value = transId;
+        document.getElementById('record-modal-subtitle').textContent = `Update transaction payments for Ref: TR-${transId}`;
+        document.getElementById('record-client-name').textContent = ledgerRow.client;
+        document.getElementById('record-total-val').textContent = ledgerRow.total;
+        document.getElementById('record-paid-val').textContent = ledgerRow.paid;
+        document.getElementById('record-balance-val').textContent = ledgerRow.balance;
+
+        currentRecordBalance = Number(ledgerRow.balance_raw);
+
+        const amountInput = document.getElementById('record-amount');
+        amountInput.value = currentRecordBalance.toFixed(2);
+        amountInput.max = currentRecordBalance;
+
+        const dueDateInput = document.getElementById('record-due-date');
+        dueDateInput.value = '';
+        dueDateInput.removeAttribute('required');
+
+        handleAmountInput();
+
+        toggleModal('record-payment-modal');
+    }
+
+    function handleAmountInput() {
+        const amountVal = Number(document.getElementById('record-amount').value || 0);
+        const container = document.getElementById('record-due-date-container');
+        const dueDateInput = document.getElementById('record-due-date');
+
+        if (amountVal >= currentRecordBalance) {
+            container.style.display = 'none';
+            dueDateInput.removeAttribute('required');
+        } else {
+            container.style.display = 'flex';
+            dueDateInput.setAttribute('required', 'required');
+            const todayStr = new Date().toISOString().split('T')[0];
+            dueDateInput.min = todayStr;
+        }
+    }
+
+    function submitRecordPayment(event) {
+        event.preventDefault();
+
+        const transId = document.getElementById('record-trans-id').value;
+        const amount = Number(document.getElementById('record-amount').value);
+        const dueDate = document.getElementById('record-due-date').value;
+
+        if (amount <= 0) {
+            showToast('Error', 'Amount must be greater than zero.', 'error');
+            return;
+        }
+        if (amount > currentRecordBalance) {
+            showToast('Error', 'Amount exceeds the remaining balance.', 'error');
+            return;
+        }
+        if (amount < currentRecordBalance && !dueDate) {
+            showToast('Error', 'Please select a next due date for the remaining balance.', 'error');
+            return;
+        }
+
+        const payload = {
+            amount: amount,
+            next_due_date: amount >= currentRecordBalance ? null : dueDate
+        };
+
+        fetch(`/control-panel/transactions/${transId}/record-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'Completed' })
+            body: JSON.stringify(payload)
         })
         .then(res => res.json())
         .then(response => {
             if (response.success) {
-                showToast('Success', 'Payment recorded successfully. Ledger updated.', 'success');
+                closeModal('record-payment-modal');
+                showToast('Success', response.message || 'Payment recorded successfully.', 'success');
                 fetchPaymentData(false);
             } else {
-                showToast('Error', response.error || 'Failed to update transaction status.', 'error');
+                showToast('Error', response.error || 'Failed to record payment.', 'error');
             }
         })
         .catch(err => {
             console.error(err);
-            showToast('Connection Error', 'Failed to update status. Check backend connection.', 'error');
+            showToast('Connection Error', 'Failed to communicate with recording service.', 'error');
         });
     }
 
@@ -773,42 +907,44 @@
                     document.getElementById('modal-agent-name').textContent = d.agentName;
                     
                     const price = d.finalPrice;
-                    let paid = 0;
-                    let balance = 0;
-                    let statusLabel = 'PAID';
-
-                    if (d.paymentStatus === 'Completed') {
-                        paid = price;
-                        balance = 0;
-                        statusLabel = 'PAID';
-                    } else if (d.paymentStatus === 'Pending') {
-                        paid = price * 0.5;
-                        balance = price * 0.5;
-                        statusLabel = 'PARTIAL (Escrow)';
-                    } else if (d.paymentStatus === 'In progress') {
-                        paid = price * 0.7;
-                        balance = price * 0.3;
-                        statusLabel = 'OVERDUE (Legal)';
-                    } else if (d.paymentStatus === 'Cancelled') {
-                        paid = 0;
-                        balance = 0;
-                        statusLabel = 'CANCELLED';
-                    }
-
+                    const paid = d.amountPaid;
+                    const balance = price - paid;
+                    const dueDate = d.nextDueDate;
+                    
                     const formatVal = val => '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                     
                     document.getElementById('modal-total-val').textContent = formatVal(price);
                     document.getElementById('modal-paid-val').textContent = formatVal(paid);
                     document.getElementById('modal-due-val').textContent = formatVal(balance);
-                    document.getElementById('modal-due-date').textContent = d.paymentStatus === 'Completed' || d.paymentStatus === 'Cancelled' ? '—' : d.transactionDate;
-                    document.getElementById('modal-status-text').textContent = statusLabel;
+                    
+                    if (dueDate) {
+                        const dateParts = dueDate.split('-');
+                        if (dateParts.length === 3) {
+                            const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                            const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            document.getElementById('modal-due-date').textContent = formattedDate;
+                        } else {
+                            document.getElementById('modal-due-date').textContent = dueDate;
+                        }
+                    } else {
+                        document.getElementById('modal-due-date').textContent = '—';
+                    }
 
-                    // Style status colors
-                    const statusText = document.getElementById('modal-status-text');
-                    if (d.paymentStatus === 'Completed') statusText.style.color = '#2e7d32';
-                    else if (d.paymentStatus === 'Pending') statusText.style.color = '#735c00';
-                    else if (d.paymentStatus === 'In progress') statusText.style.color = '#ba1a1a';
-                    else statusText.style.color = 'var(--on-surface-variant)';
+                    let statusText = 'PARTIAL (In progress)';
+                    if (d.status === 'PAID') {
+                        statusText = 'PAID (Completed)';
+                    } else if (d.status === 'CANCELLED') {
+                        statusText = 'CANCELLED';
+                    } else if (d.status === 'OVERDUE') {
+                        statusText = 'OVERDUE (Legal)';
+                    }
+                    document.getElementById('modal-status-text').textContent = statusText;
+
+                    const statusTextEl = document.getElementById('modal-status-text');
+                    if (d.status === 'PAID') statusTextEl.style.color = '#2e7d32';
+                    else if (d.status === 'PARTIAL') statusTextEl.style.color = '#735c00';
+                    else if (d.status === 'OVERDUE') statusTextEl.style.color = '#ba1a1a';
+                    else statusTextEl.style.color = 'var(--on-surface-variant)';
 
                     toggleModal('payment-details-modal');
                 } else {

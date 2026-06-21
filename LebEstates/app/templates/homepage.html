@@ -36,12 +36,12 @@
                     modern luxury to your doorstep.
                 </p>
                 <div class="hero-buttons">
-                    <button class="btn btn-lg btn-secondary luxury-shadow">
+                    <button class="btn btn-lg btn-secondary luxury-shadow" onclick="window.location.href='/properties'">
                         Browse Properties
                         <span class="material-symbols-outlined" data-icon="arrow_forward"
                             style="margin-left:8px; font-size:20px;">arrow_forward</span>
                     </button>
-                    <button class="btn btn-lg btn-hero-outline">
+                    <button class="btn btn-lg btn-hero-outline" onclick="window.location.href='/sell-rent'">
                         List Your Property
                     </button>
                 </div>
@@ -51,36 +51,39 @@
             <div class="search-overlay luxury-shadow">
                 <div class="form-group">
                     <label class="label-md">Property Type</label>
-                    <select class="form-control">
-                        <option>Apartment</option>
-                        <option>Villa</option>
-                        <option>Commercial</option>
-                        <option>Land</option>
+                    <select class="form-control" id="search-property-type">
+                        <option value="All">All Types</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="Villa">Villa</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Land">Land</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label class="label-md">Action</label>
-                    <select class="form-control">
-                        <option>Buy</option>
-                        <option>Rent</option>
+                    <select class="form-control" id="search-listing-type">
+                        <option value="All">Buy & Rent</option>
+                        <option value="Sell">Buy</option>
+                        <option value="Rent">Rent</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label class="label-md">Location</label>
                     <div class="input-with-icon">
                         <span class="material-symbols-outlined" data-icon="location_on">location_on</span>
-                        <input class="form-control" placeholder="Beirut, Batroun..." type="text" />
+                        <input class="form-control" id="search-location" placeholder="Beirut, Batroun..." type="text" />
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="label-md">Price Range</label>
-                    <select class="form-control">
-                        <option>$100k - $300k</option>
-                        <option>$300k - $700k</option>
-                        <option>$700k+</option>
+                    <select class="form-control" id="search-price-range">
+                        <option value="All">Any Price</option>
+                        <option value="0-300000">Under $300k</option>
+                        <option value="300000-700000">$300k - $700k</option>
+                        <option value="700000-max">$700k+</option>
                     </select>
                 </div>
-                <button class="btn btn-search">
+                <button class="btn btn-search" id="search-submit-btn">
                     <span class="material-symbols-outlined" data-icon="search">search</span>
                     Search
                 </button>
@@ -99,53 +102,53 @@
 
         <div class="services-grid">
             <!-- Buy -->
-            <div class="service-card luxury-shadow">
+            <div class="service-card luxury-shadow" onclick="window.location.href='/properties?listing_type=Sell'" style="cursor: pointer;">
                 <div class="service-icon">
                     <span class="material-symbols-outlined" data-icon="house"
                         style="font-variation-settings: 'FILL' 1;">house</span>
                 </div>
                 <h3 class="headline-md utility-mb-6">Buy a Property</h3>
                 <p>Explore the finest residential and commercial spaces across the country.</p>
-                <a class="service-link" href="#">
+                <a class="service-link" href="/properties?listing_type=Sell">
                     Learn More <span class="material-symbols-outlined text-sm"
                         data-icon="arrow_forward">arrow_forward</span>
                 </a>
             </div>
             <!-- Rent -->
-            <div class="service-card luxury-shadow">
+            <div class="service-card luxury-shadow" onclick="window.location.href='/properties?listing_type=Rent'" style="cursor: pointer;">
                 <div class="service-icon">
                     <span class="material-symbols-outlined" data-icon="key"
                         style="font-variation-settings: 'FILL' 1;">key</span>
                 </div>
                 <h3 class="headline-md utility-mb-6">Rent a Property</h3>
                 <p>From luxury summer villas to urban penthouses, find your temporary home.</p>
-                <a class="service-link" href="#">
+                <a class="service-link" href="/properties?listing_type=Rent">
                     Learn More <span class="material-symbols-outlined text-sm"
                         data-icon="arrow_forward">arrow_forward</span>
                 </a>
             </div>
             <!-- Sell -->
-            <div class="service-card luxury-shadow">
+            <div class="service-card luxury-shadow" onclick="window.location.href='/sell-rent'" style="cursor: pointer;">
                 <div class="service-icon">
                     <span class="material-symbols-outlined" data-icon="sell"
                         style="font-variation-settings: 'FILL' 1;">sell</span>
                 </div>
                 <h3 class="headline-md utility-mb-6">Sell Your Property</h3>
                 <p>Expert valuation and marketing to reach high-net-worth investors globally.</p>
-                <a class="service-link" href="#">
+                <a class="service-link" href="/sell-rent">
                     Learn More <span class="material-symbols-outlined text-sm"
                         data-icon="arrow_forward">arrow_forward</span>
                 </a>
             </div>
             <!-- Consultation -->
-            <div class="service-card luxury-shadow">
+            <div class="service-card luxury-shadow" onclick="window.location.href='/consultation'" style="cursor: pointer;">
                 <div class="service-icon">
                     <span class="material-symbols-outlined" data-icon="forum"
                         style="font-variation-settings: 'FILL' 1;">forum</span>
                 </div>
                 <h3 class="headline-md utility-mb-6">Consultation</h3>
                 <p>Professional guidance on investment strategies and market trends.</p>
-                <a class="service-link" href="#">
+                <a class="service-link" href="/consultation">
                     Learn More <span class="material-symbols-outlined text-sm"
                         data-icon="arrow_forward">arrow_forward</span>
                 </a>
@@ -161,88 +164,49 @@
                     <span class="section-subtitle label-md">Featured</span>
                     <h2 class="headline-lg text-primary utility-mt-2">Curated Listings</h2>
                 </div>
-                <a class="link-underline" href="#">View All Properties</a>
+                <a class="link-underline" href="/properties">View All Properties</a>
             </div>
 
             <div class="properties-grid">
-                <!-- Property 1 -->
-                <div class="property-card luxury-shadow">
+                {% for prop in properties %}
+                <div class="property-card luxury-shadow" onclick="window.location.href='/properties?q={{ prop.title|urlencode }}'" style="cursor: pointer;">
                     <div class="property-img-wrapper">
-                        <img class="property-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO59E-PTBLbeMeiQe2tIEr2fJv0gmneOc7N57H_5t3C-IMAHJKFVGfCs6HIK5tinXro4Y1Pec2vZN4Fnx02_MoNep7By6d4rt12uhhvSHLMGqIuWtxCuUX4fhJAHU_UnW_wm0d7pUbQ9Z1BdYKzZUNXpbygCCqIzefAL3RDyfzcnwvHYnjPoedhXdCVskqsXctC40Dmqhrka79BAkYZ-fysNy2Cm4ygU0alevKvimDK8kr0pEqA5WmnNL-3acMW1LRANKwXgH8Xm4"
-                            alt="Apartment" />
-                        <span class="property-badge badge-sale caption">For Sale</span>
+                        {% if prop.images %}
+                        <img class="property-img" src="{{ prop.images[0].imageURL or url_for('properties.get_property_image', image_id=prop.images[0].imageID) }}" alt="{{ prop.title }}" />
+                        {% else %}
+                        <img class="property-img" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" alt="Property" />
+                        {% endif %}
+                        <span class="property-badge {% if prop.listingType.lower() == 'sell' %}badge-sale{% else %}badge-rent{% endif %} caption">For {{ 'Sale' if prop.listingType.lower() == 'sell' else 'Rent' }}</span>
                     </div>
                     <div class="property-content">
                         <div class="property-info">
                             <div>
-                                <p class="text-secondary label-md" style="margin-bottom:4px;">Apartment</p>
-                                <h3 class="headline-md">Modern Apartment in Beirut</h3>
+                                <p class="text-secondary label-md" style="margin-bottom:4px;">{{ prop.propertyType }}</p>
+                                <h3 class="headline-md">{{ prop.title }}</h3>
                             </div>
-                            <p class="property-price">$450,000</p>
+                            <p class="property-price">
+                                {% if prop.listingType.lower() == 'sell' %}
+                                ${{ "{:,.0f}".format(prop.price) }}
+                                {% else %}
+                                ${{ "{:,.0f}".format(prop.price) }}/mo
+                                {% endif %}
+                            </p>
                         </div>
                         <div class="property-features">
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="bed">bed</span> 3 Beds</span>
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="bathtub">bathtub</span> 2 Baths</span>
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="square_foot">square_foot</span> 180 m²</span>
+                            {% if prop.propertyType.lower() == 'land' %}
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;" data-icon="square_foot">square_foot</span> {{ "{:,.0f}".format(prop.area) }} m²</span>
+                            {% else %}
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;" data-icon="bed">bed</span> {{ prop.rooms or 0 }} Beds</span>
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;" data-icon="bathtub">bathtub</span> {{ prop.bathrooms or 0 }} Baths</span>
+                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;" data-icon="square_foot">square_foot</span> {{ "{:,.0f}".format(prop.area) }} m²</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-
-                <!-- Property 2 -->
-                <div class="property-card luxury-shadow">
-                    <div class="property-img-wrapper">
-                        <img class="property-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEi7jqxrsUH5BbMM6KCq1P73OxzWYOaTZpMM0OdVvbZmvb5rCbHC9p9YJaNqoI55DxaLWCiMedNclvLiqRJZW6DknnRQvEtIeL61Aal3svRnfKGwiaYq5YnE6zv0ypzM0OQKFXLDORJlMZOJd5X0KEruOwA88qkQFLPowMPcTWnQ9mmve_QF3-2EzbEoO2J35Kju0Q0WyCRAsYH98qEwoTY7eaTUcnN-Dw1m2ZPWN_UHAKAenryLzkB65Pa1XGECqCCKmYE9ns4XY"
-                            alt="Villa" />
-                        <span class="property-badge badge-sale caption">For Sale</span>
-                    </div>
-                    <div class="property-content">
-                        <div class="property-info">
-                            <div>
-                                <p class="text-secondary label-md" style="margin-bottom:4px;">Villa</p>
-                                <h3 class="headline-md">Luxury Villa in Mount Lebanon</h3>
-                            </div>
-                            <p class="property-price">$1,200,000</p>
-                        </div>
-                        <div class="property-features">
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="bed">bed</span> 5 Beds</span>
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="bathtub">bathtub</span> 4 Baths</span>
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="square_foot">square_foot</span> 450 m²</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Property 3 -->
-                <div class="property-card luxury-shadow">
-                    <div class="property-img-wrapper">
-                        <img class="property-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPs2FobMfx5YYRjIw7PpWgEAwAZ_0RbTcebItPFATx6wooMZTSBRVKyncqJM7HfjFVl5q1ptnom3eewAB9PkYZfDitdMopzNoTCu9CwqDbkhheOFj7QQ_YoxsUTztJLHv_1xIrlZhMFndo3n5wSOeTbOEVus9gtTnH1Od_CU6R23CZa6oYgpwTcb-CfUuXpCUEImzno3TgnlxQWNAyCHpiR03yJDUu95dfaeXtaso8AveHf13RFjWnv530Wd1-9BtPwYqMA6o9Rkg"
-                            alt="Commercial" />
-                        <span class="property-badge badge-rent caption">For Rent</span>
-                    </div>
-                    <div class="property-content">
-                        <div class="property-info">
-                            <div>
-                                <p class="text-secondary label-md" style="margin-bottom:4px;">Commercial</p>
-                                <h3 class="headline-md">Commercial Shop in Hamra</h3>
-                            </div>
-                            <p class="property-price">$2,500/mo</p>
-                        </div>
-                        <div class="property-features">
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="domain">domain</span> Retail Space</span>
-                            <span class="feature"><span class="material-symbols-outlined" style="font-size:16px;"
-                                    data-icon="square_foot">square_foot</span> 85 m²</span>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
+                {% if not properties %}
+                <p style="grid-column: span 3; text-align: center; padding: 48px; color: var(--on-surface-variant);">No properties available.</p>
+                {% endif %}
             </div>
         </div>
     </section>
@@ -336,7 +300,7 @@
                     <img src="../static/Images/Hero/homepage-villa.webp" alt="Why Choose Us" />
                 </div>
                 <div class="why-stats">
-                    <p class="headline-md stats-number">2.5k+</p>
+                    <p class="headline-md stats-number">{{ stats.properties_sold }}</p>
                     <p class="caption stats-label">Properties Sold</p>
                 </div>
             </div>
@@ -351,10 +315,10 @@
                 <p class="body-lg">Whether you're looking for an investment or a dream home, our experts are here to
                     guide you.</p>
                 <div class="cta-buttons">
-                    <button class="btn btn-lg btn-secondary luxury-shadow">
+                    <button class="btn btn-lg btn-secondary luxury-shadow" onclick="window.location.href='/properties'">
                         Browse Properties
                     </button>
-                    <button class="btn btn-lg btn-primary-outline"
+                    <button class="btn btn-lg btn-primary-outline" onclick="window.location.href='/consultation'"
                         style="border-color: var(--secondary-fixed); color: var(--secondary-fixed);">
                         Request Consultation
                     </button>

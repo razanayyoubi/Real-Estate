@@ -95,6 +95,81 @@ def transactions_payment_tracking_data():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@transactions_bp.route('/control-panel/transactions/<int:trans_id>/record-payment', methods=['POST'])
+def record_transaction_payment(trans_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    from app.models.base import db
+    from app.models.operations import Transaction
+    from app.models.users import AuditLog
+    from datetime import datetime
+
+    data = request.get_json() or {}
+    amount_str = data.get('amount')
+    due_date_str = data.get('next_due_date')
+
+    if not amount_str:
+        return jsonify({'success': False, 'error': 'Payment amount is required.'}), 400
+
+    try:
+        amount = float(amount_str)
+        if amount <= 0:
+            return jsonify({'success': False, 'error': 'Payment amount must be greater than zero.'}), 400
+    except ValueError:
+        return jsonify({'success': False, 'error': 'Invalid payment amount.'}), 400
+
+    try:
+        transaction = Transaction.query.get(trans_id)
+        if not transaction:
+            return jsonify({'success': False, 'error': 'Transaction not found.'}), 404
+
+        old_paid = float(transaction.amountPaid or 0.0)
+        new_paid = old_paid + amount
+        final_price = float(transaction.finalPrice)
+
+        if new_paid > final_price:
+            return jsonify({'success': False, 'error': f'Payment exceeds final contract price. Maximum remaining: ${final_price - old_paid:,.2f}'}), 400
+
+        transaction.amountPaid = new_paid
+
+        if due_date_str:
+            try:
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+                transaction.nextDueDate = due_date
+            except ValueError:
+                return jsonify({'success': False, 'error': 'Invalid due date format. Expected YYYY-MM-DD.'}), 400
+        else:
+            transaction.nextDueDate = None
+
+        # Update status dynamically
+        if new_paid >= final_price:
+            transaction.paymentStatus = 'Closed'
+            transaction.nextDueDate = None
+        else:
+            today = datetime.now().date()
+            if transaction.nextDueDate and transaction.nextDueDate < today:
+                transaction.paymentStatus = 'Legal'
+            else:
+                transaction.paymentStatus = 'Escrow'
+
+        AuditLog.log_action(
+            action='UPDATE',
+            table_name='transaction',
+            record_id=trans_id,
+            description=f"Recorded payment of ${amount:,.2f} for Transaction #{trans_id}. Total Paid: ${new_paid:,.2f}.",
+            user_id=session['user_id']
+        )
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Payment recorded successfully!'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Database error: {str(e)}'}), 500
+
+
+
 
 # --- COMMISSION SETTINGS MANAGEMENT ---
 

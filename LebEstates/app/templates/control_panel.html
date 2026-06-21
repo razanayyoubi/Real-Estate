@@ -19,13 +19,71 @@
     <div class="main-content__body">
 
         <!-- Breadcrumbs & Heading -->
-        <div class="page-heading">
-            <h2 class="page-heading__title">The Management Panel</h2>
-            <p class="page-heading__subtitle">Centralized management for all LebEstates system modules. Access
-                specialized tools and administrative configurations.</p>
+        <div class="hub-header">
+            <div class="hub-header-top">
+                <span class="hub-header-line"></span>
+                <span class="hub-header-tag">Control Panel</span>
+            </div>
+            <h2 class="hub-title">The Management Panel</h2>
+            <p class="hub-subtitle">Centralized management for all LebEstates system modules. Access specialized tools and administrative configurations.</p>
         </div>
 
         {% set role = session.get('role_name', '').lower() %}
+        {% if role == 'customer' %}
+        <!-- Section: Customer Hub -->
+        <div class="modules-section">
+            <h3 class="modules-section__title">My Hub</h3>
+            <div class="modules-grid">
+                <!-- My Wishlist -->
+                <div class="module-card" data-icon="favorite" data-href="/favorites" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">favorite</span>
+                    </div>
+                    <h3 class="module-card__title">My Wishlist</h3>
+                    <p class="module-card__description">Curate and manage your saved premium property collections.</p>
+                    <div class="module-card__action">
+                        Open Wishlist <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Tours & Walkthroughs -->
+                <div class="module-card" data-icon="calendar_month" data-href="/dashboard#tours" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">calendar_month</span>
+                    </div>
+                    <h3 class="module-card__title">Tours & Walkthroughs</h3>
+                    <p class="module-card__description">Track scheduled walkthroughs and past property inspections.</p>
+                    <div class="module-card__action">
+                        Open Schedule <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Consultations -->
+                <div class="module-card" data-icon="chat_bubble" data-href="/dashboard#inquiries" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">chat_bubble</span>
+                    </div>
+                    <h3 class="module-card__title">Service Inquiries</h3>
+                    <p class="module-card__description">Monitor active consultation cases and agent briefs.</p>
+                    <div class="module-card__action">
+                        Open Inquiries <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Financial Ledger -->
+                <div class="module-card" data-icon="payments" data-href="/dashboard#ledger" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <h3 class="module-card__title">Financial Ledger</h3>
+                    <p class="module-card__description">Review active contracts, escrow status, and payout records.</p>
+                    <div class="module-card__action">
+                        Open Ledger <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
         <!-- Section: Core Operations -->
         <div class="modules-section">
             <h3 class="modules-section__title">Core Operations</h3>
@@ -60,7 +118,7 @@
                 {% endif %}
 
                 <!-- Consultations -->
-                <div class="module-card" data-icon="chat_bubble">
+                <div class="module-card" data-icon="chat_bubble" data-href="{{ url_for('consultations.consultations_list') }}" style="cursor: pointer;">
                     <div class="module-card__icon-wrapper">
                         <span class="material-symbols-outlined">chat_bubble</span>
                     </div>
@@ -85,6 +143,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         {% if role in ['admin', 'employee'] %}
         <!-- Section: User & Role Administration -->

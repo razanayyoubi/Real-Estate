@@ -115,8 +115,8 @@
         </div>
 
         <!-- Table Container -->
-        <div class="mgmt-table-wrapper custom-scrollbar">
-            <table class="mgmt-table">
+        <div class="mgmt-table-wrapper custom-scrollbar unified-table-container">
+            <table class="mgmt-table unified-table">
                 <thead>
                     <tr>
                         <th class="col-id">Property ID</th>
@@ -264,36 +264,50 @@
             </div>
         </div>
 
-        <!-- Listing Guidelines & Compliance -->
+        <!-- Inventory Breakdown (Replaces Schema Overview) -->
         <div class="insights-card schema-card bg-primary-dark">
-            <h3 class="insights-title text-white">Listing Compliance</h3>
-            <div class="schema-list">
-                <div class="schema-item">
+            <h3 class="insights-title text-white">Inventory Breakdown</h3>
+            <div class="schema-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
                     <div class="schema-item-header">
-                        <span class="material-symbols-outlined text-secondary">verified</span>
-                        <span class="schema-item-title text-white">Verification Standard</span>
+                        <span class="material-symbols-outlined text-secondary">apartment</span>
+                        <span class="schema-item-title text-white" style="margin-left: 8px;">Apartments</span>
                     </div>
-                    <div class="schema-item-details">
-                        <span>Min. 1 image required</span>
-                        <span>Correct geocoding</span>
-                        <span>Verified owner contact</span>
+                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                        {{ type_counts.get('Apartment', 0) }}
                     </div>
                 </div>
-                <div class="schema-item">
+                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
                     <div class="schema-item-header">
-                        <span class="material-symbols-outlined text-secondary">photo_library</span>
-                        <span class="schema-item-title text-white">Portfolio Media</span>
+                        <span class="material-symbols-outlined text-secondary">villa</span>
+                        <span class="schema-item-title text-white" style="margin-left: 8px;">Villas</span>
                     </div>
-                    <div class="schema-item-details">
-                        <span>{{ image_count }} Total Images</span>
-                        <span>BLOB Storage: Active</span>
-                        <span>WebP Format Recommended</span>
+                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                        {{ type_counts.get('Villa', 0) }}
+                    </div>
+                </div>
+                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
+                    <div class="schema-item-header">
+                        <span class="material-symbols-outlined text-secondary">storefront</span>
+                        <span class="schema-item-title text-white" style="margin-left: 8px;">Commercial</span>
+                    </div>
+                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                        {{ type_counts.get('Commercial', 0) }}
+                    </div>
+                </div>
+                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
+                    <div class="schema-item-header">
+                        <span class="material-symbols-outlined text-secondary">terrain</span>
+                        <span class="schema-item-title text-white" style="margin-left: 8px;">Lands</span>
+                    </div>
+                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                        {{ type_counts.get('Land', 0) }}
                     </div>
                 </div>
             </div>
             <!-- Decorative Graphic -->
             <div class="schema-decorative-icon">
-                <span class="material-symbols-outlined">rule_folder</span>
+                <span class="material-symbols-outlined">analytics</span>
             </div>
         </div>
     </section>

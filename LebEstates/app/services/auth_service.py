@@ -220,16 +220,36 @@ class AuthService:
 
     @staticmethod
     def get_profile_data(user_id):
-        """Fetch user sessions and login history."""
+        """Fetch user sessions, login history, and profile counts."""
         user = Users.query.get(user_id)
         if not user:
             return None
         sessions = UserSession.query.filter_by(userID=user.userID).order_by(UserSession.lastActive.desc()).all()
         login_history = LoginLog.query.filter_by(userID=user.userID).order_by(LoginLog.loginAt.desc()).limit(5).all()
+        
+        # Import models inside method to avoid circular import issues
+        from app.models.property import Favorite
+        from app.models.operations import Visit, Consultation
+        
+        favorites_count = 0
+        tours_count = 0
+        inquiries_count = 0
+        
+        if user.customer_profile:
+            favorites_count = Favorite.query.filter_by(customerID=user.customer_profile.customerID).count()
+            tours_count = Visit.query.filter_by(customerID=user.customer_profile.customerID).count()
+            inquiries_count = Consultation.query.filter_by(customerID=user.customer_profile.customerID).count()
+        elif user.employee_profile:
+            tours_count = Visit.query.filter_by(employeeID=user.employee_profile.employeeID).count()
+            inquiries_count = Consultation.query.filter_by(assignedEmployeeID=user.employee_profile.employeeID).count()
+            
         return {
             'user': user,
             'sessions': sessions,
-            'login_history': login_history
+            'login_history': login_history,
+            'favorites_count': favorites_count,
+            'tours_count': tours_count,
+            'inquiries_count': inquiries_count
         }
 
     @staticmethod
@@ -357,4 +377,66 @@ class AuthService:
         except Exception as e:
             db.session.rollback()
             return {"success": False, "error": "Failed to revoke other sessions.", "code": 500}
+
+    @staticmethod
+    def get_customer_dashboard_data(user_id):
+        """Fetch all dashboard data for a customer user."""
+        from app.models.customer import Customer
+        from app.models.property import Favorite
+        from app.models.operations import Visit, Consultation, Transaction
+        
+        user = Users.query.get(user_id)
+        if not user or not user.customer_profile:
+            return {
+                'favorites': [],
+                'visits': [],
+                'consultations': [],
+                'transactions': [],
+                'favorites_count': 0,
+                'visits_count': 0,
+                'consultations_count': 0,
+                'transactions_count': 0,
+                'active_deal': None
+            }
+            
+        customer_id = user.customer_profile.customerID
+        
+        # 1. Favorites
+        favorites = Favorite.query.filter_by(customerID=customer_id).order_by(Favorite.createdAt.desc()).all()
+        
+        # 2. Visits
+        visits = Visit.query.filter_by(customerID=customer_id).order_by(Visit.visitDate.asc(), Visit.visitTime.asc()).all()
+        
+        # 3. Consultations
+        consultations = Consultation.query.filter_by(customerID=customer_id).order_by(Consultation.createdAt.desc()).all()
+        
+        # 4. Transactions
+        transactions = Transaction.query.filter(
+            (Transaction.customerID == customer_id) | (Transaction.ownerID == customer_id)
+        ).order_by(Transaction.transactionDate.desc()).all()
+        
+        # Active deal selection
+        active_deal = None
+        for t in transactions:
+            if t.paymentStatus in ['Escrow', 'Legal']:
+                active_deal = t
+                break
+        if not active_deal and transactions:
+            for t in transactions:
+                if t.paymentStatus.lower() != 'cancelled':
+                    active_deal = t
+                    break
+            
+        return {
+            'favorites': favorites,
+            'visits': visits,
+            'consultations': consultations,
+            'transactions': transactions,
+            'favorites_count': len(favorites),
+            'visits_count': len(visits),
+            'consultations_count': len(consultations),
+            'transactions_count': len(transactions),
+            'active_deal': active_deal
+        }
+
 

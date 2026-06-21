@@ -16,22 +16,31 @@
             </svg>
         </div>
         <div class="treasury-hero__content">
-            <div class="treasury-hero__top-row">
-                <div class="treasury-hero__title-area">
-                    <div class="treasury-hero__badge-row">
-                        <span class="cycle-badge">Active Cycle</span>
-                        <span class="cycle-date">{{ selected_month }}</span>
-                    </div>
-                    <h2 class="treasury-hero__title">Monthly Payroll</h2>
-                    <p class="treasury-hero__subtitle">Orchestrating financial excellence across the LebEstates enterprise. Precise management of salaries, elite commissions, and fiscal health.</p>
+            <!-- Page Header -->
+            <div class="hub-header" style="margin-bottom: 32px;">
+                <div class="hub-header-top">
+                    <span class="hub-header-line" style="background-color: var(--secondary-fixed);"></span>
+                    <span class="hub-header-tag" style="color: var(--secondary-fixed);">Financial Operations</span>
                 </div>
-                <div class="treasury-hero__action-row">
-                    <button class="btn-treasury btn-treasury--outline" id="btnExportLedger">
-                        <span class="material-symbols-outlined">ios_share</span> Export Ledger
-                    </button>
-                    <button class="btn-treasury btn-treasury--gold" id="btnGenerateBatch">
-                        <span class="material-symbols-outlined">sync</span> Generate Batch
-                    </button>
+                <div class="hub-header-main-flex">
+                    <div class="hub-header-details">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap;">
+                            <h2 class="hub-title" style="color: #ffffff; margin: 0;">Monthly Payroll</h2>
+                            <div class="treasury-hero__badge-row" style="margin: 0; display: inline-flex;">
+                                <span class="cycle-badge">Active Cycle</span>
+                                <span class="cycle-date" style="color: var(--secondary-fixed);">{{ selected_month }}</span>
+                            </div>
+                        </div>
+                        <p class="hub-subtitle" style="color: rgba(255, 255, 255, 0.7); max-width: 700px;">Orchestrating financial excellence across the LebEstates enterprise. Precise management of salaries, elite commissions, and fiscal health.</p>
+                    </div>
+                    <div class="treasury-hero__action-row" style="margin-top: 0;">
+                        <button class="btn-treasury btn-treasury--outline" id="btnExportLedger">
+                            <span class="material-symbols-outlined">ios_share</span> Export Ledger
+                        </button>
+                        <button class="btn-treasury btn-treasury--gold" id="btnGenerateBatch">
+                            <span class="material-symbols-outlined">sync</span> Generate Batch
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -118,9 +127,9 @@
         </div>
 
         <!-- Premium Ledger Table -->
-        <div class="ledger-container">
+        <div class="ledger-container unified-table-container">
             <div class="table-responsive">
-                <table class="ledger-table">
+                <table class="ledger-table unified-table">
                     <thead>
                         <tr>
                             <th>Stakeholder</th>

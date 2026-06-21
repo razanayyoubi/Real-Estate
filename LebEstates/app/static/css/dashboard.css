@@ -933,20 +933,22 @@ body.dashboard-body {
 .chart-bar {
   width: 100%;
   height: var(--bar-height);
-  background-color: rgba(10, 31, 68, 0.1);
+  background-color: var(--primary-container);
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   position: relative;
-  transition: background-color 0.3s, height 0.6s var(--transition-bezier);
+  transition: background-color 0.3s, opacity 0.3s, height 0.6s var(--transition-bezier);
 }
 
 /* Hover highlights */
 .chart-bar-container:nth-child(even) .chart-bar {
-  background-color: rgba(10, 31, 68, 0.15);
+  background-color: var(--primary-container);
+  opacity: 0.85;
 }
 
 .chart-bar-container:hover .chart-bar {
-  background-color: var(--secondary-fixed) !important;
+  background-color: var(--secondary-fixed-dim) !important;
+  opacity: 1 !important;
 }
 
 /* Chart Tooltips */

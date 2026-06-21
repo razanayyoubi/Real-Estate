@@ -505,49 +505,7 @@
 /* -------------------------------------------------------------
    PREMIUM LEDGER TABLE
    ------------------------------------------------------------- */
-.ledger-container {
-    background-color: #ffffff;
-    border: 1px solid var(--outline-variant);
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 15px 45px rgba(0, 13, 34, 0.05);
-}
-
-.ledger-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-}
-
-.ledger-table th {
-    background-color: rgba(243, 244, 245, 0.5);
-    padding: 20px 32px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--on-surface-variant);
-    border-bottom: 1px solid var(--outline-variant);
-}
-
-.ledger-row {
-    border-bottom: 1px solid rgba(196, 198, 207, 0.3);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.ledger-row:last-child {
-    border-bottom: none;
-}
-
-.ledger-row:hover {
-    background-color: var(--surface-container-lowest);
-    transform: translateX(8px);
-}
-
-.ledger-table td {
-    padding: 24px 32px;
-    vertical-align: middle;
-}
+/* Table styles handled globally by unified-table classes in global.css */
 
 /* Stakeholder Cell details */
 .stakeholder {

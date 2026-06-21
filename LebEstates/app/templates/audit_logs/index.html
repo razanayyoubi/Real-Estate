@@ -8,16 +8,21 @@
 
 {% block content %}
 <main class="audit-container">
-    <!-- Page Header -->
-    <div class="audit-page-header">
-        <div>
-            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">System Audit Logs</h2>
-            <p class="body-md text-on-surface-variant">Trace and inspect administrative operations, user modifications, and security actions.</p>
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">System Security</span>
         </div>
-        <button class="btn btn-secondary btn-lg" onclick="window.location.reload();" style="display: flex; align-items: center; gap: 8px;">
-            <span class="material-symbols-outlined">refresh</span>
-            Refresh Logs
-        </button>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">System Audit Logs</h2>
+                <p class="hub-subtitle">Trace and inspect administrative operations, user modifications, and security actions.</p>
+            </div>
+            <button class="btn btn-secondary btn-lg" onclick="window.location.reload();" style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined">refresh</span>
+                Refresh Logs
+            </button>
+        </div>
     </div>
 
     <!-- Statistics Row -->
@@ -95,9 +100,9 @@
     </div>
 
     <!-- Data Table -->
-    <div class="table-container">
+    <div class="table-container unified-table-container">
         <div class="table-responsive custom-scrollbar">
-            <table class="audit-table">
+            <table class="audit-table unified-table">
                 <thead>
                     <tr class="table-header-row">
                         <th class="table-th">Log ID</th>

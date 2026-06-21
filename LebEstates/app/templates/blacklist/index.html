@@ -9,15 +9,21 @@
 {% block content %}
 <main class="blacklist-container">
     <!-- Page Header -->
-    <div class="blacklist-page-header">
-        <div>
-            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Blacklist Management</h2>
-            <p class="body-md text-on-surface-variant">Monitor restricted accounts and manage system-wide security access.</p>
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">System Security</span>
         </div>
-        <button class="btn btn-secondary btn-lg" onclick="openModal('blacklistModal')" style="display: flex; align-items: center; gap: 8px;">
-            <span class="material-symbols-outlined">person_add_disabled</span>
-            Blacklist User
-        </button>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Blacklist Management</h2>
+                <p class="hub-subtitle">Monitor restricted accounts and manage system-wide security access.</p>
+            </div>
+            <button class="btn btn-secondary btn-lg" onclick="openModal('blacklistModal')" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span class="material-symbols-outlined">person_add_disabled</span>
+                Blacklist User
+            </button>
+        </div>
     </div>
 
     <!-- Statistics Row -->
@@ -87,9 +93,9 @@
     </div>
 
     <!-- Data Table -->
-    <div class="table-container">
+    <div class="table-container unified-table-container">
         <div class="table-responsive custom-scrollbar">
-            <table class="blacklist-table" id="blacklistTable">
+            <table class="blacklist-table unified-table" id="blacklistTable">
                 <thead>
                     <tr class="table-header-row">
                         <th class="table-th">ID</th>

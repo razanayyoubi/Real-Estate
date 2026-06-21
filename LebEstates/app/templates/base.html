@@ -232,11 +232,22 @@
         <div class="header__actions">
             {% if session.get('user_id') %}
             <!-- Logged-in state (Admin, Employee, Customer) -->
-            <div class="header__action-buttons">
-                <!-- Notifications/Theme toggles, we can show them or just keep standard -->
-                <button class="header__action-btn" aria-label="Notifications">
+            <div class="header__action-buttons" style="position: relative;">
+                <button class="header__action-btn" id="notificationBellBtn" aria-label="Notifications" style="position: relative;">
                     <span class="material-symbols-outlined">notifications</span>
+                    <span class="notification-badge" id="notificationBadge" style="display: none; position: absolute; top: -2px; right: -2px; background-color: #ba1a1a; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid var(--surface, #fff);">0</span>
                 </button>
+                
+                <!-- Notification Dropdown -->
+                <div class="notification-dropdown" id="notificationDropdown" style="display: none; position: absolute; top: 100%; right: 0; width: 320px; background-color: var(--surface-container-lowest, #ffffff); border: 1px solid var(--outline-variant, #c5c6cf); border-radius: 16px; box-shadow: 0 8px 32px rgba(10, 31, 68, 0.15); z-index: 10000; padding: 16px; margin-top: 12px; font-family: var(--font-body, 'Inter', sans-serif); text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--outline-variant, #e5e6ef); padding-bottom: 10px; margin-bottom: 12px;">
+                        <h4 style="margin: 0; font-family: var(--font-headline, 'Montserrat', sans-serif); font-size: 16px; font-weight: 700; color: var(--primary, #0d1b2a);">Notifications</h4>
+                        <button id="markAllReadBtn" style="background: none; border: none; font-family: var(--font-body); font-size: 11.5px; font-weight: 700; color: var(--secondary, #735c00); cursor: pointer; text-decoration: underline; padding: 4px;">Mark all read</button>
+                    </div>
+                    <div id="notificationList" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;" class="custom-scrollbar">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
             </div>
 
             <div class="header__divider"></div>
@@ -265,9 +276,12 @@
                     <a href="/favorites" class="profile-dropdown__item">
                         <span class="material-symbols-outlined">favorite</span> Favorite Properties
                     </a>
-                    {% if session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
                     <a href="/dashboard" class="profile-dropdown__item">
                         <span class="material-symbols-outlined">dashboard</span> Dashboard
+                    </a>
+                    {% if session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
+                    <a href="/control-panel" class="profile-dropdown__item">
+                        <span class="material-symbols-outlined">admin_panel_settings</span> Control Panel
                     </a>
                     {% endif %}
                     <hr class="profile-dropdown__divider">
@@ -372,6 +386,139 @@
     </footer>
 
     {% block scripts %}{% endblock %}
+
+    {% if session.get('user_id') %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bellBtn = document.getElementById('notificationBellBtn');
+            const dropdown = document.getElementById('notificationDropdown');
+            const badge = document.getElementById('notificationBadge');
+            const list = document.getElementById('notificationList');
+            const markAllBtn = document.getElementById('markAllReadBtn');
+
+            if (!bellBtn) return;
+
+            // Fetch unread count to show badge
+            function updateUnreadCount() {
+                fetch('/api/notifications/unread-count')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            const count = data.count;
+                            if (count > 0) {
+                                badge.textContent = count;
+                                badge.style.display = 'flex';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error fetching unread notification count:', err));
+            }
+
+            // Fetch and render notification list
+            function loadNotifications() {
+                fetch('/api/notifications')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            const notifs = data.notifications;
+                            list.innerHTML = '';
+                            if (notifs.length === 0) {
+                                list.innerHTML = `
+                                    <div style="text-align: center; padding: 24px 8px; color: var(--on-surface-variant, #5c5e69);">
+                                        <span class="material-symbols-outlined" style="font-size: 32px; opacity: 0.5; margin-bottom: 8px;">notifications_off</span>
+                                        <p style="margin: 0; font-size: 13px; font-weight: 500;">No notifications yet.</p>
+                                    </div>
+                                `;
+                                return;
+                            }
+
+                            notifs.forEach(n => {
+                                const item = document.createElement('div');
+                                item.className = `notification-item ${n.isRead ? '' : 'unread'}`;
+                                item.style.cssText = `
+                                    padding: 10px 12px;
+                                    border-radius: 8px;
+                                    background-color: ${n.isRead ? 'transparent' : 'rgba(255, 214, 91, 0.1)'};
+                                    border-left: 3px solid ${n.isRead ? 'transparent' : 'var(--secondary, #735c00)'};
+                                    cursor: pointer;
+                                    transition: background-color 0.2s ease;
+                                    text-align: left;
+                                `;
+                                item.addEventListener('mouseenter', () => {
+                                    item.style.backgroundColor = n.isRead ? 'rgba(0, 8, 30, 0.03)' : 'rgba(255, 214, 91, 0.15)';
+                                });
+                                item.addEventListener('mouseleave', () => {
+                                    item.style.backgroundColor = n.isRead ? 'transparent' : 'rgba(255, 214, 91, 0.1)';
+                                });
+
+                                item.innerHTML = `
+                                    <div style="font-size: 12.5px; font-weight: ${n.isRead ? '500' : '700'}; color: var(--on-surface, #1b1b1f); line-height: 1.4; margin-bottom: 4px;">
+                                        ${n.message}
+                                    </div>
+                                    <div style="font-size: 10px; color: var(--on-surface-variant, #5c5e69); font-weight: 500;">
+                                        ${n.createdAt}
+                                    </div>
+                                `;
+
+                                item.addEventListener('click', () => {
+                                    fetch(`/api/notifications/${n.notificationID}/read`, { method: 'POST' })
+                                        .then(() => {
+                                            updateUnreadCount();
+                                            if (n.actionURL) {
+                                                window.location.href = n.actionURL;
+                                            } else {
+                                                loadNotifications();
+                                            }
+                                        });
+                                });
+
+                                list.appendChild(item);
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error loading notifications:', err));
+            }
+
+            // Bell click toggle
+            bellBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = dropdown.style.display === 'none';
+                dropdown.style.display = isHidden ? 'block' : 'none';
+                if (isHidden) {
+                    loadNotifications();
+                }
+            });
+
+            // Close on clicking outside
+            document.addEventListener('click', (e) => {
+                if (dropdown.style.display === 'block' && !dropdown.contains(e.target) && e.target !== bellBtn) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Mark all read
+            markAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fetch('/api/notifications/read-all', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateUnreadCount();
+                            loadNotifications();
+                        }
+                    });
+            });
+
+            // Initial load
+            updateUnreadCount();
+            
+            // Poll for updates every 15s
+            setInterval(updateUnreadCount, 15000);
+        });
+    </script>
+    {% endif %}
 
 </body>
 

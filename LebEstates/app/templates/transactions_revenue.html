@@ -14,22 +14,28 @@
 <main class="main-content" id="mainContent">
     <div class="revenue-dashboard-main">
         <!-- Page Header -->
-        <div class="revenue-header">
-            <div class="revenue-title-area">
-                <h2 class="revenue-title">Revenue Dashboard</h2>
-                <p class="revenue-subtitle">Visual financial analytics and agency profitability reporting for LebEstates.</p>
+        <div class="hub-header">
+            <div class="hub-header-top">
+                <span class="hub-header-line"></span>
+                <span class="hub-header-tag">Financial Operations</span>
             </div>
-            <div class="sync-controls">
-                <div class="sync-status-badge">
-                    <div class="sync-dot pulsing" id="syncDot"></div>
-                    <span id="syncStatusText">Syncing live</span>
+            <div class="hub-header-main-flex">
+                <div class="hub-header-details">
+                    <h2 class="hub-title">Revenue Dashboard</h2>
+                    <p class="hub-subtitle">Visual financial analytics and agency profitability reporting for LebEstates.</p>
                 </div>
-                <button class="btn-sync" id="manualSyncBtn" title="Force Sync Data" onclick="fetchDashboardData(true)">
-                    <span class="material-symbols-outlined">sync</span>
-                </button>
-                <div class="date-selector-badge">
-                    <span class="material-symbols-outlined" style="margin-right: 8px;">calendar_today</span>
-                    <span id="currentDateRange">{{ charts.trend_labels[0] }} - {{ charts.trend_labels[-1] }}</span>
+                <div class="sync-controls">
+                    <div class="sync-status-badge">
+                        <div class="sync-dot pulsing" id="syncDot"></div>
+                        <span id="syncStatusText">Syncing live</span>
+                    </div>
+                    <button class="btn-sync" id="manualSyncBtn" title="Force Sync Data" onclick="fetchDashboardData(true)">
+                        <span class="material-symbols-outlined">sync</span>
+                    </button>
+                    <div class="date-selector-badge">
+                        <span class="material-symbols-outlined" style="margin-right: 8px;">calendar_today</span>
+                        <span id="currentDateRange">{{ charts.trend_labels[0] }} - {{ charts.trend_labels[-1] }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,8 +158,9 @@
                 <div class="card-headline-row">
                     <h4 class="card-title">Top Revenue Agents</h4>
                 </div>
-                <div class="table-responsive">
-                    <table class="leaderboard-table">
+                <div class="unified-table-container">
+                    <div class="table-responsive">
+                        <table class="leaderboard-table unified-table">
                         <thead>
                             <tr>
                                 <th>Agent</th>
@@ -182,6 +189,7 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
         </section>
 
@@ -238,8 +246,9 @@
                     <input type="text" id="recent-search" class="search-field-input" placeholder="Search ID, Client, Agent..." onkeyup="filterRecentTable()">
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="recent-table-element" id="recent-transactions-table">
+            <div class="unified-table-container">
+                <div class="table-responsive">
+                    <table class="recent-table-element unified-table" id="recent-transactions-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -284,6 +293,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
             </div>
         </section>
 

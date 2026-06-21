@@ -14,6 +14,7 @@ def create_app(config_class=Config):
     from app.models.hr import Employee, Salary, CommissionSetting
     from app.models.customer import Customer, CustomerDocument
     from app.models.operations import Visit, Consultation, Transaction
+    from app.models.notification import Notification
 
     from app.routes.main import main_bp
     app.register_blueprint(main_bp)
@@ -39,6 +40,9 @@ def create_app(config_class=Config):
     from app.routes.visits import visits_bp
     app.register_blueprint(visits_bp)
 
+    from app.routes.consultations import consultations_bp
+    app.register_blueprint(consultations_bp)
+
     from app.routes.transactions import transactions_bp
     app.register_blueprint(transactions_bp)
 
@@ -47,6 +51,9 @@ def create_app(config_class=Config):
 
     from app.routes.audit_logs import audit_logs_bp
     app.register_blueprint(audit_logs_bp)
+
+    from app.routes.notifications import notifications_bp
+    app.register_blueprint(notifications_bp)
 
     # Global session checker middleware
     from flask import session, redirect, url_for, request

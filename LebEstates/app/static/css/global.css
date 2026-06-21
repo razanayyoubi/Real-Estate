@@ -1695,3 +1695,119 @@ body.control-panel-body {
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   SHARED ADMIN CONTROL PANEL HUB HEADER STYLES
+   ========================================================================== */
+.hub-header {
+  margin-bottom: 40px;
+  text-align: left;
+  width: 100%;
+}
+
+.hub-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hub-header-line {
+  width: 40px;
+  height: 3px;
+  background-color: var(--secondary, #735c00);
+  border-radius: 9999px;
+}
+
+.hub-header-tag {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: var(--secondary, #735c00);
+}
+
+.hub-title {
+  font-family: var(--font-headline, 'Montserrat', sans-serif);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--primary, #00081e);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.hub-subtitle {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 15px;
+  color: var(--on-surface-variant, #44464e);
+  margin: 0;
+  line-height: 1.6;
+  max-width: 800px;
+  opacity: 0.85;
+}
+
+.hub-header-main-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .hub-header-main-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+/* ==========================================================================
+   UNIFIED CONTROL PANEL TABLES DESIGN
+   ========================================================================== */
+.unified-table-container {
+  background-color: var(--surface-container-lowest) !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--outline-variant) !important;
+  box-shadow: 0px 12px 32px rgba(10, 31, 68, 0.06) !important;
+  overflow: hidden !important;
+  margin-bottom: 32px !important;
+}
+
+.unified-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.unified-table th {
+  background-color: var(--surface-container-low, #eff4ff) !important;
+  color: var(--on-surface-variant, #44464e) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  padding: 16px 24px !important;
+  border-bottom: 1px solid var(--outline-variant) !important;
+}
+
+.unified-table td {
+  padding: 16px 24px !important;
+  border-bottom: 1px solid var(--outline-variant) !important;
+  vertical-align: middle !important;
+  font-size: 14px !important;
+  color: var(--on-surface, #121c2a) !important;
+}
+
+.unified-table tr {
+  transition: background-color 0.2s ease !important;
+}
+
+.unified-table tr:hover {
+  background-color: rgba(239, 244, 255, 0.5) !important;
+}
+
+.unified-table tr:last-child td {
+  border-bottom: none !important;
+}

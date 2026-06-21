@@ -8,17 +8,22 @@
 
 {% block content %}
 <main class="employee-container">
-    <!-- Header -->
-    <header class="employee-page-header">
-        <div>
-            <h2 class="headline-lg text-primary" style="margin-bottom: 4px;">Employee Management</h2>
-            <p class="body-md text-on-surface-variant">Oversee staff profiles, positions, basic salaries, and internal accounts.</p>
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">User Directory</span>
         </div>
-        <button class="btn-primary" onclick="openModal('addEmployeeModal')">
-            <span class="material-symbols-outlined">badge</span>
-            Add Employee
-        </button>
-    </header>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Employee Management</h2>
+                <p class="hub-subtitle">Oversee staff profiles, positions, basic salaries, and internal accounts.</p>
+            </div>
+            <button class="btn btn-secondary btn-lg" onclick="openModal('addEmployeeModal')" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span class="material-symbols-outlined">badge</span>
+                Add Employee
+            </button>
+        </div>
+    </div>
 
     <!-- Stats Row -->
     <div class="stats-grid">
@@ -92,9 +97,9 @@
     </section>
 
     <!-- Data Table -->
-    <section class="table-container">
+    <section class="table-container unified-table-container">
         <div class="table-responsive custom-scrollbar">
-            <table class="employee-table">
+            <table class="employee-table unified-table">
                 <thead>
                     <tr class="table-header-row">
                         <th class="table-th">Employee ID</th>

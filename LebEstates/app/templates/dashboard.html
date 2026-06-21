@@ -4,10 +4,16 @@
 
 {% block styles %}
 <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% if session.get('role_name', '').lower() == 'customer' %}
+<link href="{{ url_for('static', filename='css/customer_dashboard.css') }}" rel="stylesheet">
+{% endif %}
 {% endblock %}
 
 {% block head_scripts %}
 <script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% if session.get('role_name', '').lower() == 'customer' %}
+<script defer src="{{ url_for('static', filename='js/customer_dashboard.js') }}"></script>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -18,18 +24,615 @@
     <!-- Main Body -->
     <div class="dashboard-body__content">
 
-        {% if session.get('role_name', '').lower() == 'accountant' %}
-        <!-- Page Heading -->
-        <div class="page-heading">
-            <div class="page-heading__info">
-                <h1 class="page-heading__title">Financial Overview</h1>
-                <p class="page-heading__subtitle">Welcome back, Accountant. Oversee the financial health and payouts of LebEstates.</p>
+        {% if session.get('role_name', '').lower() == 'customer' %}
+        <div class="dashboard-body__customer-layout">
+
+
+            <!-- Customer Dashboard Content Workspace -->
+            <div class="customer-dashboard-main">
+
+                <!-- 1. DASHBOARD VIEW -->
+                <section class="customer-view-section" id="view-dashboard">
+                    <div class="customer-bento-grid">
+                        
+                        <!-- Welcome Hero Card -->
+                        <div class="col-span-12 lg:col-span-8 bento-card bento-card--hero">
+                            <div class="bento-card--hero-bg" style="background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80');"></div>
+                            <div class="bento-card--hero-overlay"></div>
+                            <div class="bento-card--hero-content">
+                                <span class="bento-card--hero-badge">Welcome Back, {{ user.fullName }}</span>
+                                <h2 class="bento-card--hero-title">Your Private Portfolio <span>Awaits.</span></h2>
+                                <div class="bento-card--hero-actions">
+                                    <button class="btn-white" onclick="window.location.href='/consultation'">
+                                        <span class="material-symbols-outlined">concierge</span>
+                                        Schedule Concierge
+                                    </button>
+                                    <button class="btn-outline-white" onclick="window.location.href='/contact'">
+                                        <span class="material-symbols-outlined">support_agent</span>
+                                        Contact Advisor
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Metrics Column -->
+                        <div class="col-span-12 lg:col-span-4 bento-grid--metrics-col">
+                            <!-- Favorites KPI -->
+                            <div class="bento-card bento-card--stat stat-glow" onclick="window.location.href='/favorites';" style="cursor: pointer;">
+                                <div class="bento-card--stat-icon-wrapper">
+                                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                                </div>
+                                <div>
+                                    <p class="bento-card--stat-val" id="kpi-fav-count">{{ "%02d"|format(customer_data.favorites_count) }}</p>
+                                    <p class="bento-card--stat-label">Favorited Properties</p>
+                                </div>
+                            </div>
+
+                            <!-- Upcoming Tours KPI -->
+                            <div class="bento-card bento-card--stat" data-target-view="tours" style="cursor: pointer;">
+                                <div class="bento-card--stat-icon-wrapper">
+                                    <span class="material-symbols-outlined">event_available</span>
+                                </div>
+                                <div>
+                                    <p class="bento-card--stat-val">{{ "%02d"|format(customer_data.visits_count) }}</p>
+                                    <p class="bento-card--stat-label">Confirmed Tours</p>
+                                </div>
+                            </div>
+
+                            <!-- Active Inquiries KPI -->
+                            <div class="bento-card bento-card--stat" data-target-view="inquiries" style="cursor: pointer;">
+                                <div class="bento-card--stat-icon-wrapper">
+                                    <span class="material-symbols-outlined">mark_chat_unread</span>
+                                </div>
+                                <div>
+                                    <p class="bento-card--stat-val">{{ "%02d"|format(customer_data.consultations_count) }}</p>
+                                    <p class="bento-card--stat-label">Active Inquiries</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Tour Schedule -->
+                        <div class="col-span-12 lg:col-span-7 bento-card">
+                            <div class="bento-card__header">
+                                <div class="details-card__title-area">
+                                    <span class="material-symbols-outlined" style="font-size: 24px; color: var(--customer-gold);">calendar_month</span>
+                                    <h3 class="bento-card__title">Upcoming Tour Schedule</h3>
+                                </div>
+                                <button class="btn-icon-more" onclick="window.location.hash='#tours'">
+                                    <span class="material-symbols-outlined">arrow_forward</span>
+                                </button>
+                            </div>
+                            {% if customer_data.visits %}
+                            <div class="timeline-container">
+                                {% for visit in customer_data.visits[:2] %}
+                                <div class="timeline-item">
+                                    <div class="timeline-badge {% if visit.status.lower() != 'scheduled' %}timeline-badge--inactive{% endif %}">
+                                        <span class="material-symbols-outlined">location_on</span>
+                                    </div>
+                                    <div class="timeline-thumb">
+                                        {% if visit.property_obj.images %}
+                                        <img src="{{ visit.property_obj.images[0].imageURL or url_for('properties.get_property_image', image_id=visit.property_obj.images[0].imageID) }}" alt="{{ visit.property_obj.title }}">
+                                        {% else %}
+                                        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=150&q=80" alt="Property">
+                                        {% endif %}
+                                    </div>
+                                    <div class="timeline-details">
+                                        <p class="timeline-date">{{ visit.visitDate.strftime('%b %d, %Y') }} • {{ visit.visitTime.strftime('%H:%M') }}</p>
+                                        <h5 class="timeline-title">{{ visit.property_obj.title }}</h5>
+                                        <p class="timeline-agent">
+                                            <span class="material-symbols-outlined">person</span>
+                                            Consultant: {{ visit.employee.user.fullName if visit.employee else 'Agent Assigned' }}
+                                        </p>
+                                    </div>
+                                    <div class="timeline-actions">
+                                        <button class="btn-sm-action" onclick="window.location.href='/properties?q={{ visit.property_obj.title|urlencode }}'">Manage</button>
+                                        <button class="btn-sm-icon" onclick="window.location.href='/properties?q={{ visit.property_obj.title|urlencode }}'">
+                                            <span class="material-symbols-outlined">map</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="customer-empty-state" style="padding: 24px; box-shadow: none; border: none;">
+                                <span class="material-symbols-outlined" style="font-size: 48px; color: var(--customer-gold);">calendar_today</span>
+                                <p class="customer-empty-state-title" style="font-size: 16px; margin-top: 12px;">No Upcoming Tours Scheduled</p>
+                                <p class="customer-empty-state-desc" style="font-size: 12px; margin-bottom: 16px;">Schedule a walkthrough with one of our premium real estate concierges.</p>
+                                <button class="btn-primary-gold" onclick="window.location.href='/properties'" style="font-size: 12px; padding: 8px 16px;">Browse Properties</button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Financial Portfolio / Active Deal -->
+                        <div class="col-span-12 lg:col-span-5 bento-card bento-card--financial">
+                            <div class="bento-card__header">
+                                <h3 class="bento-card__title">Financial Portfolio</h3>
+                                {% if customer_data.active_deal %}
+                                <span class="badge-deal-active">Deal {{ customer_data.active_deal.paymentStatus }}</span>
+                                {% else %}
+                                <span class="badge-deal-active" style="background-color: var(--customer-low); color: var(--customer-text-muted);">No Active Deals</span>
+                                {% endif %}
+                            </div>
+
+                            {% if customer_data.active_deal %}
+                            {% set deal = customer_data.active_deal %}
+                            <div class="financial-inner-card">
+                                <div class="financial-asset-row">
+                                    <div>
+                                        <p class="financial-asset-title-lbl">Active Asset</p>
+                                        <h4 class="financial-asset-title-val">{{ deal.property_obj.title }}</h4>
+                                    </div>
+                                    <div>
+                                        <p class="financial-asset-price-val">${{ "{:,.0f}".format(deal.finalPrice) }}</p>
+                                        <p class="financial-asset-price-lbl">Contract Value</p>
+                                    </div>
+                                </div>
+
+                                {% set paid_pct = (deal.amountPaid / deal.finalPrice * 100)|round|int if deal.finalPrice else 0 %}
+                                {% set remaining = deal.finalPrice - deal.amountPaid %}
+                                <div class="circular-chart-wrapper">
+                                    <svg class="circular-chart" viewBox="0 0 100 100">
+                                        <circle class="circular-chart-bg" cx="50" cy="50" r="40" />
+                                        <circle class="circular-chart-fill" cx="50" cy="50" r="40" 
+                                                stroke-dasharray="251.2" 
+                                                stroke-dashoffset="{{ 251.2 - (paid_pct / 100 * 251.2) }}" />
+                                    </svg>
+                                    <div class="circular-chart-text-wrapper">
+                                        <p class="circular-chart-percent">{{ paid_pct }}%</p>
+                                        <p class="circular-chart-lbl">Paid to Date</p>
+                                    </div>
+                                </div>
+
+                                <div class="financial-grid-stats">
+                                    <div>
+                                        <p class="financial-stat-label">Paid</p>
+                                        <p class="financial-stat-value">${{ "{:,.0f}".format(deal.amountPaid) }}</p>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <p class="financial-stat-label">Remaining</p>
+                                        <p class="financial-stat-value" style="color: var(--customer-gold);">${{ "{:,.0f}".format(remaining) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="financial-dues-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                                {% set ns = namespace(found=false) %}
+                                {% for trans in customer_data.transactions %}
+                                    {% if trans.nextDueDate %}
+                                        {% set ns.found = true %}
+                                        <div class="financial-due-banner" style="margin-bottom: 0;">
+                                            <div>
+                                                <p class="financial-due-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em;">{{ trans.property_obj.title }}</p>
+                                                <p class="financial-due-val" style="font-size: 15px; font-weight: 700;">{{ trans.nextDueDate.strftime('%B %d, %Y') }}</p>
+                                            </div>
+                                            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-gold-light);">
+                                                Due
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not ns.found %}
+                                    <div class="financial-due-banner">
+                                        <div>
+                                            <p class="financial-due-lbl">Next Payment Due</p>
+                                            <p class="financial-due-val">Fully Settled</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="customer-empty-state" style="padding: 32px; flex: 1; justify-content: center; box-shadow: none; border: none;">
+                                <span class="material-symbols-outlined" style="font-size: 48px; color: var(--customer-gold);">account_balance_wallet</span>
+                                <p class="customer-empty-state-title" style="font-size: 16px; margin-top: 12px;">No Active Transactions</p>
+                                <p class="customer-empty-state-desc" style="font-size: 12px;">When you purchase or rent a property with escrow transactions, your ledger progress will show up here.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Active Service Inquiries -->
+                        <div class="col-span-12 bento-card bento-card--inquiries">
+                            <div class="bento-card__header" style="margin-bottom: 24px; border-bottom: none; padding-bottom: 0;">
+                                <div class="details-card__title-area">
+                                    <span class="material-symbols-outlined" style="font-size: 24px; color: var(--customer-gold);">chat_bubble_outline</span>
+                                    <h3 class="bento-card__title">Active Service Inquiries</h3>
+                                </div>
+                            </div>
+                            
+                            {% if customer_data.consultations %}
+                            <div class="inquiry-list">
+                                {% for cons in customer_data.consultations[:2] %}
+                                <div class="inquiry-item">
+                                    <div class="inquiry-info">
+                                        <div class="inquiry-header-row">
+                                            <span class="material-symbols-outlined inquiry-header-icon">description</span>
+                                            <h5 class="inquiry-title">{{ cons.consultationType }}</h5>
+                                        </div>
+                                        <p class="inquiry-meta">Case ID: #CONS-{{ cons.consultationID }} • Submitted {{ cons.createdAt.strftime('%b %d, %Y') if cons.createdAt else 'Recently' }}</p>
+                                    </div>
+                                    
+                                    <div class="inquiry-stepper">
+                                        <div class="step {% if cons.status.lower() in ['pending', 'scheduled', 'completed'] %}step--completed{% endif %}">
+                                            <div class="step-dot"></div>
+                                            <span class="step-label">Submitted</span>
+                                        </div>
+                                        <div class="step-line {% if cons.status.lower() in ['scheduled', 'completed'] %}step-line--completed{% endif %}"></div>
+                                        
+                                        <div class="step {% if cons.status.lower() == 'scheduled' %}step--active{% elif cons.status.lower() == 'completed' %}step--completed{% endif %}">
+                                            <div class="step-dot"></div>
+                                            <span class="step-label">Assigned</span>
+                                        </div>
+                                        <div class="step-line {% if cons.status.lower() == 'completed' %}step-line--completed{% endif %}"></div>
+                                        
+                                        <div class="step {% if cons.status.lower() == 'completed' %}step--active{% endif %}">
+                                            <div class="step-dot"></div>
+                                            <span class="step-label">Resolved</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="inquiry-actions">
+                                        <button class="btn-sm-action" onclick="window.location.href='mailto:support@lebestates.com?subject=Inquiry #CONS-{{ cons.consultationID }}'">View Details</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="customer-empty-state" style="padding: 24px; box-shadow: none; border: none;">
+                                <span class="material-symbols-outlined" style="font-size: 48px; color: var(--customer-gold);">chat_bubble_outline</span>
+                                <p class="customer-empty-state-title" style="font-size: 16px; margin-top: 12px;">No Consultations Requested</p>
+                                <p class="customer-empty-state-desc" style="font-size: 12px;">Get premium consulting from our local real estate experts.</p>
+                                <button class="btn-primary-gold" onclick="window.location.href='/consultation'" style="font-size: 12px; padding: 8px 16px;">Request Consultation</button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 2. MY WISHLIST VIEW -->
+                <section class="customer-view-section" id="view-wishlist">
+                    <h2 class="customer-sidebar__brand-title" style="color: var(--customer-navy); margin-bottom: 8px;">My Saved Collections</h2>
+                    <p class="hub-subtitle" style="margin-bottom: 32px; color: var(--customer-text-muted);">Curate your dream real estate collection and track updates.</p>
+
+                    <div class="wishlist-grid" id="wishlist-active-grid" {% if not customer_data.favorites %}style="display:none;"{% endif %}>
+                        {% for fav in customer_data.favorites %}
+                        {% set prop = fav.property_obj %}
+                        <div class="wishlist-card">
+                            <div class="wishlist-card-media">
+                                {% if prop.images %}
+                                <img class="wishlist-card-img" src="{{ prop.images[0].imageURL or url_for('properties.get_property_image', image_id=prop.images[0].imageID) }}" alt="{{ prop.title }}">
+                                {% else %}
+                                <img class="wishlist-card-img" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80" alt="Property">
+                                {% endif %}
+                                <span class="wishlist-card-badge">{{ prop.listingType }}</span>
+                                <button class="wishlist-card-btn-remove" data-id="{{ prop.propertyID }}" title="Remove from Wishlist">
+                                    <span class="material-symbols-outlined">favorite</span>
+                                </button>
+                            </div>
+                            <div class="wishlist-card-content">
+                                <p class="wishlist-card-price">${{ "{:,.0f}".format(prop.price) }}</p>
+                                <h4 class="wishlist-card-title">{{ prop.title }}</h4>
+                                <div class="wishlist-card-location">
+                                    <span class="material-symbols-outlined">location_on</span>
+                                    <span>{{ prop.location }}</span>
+                                </div>
+                                <div class="wishlist-card-features">
+                                    <div class="wishlist-card-feature-item">
+                                        <span class="material-symbols-outlined">bed</span>
+                                        <span>{{ prop.rooms or 0 }} Beds</span>
+                                    </div>
+                                    <div class="wishlist-card-feature-item">
+                                        <span class="material-symbols-outlined">bathtub</span>
+                                        <span>{{ prop.bathrooms or 0 }} Baths</span>
+                                    </div>
+                                    <div class="wishlist-card-feature-item">
+                                        <span class="material-symbols-outlined">square_foot</span>
+                                        <span>{{ prop.area }} sqm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="customer-empty-state" id="wishlist-empty-view" {% if customer_data.favorites %}style="display:none;"{% endif %}>
+                        <div class="customer-empty-state-icon">
+                            <span class="material-symbols-outlined">favorite_border</span>
+                        </div>
+                        <h3 class="customer-empty-state-title">Your Wishlist is Empty</h3>
+                        <p class="customer-empty-state-desc">Explore beachfront batroun villas, penthouse suites in batched locations, or luxury modern offices, and hit the heart icon to save.</p>
+                        <button class="btn-primary-gold" onclick="window.location.href='/properties'">Browse Listings</button>
+                    </div>
+                </section>
+
+                <!-- 3. TOURS VIEW -->
+                <section class="customer-view-section" id="view-tours">
+                    <!-- Page Header -->
+                    <div class="hub-header" style="margin-bottom: 32px;">
+                        <div class="hub-header-top">
+                            <span class="hub-header-line" style="background-color: var(--customer-gold);"></span>
+                            <span class="hub-header-tag" style="color: var(--customer-gold); font-weight: 700;">Tours & Walkthroughs</span>
+                        </div>
+                        <h2 class="hub-title" style="color: var(--customer-navy); font-size: 28px; font-weight: 800; margin-bottom: 8px;">My Scheduled Walkthroughs</h2>
+                        <p class="hub-subtitle" style="color: var(--customer-text-muted);">Manage upcoming visits and review past property inspections.</p>
+                    </div>
+
+                    {% if customer_data.visits %}
+                    <div class="bento-card">
+                        <div class="timeline-container" style="padding: 16px 0;">
+                            {% for visit in customer_data.visits %}
+                            <div class="timeline-item">
+                                <div class="timeline-badge {% if visit.status.lower() != 'scheduled' %}timeline-badge--inactive{% endif %}">
+                                    <span class="material-symbols-outlined">location_on</span>
+                                </div>
+                                <div class="timeline-thumb">
+                                    {% if visit.property_obj.images %}
+                                    <img src="{{ visit.property_obj.images[0].imageURL or url_for('properties.get_property_image', image_id=visit.property_obj.images[0].imageID) }}" alt="{{ visit.property_obj.title }}">
+                                    {% else %}
+                                    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=150&q=80" alt="Property">
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-details">
+                                    <p class="timeline-date {% if visit.status.lower() != 'scheduled' %}timeline-date--past{% endif %}">
+                                        {{ visit.visitDate.strftime('%b %d, %Y') }} • {{ visit.visitTime.strftime('%H:%M') }}
+                                        <span class="status-badge" style="display:inline-block; margin-left: 8px; font-size:10px; padding:2px 8px; border-radius:10px; background-color: var(--customer-low); color: var(--customer-navy);">{{ visit.status }}</span>
+                                    </p>
+                                    <h5 class="timeline-title">{{ visit.property_obj.title }}</h5>
+                                    <p class="timeline-agent" style="margin-bottom: 6px;">
+                                        <span class="material-symbols-outlined">person</span>
+                                        Consultant: {{ visit.employee.user.fullName if visit.employee else 'Agent Assigned' }}
+                                    </p>
+                                    {% if visit.notes %}
+                                    <p class="timeline-agent" style="font-style: italic;">
+                                        <span class="material-symbols-outlined">chat_bubble_outline</span>
+                                        Note: "{{ visit.notes }}"
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-actions">
+                                    <button class="btn-sm-action" onclick="window.location.href='/properties?q={{ visit.property_obj.title|urlencode }}'">Details</button>
+                                    <button class="btn-sm-icon" onclick="window.location.href='/properties?q={{ visit.property_obj.title|urlencode }}'">
+                                        <span class="material-symbols-outlined">map</span>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="customer-empty-state">
+                        <div class="customer-empty-state-icon">
+                            <span class="material-symbols-outlined">calendar_today</span>
+                        </div>
+                        <h3 class="customer-empty-state-title">No Tours Scheduled</h3>
+                        <p class="customer-empty-state-desc">You don't have any scheduled visits. Browse our properties and request a tour at your preferred time.</p>
+                        <button class="btn-primary-gold" onclick="window.location.href='/properties'">Schedule a Tour</button>
+                    </div>
+                    {% endif %}
+                </section>
+
+                <!-- 4. INQUIRIES VIEW -->
+                <section class="customer-view-section" id="view-inquiries">
+                    <!-- Page Header -->
+                    <div class="hub-header" style="margin-bottom: 32px;">
+                        <div class="hub-header-top">
+                            <span class="hub-header-line" style="background-color: var(--customer-gold);"></span>
+                            <span class="hub-header-tag" style="color: var(--customer-gold); font-weight: 700;">Service Inquiries</span>
+                        </div>
+                        <h2 class="hub-title" style="color: var(--customer-navy); font-size: 28px; font-weight: 800; margin-bottom: 8px;">My Service Inquiries</h2>
+                        <p class="hub-subtitle" style="color: var(--customer-text-muted);">Track consultation requests, agent briefs, and customer assistance tasks.</p>
+                    </div>
+
+                    {% if customer_data.consultations %}
+                    <div class="bento-card">
+                        <div class="inquiry-list">
+                            {% for cons in customer_data.consultations %}
+                            <div class="inquiry-item">
+                                <div class="inquiry-info">
+                                    <div class="inquiry-header-row">
+                                        <span class="material-symbols-outlined inquiry-header-icon">description</span>
+                                        <h5 class="inquiry-title">{{ cons.consultationType }}</h5>
+                                    </div>
+                                    <p class="inquiry-meta" style="margin-bottom: 8px;">Case ID: #CONS-{{ cons.consultationID }} • Submitted {{ cons.createdAt.strftime('%b %d, %Y') if cons.createdAt else 'Recently' }}</p>
+                                    <p class="timeline-agent" style="font-size: 13px; color: var(--customer-text-muted); display:flex; align-items:center; gap:6px;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">contact_mail</span>
+                                        Contact Method: {{ cons.preferredMethod or 'Not Selected' }}
+                                    </p>
+                                    {% if cons.message %}
+                                    <p class="timeline-agent" style="font-style: italic; font-size:13px; margin-top:4px;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">chat_bubble</span>
+                                        Message: "{{ cons.message }}"
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="inquiry-stepper">
+                                    <div class="step {% if cons.status.lower() in ['pending', 'scheduled', 'completed'] %}step--completed{% endif %}">
+                                        <div class="step-dot"></div>
+                                        <span class="step-label">Submitted</span>
+                                    </div>
+                                    <div class="step-line {% if cons.status.lower() in ['scheduled', 'completed'] %}step-line--completed{% endif %}"></div>
+                                    
+                                    <div class="step {% if cons.status.lower() == 'scheduled' %}step--active{% elif cons.status.lower() == 'completed' %}step--completed{% endif %}">
+                                        <div class="step-dot"></div>
+                                        <span class="step-label">Assigned</span>
+                                    </div>
+                                    <div class="step-line {% if cons.status.lower() == 'completed' %}step-line--completed{% endif %}"></div>
+                                    
+                                    <div class="step {% if cons.status.lower() == 'completed' %}step--active{% endif %}">
+                                        <div class="step-dot"></div>
+                                        <span class="step-label">Resolved</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="inquiry-actions">
+                                    <button class="btn-sm-action" onclick="window.location.href='mailto:support@lebestates.com?subject=Inquiry #CONS-{{ cons.consultationID }}'">View Details</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="customer-empty-state">
+                        <div class="customer-empty-state-icon">
+                            <span class="material-symbols-outlined">chat_bubble_outline</span>
+                        </div>
+                        <h3 class="customer-empty-state-title">No Active Inquiries</h3>
+                        <p class="customer-empty-state-desc">Need assistance or legal real estate consultation? Request a brief from our agency advisors.</p>
+                        <button class="btn-primary-gold" onclick="window.location.href='/consultation'">Request Consultation</button>
+                    </div>
+                    {% endif %}
+                </section>
+
+                <!-- 5. LEDGER VIEW -->
+                <section class="customer-view-section" id="view-ledger">
+                    <h2 class="customer-sidebar__brand-title" style="color: var(--customer-navy); margin-bottom: 8px;">Financial Ledger & Transactions</h2>
+                    <p class="hub-subtitle" style="margin-bottom: 32px; color: var(--customer-text-muted);">Oversee payout status, escrow summaries, and transaction history.</p>
+
+                    <div class="customer-bento-grid">
+                        
+                        <!-- Financial Overview Table (Col Span 7) -->
+                        <div class="col-span-12 lg:col-span-7 bento-card">
+                            <h3 class="bento-card__title" style="margin-bottom: 24px;">Recent Transactions Ledger</h3>
+                            
+                            {% if customer_data.transactions %}
+                            <div style="overflow-x: auto; width: 100%;">
+                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid var(--customer-border); padding-bottom: 12px;">
+                                            <th style="padding: 12px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-text-muted);">Ref ID</th>
+                                            <th style="padding: 12px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-text-muted);">Property</th>
+                                            <th style="padding: 12px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-text-muted);">Deal Type</th>
+                                            <th style="padding: 12px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-text-muted);">Amount Paid</th>
+                                            <th style="padding: 12px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-text-muted);">Total Price</th>
+                                            <th style="padding: 12px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-text-muted);">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for deal in customer_data.transactions %}
+                                        <tr style="border-bottom: 1px solid var(--customer-border); transition: background-color 0.2s;">
+                                            <td style="padding: 16px 8px; font-size: 13px; font-weight: 700; color: var(--customer-navy);">#TX-{{ deal.transactionID }}</td>
+                                            <td style="padding: 16px 8px; font-size: 14px;">{{ deal.property_obj.title }}</td>
+                                            <td style="padding: 16px 8px; font-size: 13px;">{{ deal.transactionType }}</td>
+                                            <td style="padding: 16px 8px; font-size: 14px; font-weight: 600;">${{ "{:,.0f}".format(deal.amountPaid) }}</td>
+                                            <td style="padding: 16px 8px; font-size: 14px; font-weight: 600; color: var(--customer-gold);">${{ "{:,.0f}".format(deal.finalPrice) }}</td>
+                                            <td style="padding: 16px 8px;">
+                                                <span class="status-badge" style="display:inline-block; font-size:10px; padding:2px 8px; border-radius:10px; 
+                                                    {% if deal.paymentStatus.lower() == 'closed' %}background-color: rgba(46, 204, 113, 0.1); color: var(--customer-success);
+                                                    {% elif deal.paymentStatus.lower() == 'cancelled' %}background-color: var(--error-container); color: var(--on-error-container);
+                                                    {% else %}background-color: var(--customer-low); color: var(--customer-navy);{% endif %}">
+                                                    {{ deal.paymentStatus }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="customer-empty-state" style="padding: 24px; box-shadow: none; border: none;">
+                                <span class="material-symbols-outlined" style="font-size: 40px; color: var(--customer-gold);">receipt_long</span>
+                                <p class="customer-empty-state-title" style="font-size: 15px; margin-top: 12px;">No Transactions Found</p>
+                                <p class="customer-empty-state-desc" style="font-size: 12px;">Your transaction statements and receipts will appear here once an acquisition begins.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Active Deal Card (Col Span 5) -->
+                        <div class="col-span-12 lg:col-span-5 bento-card bento-card--financial" style="background-color: #ffffff; border: 1px solid var(--customer-border);">
+                            <div class="bento-card__header">
+                                <h3 class="bento-card__title">Deal Escrow Status</h3>
+                            </div>
+                            
+                            {% if customer_data.active_deal %}
+                            {% set deal = customer_data.active_deal %}
+                            <div style="display: flex; flex-direction: column; height: 100%;">
+                                <div style="flex: 1; margin-bottom: 24px;">
+                                    <div style="margin-bottom: 16px;">
+                                        <p style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--customer-text-muted);">Current Active Contract</p>
+                                        <h4 style="font-size:18px; font-weight:700; color:var(--customer-navy); margin-top:4px;">{{ deal.property_obj.title }}</h4>
+                                        <p style="font-size:13px; color:var(--customer-text-muted); margin-top:2px;">Location: {{ deal.property_obj.location }}</p>
+                                    </div>
+                                    
+                                    <hr style="border:0; border-top:1px solid var(--customer-border); margin: 16px 0;">
+                                    
+                                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                                        <span style="font-size:13px; color:var(--customer-text-muted);">Deal Type:</span>
+                                        <span style="font-size:13px; font-weight:700; color:var(--customer-navy);">{{ deal.transactionType }}</span>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                                        <span style="font-size:13px; color:var(--customer-text-muted);">Payment Type:</span>
+                                        <span style="font-size:13px; font-weight:700; color:var(--customer-navy);">{{ deal.paymentType or 'Standard' }}</span>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                                        <span style="font-size:13px; color:var(--customer-text-muted);">Payment Method:</span>
+                                        <span style="font-size:13px; font-weight:700; color:var(--customer-navy);">{{ deal.paymentMethod or 'Wire Transfer' }}</span>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span style="font-size:13px; color:var(--customer-text-muted);">Escrow Verifier:</span>
+                                        <span style="font-size:13px; font-weight:700; color:var(--customer-navy);">{{ deal.employee.user.fullName if deal.employee else 'LebEstates Agent' }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="financial-dues-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                                    {% set ns = namespace(found=false) %}
+                                    {% for trans in customer_data.transactions %}
+                                        {% if trans.nextDueDate %}
+                                            {% set ns.found = true %}
+                                            <div class="financial-due-banner" style="margin-bottom: 0;">
+                                                <div>
+                                                    <p class="financial-due-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em;">{{ trans.property_obj.title }}</p>
+                                                    <p class="financial-due-val" style="font-size: 15px; font-weight: 700;">{{ trans.nextDueDate.strftime('%B %d, %Y') }}</p>
+                                                </div>
+                                                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--customer-gold-light);">
+                                                    Due
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if not ns.found %}
+                                        <div class="financial-due-banner">
+                                            <div>
+                                                <p class="financial-due-lbl">Next Payout Due</p>
+                                                <p class="financial-due-val">N/A</p>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="customer-empty-state" style="padding: 24px; box-shadow: none; border: none; flex:1; justify-content:center;">
+                                <span class="material-symbols-outlined" style="font-size: 40px; color: var(--customer-gold);">account_balance</span>
+                                <p class="customer-empty-state-title" style="font-size: 15px; margin-top: 12px;">No Active Escrow Account</p>
+                                <p class="customer-empty-state-desc" style="font-size: 12px;">Active legal records are generated upon sales/rent agreements.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </section>
+
             </div>
-            <div class="page-heading__actions">
-                <span class="date-badge">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    Reconciliation Mode
-                </span>
+
+        </div>
+
+        {% elif session.get('role_name', '').lower() == 'accountant' %}
+        <!-- Page Header -->
+        <div class="hub-header" style="margin-bottom: 32px;">
+            <div class="hub-header-top">
+                <span class="hub-header-line" style="background-color: var(--secondary);"></span>
+                <span class="hub-header-tag" style="color: var(--secondary);">Financial Operations</span>
+            </div>
+            <div class="hub-header-main-flex" style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
+                <div class="hub-header-details">
+                    <h2 class="hub-title" style="margin-bottom: 8px;">Financial Overview</h2>
+                    <p class="hub-subtitle">Welcome back, Accountant. Oversee the financial health and payouts of LebEstates.</p>
+                </div>
+                <div class="page-heading__actions" style="margin-bottom: 8px;">
+                    <span class="date-badge">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        Reconciliation Mode
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -42,11 +645,11 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">payments</span>
                     </div>
-                    <span class="badge badge--success">+18.4%</span>
+                    <span class="badge badge--success">{% if accountant_stats.volume_growth >= 0 %}+{% endif %}{{ accountant_stats.volume_growth }}%</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Gross Transactions Volume</p>
-                    <h3 class="kpi-card__value">$18.4M</h3>
+                    <h3 class="kpi-card__value">${{ "{:,.0f}".format(accountant_stats.gross_volume) }}</h3>
                 </div>
             </div>
 
@@ -57,11 +660,11 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">account_balance</span>
                     </div>
-                    <span class="badge badge--success">+9.2%</span>
+                    <span class="badge badge--success">Active</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Company Revenue</p>
-                    <h3 class="kpi-card__value">$920K</h3>
+                    <h3 class="kpi-card__value">${{ "{:,.0f}".format(accountant_stats.company_revenue) }}</h3>
                 </div>
             </div>
 
@@ -76,7 +679,7 @@
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Commissions Paid</p>
-                    <h3 class="kpi-card__value">$276K</h3>
+                    <h3 class="kpi-card__value">${{ "{:,.0f}".format(accountant_stats.commissions_paid) }}</h3>
                 </div>
             </div>
 
@@ -87,11 +690,11 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">paid</span>
                     </div>
-                    <span class="badge badge--success">+12.5%</span>
+                    <span class="badge badge--success">Net Profit</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Net Agency Profit</p>
-                    <h3 class="kpi-card__value">$644K</h3>
+                    <h3 class="kpi-card__value">${{ "{:,.0f}".format(accountant_stats.net_profit) }}</h3>
                 </div>
             </div>
         </section>
@@ -109,32 +712,20 @@
 
                 <div class="custom-chart">
                     <div class="custom-chart__bars">
-                        <div class="chart-bar-container group" style="--bar-height: 45%;">
+                        {% for week in accountant_stats.weekly_net_profit %}
+                        {% set max_val = 200.0 %}
+                        {% set pct = (week.profit_k / max_val * 100) | int if week.profit_k > 0 else 5 %}
+                        <div class="chart-bar-container group" style="--bar-height: {{ pct if pct < 100 else 100 }}%;">
                             <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 1: $65k</div>
+                                <div class="chart-bar__tooltip">{{ week.label }}: ${{ week.profit_k }}k</div>
                             </div>
                         </div>
-                        <div class="chart-bar-container group" style="--bar-height: 70%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 2: $110k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 55%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 3: $80k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 90%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 4: $145k</div>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
                     <div class="custom-chart__axis">
-                        <span class="custom-chart__label">Week 1</span>
-                        <span class="custom-chart__label">Week 2</span>
-                        <span class="custom-chart__label">Week 3</span>
-                        <span class="custom-chart__label">Week 4</span>
+                        {% for week in accountant_stats.weekly_net_profit %}
+                        <span class="custom-chart__label">{{ week.label }}</span>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -148,12 +739,12 @@
                     <div class="donut-chart">
                         <svg class="donut-chart__svg" viewBox="0 0 100 100">
                             <circle class="donut-chart__bg" cx="50" cy="50" r="40" />
-                            <circle class="donut-chart__segment" cx="50" cy="50" r="40" style="stroke: #00081e; stroke-dasharray: 70 30; stroke-dashoffset: 25; fill: transparent; stroke-width: 8;" />
-                            <circle class="donut-chart__segment" cx="50" cy="50" r="40" style="stroke: #d4af37; stroke-dasharray: 30 70; stroke-dashoffset: -45; fill: transparent; stroke-width: 8;" />
+                            <circle class="donut-chart__segment" cx="50" cy="50" r="40" style="stroke: #00081e; stroke-dasharray: {{ accountant_stats.sales_pct }} {{ 100 - accountant_stats.sales_pct }}; stroke-dashoffset: 25; fill: transparent; stroke-width: 8;" />
+                            <circle class="donut-chart__segment" cx="50" cy="50" r="40" style="stroke: #d4af37; stroke-dasharray: {{ accountant_stats.rental_pct }} {{ 100 - accountant_stats.rental_pct }}; stroke-dashoffset: {{ 125 - accountant_stats.sales_pct }}; fill: transparent; stroke-width: 8;" />
                         </svg>
                         <div class="donut-chart__content">
-                            <span class="donut-chart__number">100%</span>
-                            <span class="donut-chart__label">Audited</span>
+                            <span class="donut-chart__number">{{ accountant_stats.sales_count + accountant_stats.rental_count }}</span>
+                            <span class="donut-chart__label">Total Deals</span>
                         </div>
                     </div>
                 </div>
@@ -161,11 +752,11 @@
                 <div class="donut-legend">
                     <div class="donut-legend__item">
                         <div class="donut-legend__indicator" style="background-color: #00081e;"></div>
-                        <span class="donut-legend__text">Sales Deals (70%)</span>
+                        <span class="donut-legend__text">Sales Deals ({{ accountant_stats.sales_pct }}%)</span>
                     </div>
                     <div class="donut-legend__item">
                         <div class="donut-legend__indicator" style="background-color: #d4af37;"></div>
-                        <span class="donut-legend__text">Rental Deals (30%)</span>
+                        <span class="donut-legend__text">Rental Deals ({{ accountant_stats.rental_pct }}%)</span>
                     </div>
                 </div>
             </div>
@@ -180,7 +771,7 @@
                         <span class="material-symbols-outlined text-primary">receipt_long</span>
                         <h3 class="details-card__title">Recent Audit Log</h3>
                     </div>
-                    <span class="badge badge--success-light">4 Audited Payments</span>
+                    <span class="badge badge--success-light">{{ accountant_stats.recent_audits|length }} Audited Payments</span>
                 </div>
 
                 <div class="table-container">
@@ -195,34 +786,25 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for trans in accountant_stats.recent_audits %}
+                            {% set net_rev = (trans.commissionAmount | float) - (trans.commissionAmount | float) * (trans.agentCommissionRate | float / 100.0) %}
                             <tr>
-                                <td class="schedule-table__time">#LEB-1021</td>
-                                <td>Luxury Penthouse Ashrafieh</td>
-                                <td>$45,000</td>
-                                <td>$31,500</td>
-                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
+                                <td class="schedule-table__time">#TX-{{ trans.transactionID }}</td>
+                                <td>{{ trans.property_obj.title }}</td>
+                                <td>${{ "{:,.0f}".format(trans.commissionAmount) }}</td>
+                                <td>${{ "{:,.0f}".format(net_rev) }}</td>
+                                <td>
+                                    <span class="status-badge {% if trans.paymentStatus.lower() == 'closed' %}status-badge--confirmed{% else %}status-badge--pending{% endif %}">
+                                        {{ 'Audited' if trans.paymentStatus.lower() == 'closed' else trans.paymentStatus }}
+                                    </span>
+                                </td>
                             </tr>
+                            {% endfor %}
+                            {% if not accountant_stats.recent_audits %}
                             <tr>
-                                <td class="schedule-table__time">#LEB-1024</td>
-                                <td>Modern Office Downtown</td>
-                                <td>$15,000</td>
-                                <td>$10,500</td>
-                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
+                                <td colspan="5" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No transaction records audited yet.</td>
                             </tr>
-                            <tr>
-                                <td class="schedule-table__time">#LEB-1031</td>
-                                <td>Faraya Chalet</td>
-                                <td>$8,000</td>
-                                <td>$5,600</td>
-                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
-                            </tr>
-                            <tr>
-                                <td class="schedule-table__time">#LEB-1044</td>
-                                <td>Beachfront Villa Batroun</td>
-                                <td>$120,000</td>
-                                <td>$84,000</td>
-                                <td><span class="status-badge status-badge--confirmed">Audited</span></td>
-                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -230,17 +812,23 @@
         </section>
 
         {% else %}
-        <!-- Page Heading -->
-        <div class="page-heading">
-            <div class="page-heading__info">
-                <h1 class="page-heading__title">Overview</h1>
-                <p class="page-heading__subtitle">Welcome back, Admin. Here is what's happening today.</p>
+        <!-- Page Header -->
+        <div class="hub-header" style="margin-bottom: 32px;">
+            <div class="hub-header-top">
+                <span class="hub-header-line" style="background-color: var(--secondary);"></span>
+                <span class="hub-header-tag" style="color: var(--secondary);">Agency Operations</span>
             </div>
-            <div class="page-heading__actions">
-                <span class="date-badge">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    Oct 24, 2024
-                </span>
+            <div class="hub-header-main-flex" style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
+                <div class="hub-header-details">
+                    <h2 class="hub-title" style="margin-bottom: 8px;">Overview</h2>
+                    <p class="hub-subtitle">Welcome back, {{ user.fullName }}. Here is what's happening today.</p>
+                </div>
+                <div class="page-heading__actions" style="margin-bottom: 8px;">
+                    <span class="date-badge">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        Today
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -253,11 +841,11 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">apartment</span>
                     </div>
-                    <span class="badge badge--success">+4.2%</span>
+                    <span class="badge badge--success">{% if admin_stats.prop_growth >= 0 %}+{% endif %}{{ admin_stats.prop_growth }}%</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Total Properties</p>
-                    <h3 class="kpi-card__value">124</h3>
+                    <h3 class="kpi-card__value">{{ admin_stats.total_properties }}</h3>
                 </div>
             </div>
 
@@ -268,11 +856,11 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">group</span>
                     </div>
-                    <span class="badge badge--success">+12%</span>
+                    <span class="badge badge--success">{% if admin_stats.user_growth >= 0 %}+{% endif %}{{ admin_stats.user_growth }}%</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Total Users</p>
-                    <h3 class="kpi-card__value">1,450</h3>
+                    <h3 class="kpi-card__value">{{ admin_stats.total_users }}</h3>
                 </div>
             </div>
 
@@ -283,11 +871,11 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">chat_bubble</span>
                     </div>
-                    <span class="badge badge--success">+8 today</span>
+                    <span class="badge badge--success">{% if admin_stats.cons_growth >= 0 %}+{% endif %}{{ admin_stats.cons_growth }}%</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Consultations</p>
-                    <h3 class="kpi-card__value">82</h3>
+                    <h3 class="kpi-card__value">{{ admin_stats.total_consultations }}</h3>
                 </div>
             </div>
 
@@ -298,11 +886,11 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">calendar_month</span>
                     </div>
-                    <span class="badge badge--neutral">Stable</span>
+                    <span class="badge badge--neutral">Visits</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Scheduled Visits</p>
-                    <h3 class="kpi-card__value">45</h3>
+                    <h3 class="kpi-card__value">{{ admin_stats.scheduled_visits }}</h3>
                 </div>
             </div>
 
@@ -313,26 +901,30 @@
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">payments</span>
                     </div>
-                    <span class="badge badge--success">+15%</span>
+                    <span class="badge badge--success">Deals</span>
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Transactions</p>
-                    <h3 class="kpi-card__value">12</h3>
+                    <h3 class="kpi-card__value">{{ admin_stats.total_transactions }}</h3>
                 </div>
             </div>
 
             <!-- KPI Card 6 (Urgent/Error) -->
-            <div class="kpi-card kpi-card--urgent">
+            <div class="kpi-card {% if admin_stats.pending_requests > 0 %}kpi-card--urgent{% endif %}">
                 <div class="kpi-card__background-decorator"></div>
                 <div class="kpi-card__top">
                     <div class="kpi-card__icon-container">
                         <span class="material-symbols-outlined">pending_actions</span>
                     </div>
+                    {% if admin_stats.pending_requests > 0 %}
                     <span class="badge badge--urgent animate-pulse">URGENT</span>
+                    {% else %}
+                    <span class="badge badge--neutral">Clear</span>
+                    {% endif %}
                 </div>
                 <div class="kpi-card__bottom">
                     <p class="kpi-card__label">Pending Requests</p>
-                    <h3 class="kpi-card__value">8</h3>
+                    <h3 class="kpi-card__value">{{ admin_stats.pending_requests }}</h3>
                 </div>
             </div>
         </section>
@@ -344,72 +936,27 @@
                 <div class="visual-card__header">
                     <div class="visual-card__title-area">
                         <h3 class="visual-card__title">Revenue & Growth</h3>
-                        <p class="visual-card__subtitle">Transaction volume (Last 30 Days)</p>
-                    </div>
-                    <div class="visual-card__toggle-group">
-                        <button class="toggle-btn toggle-btn--active">Volume</button>
-                        <button class="toggle-btn">Value</button>
+                        <p class="visual-card__subtitle">Transaction volume (Last 10 Weeks)</p>
                     </div>
                 </div>
 
                 <!-- CSS Custom Chart Grid -->
                 <div class="custom-chart">
                     <div class="custom-chart__bars">
-                        <div class="chart-bar-container group" style="--bar-height: 40%;">
+                        {% for week in admin_stats.weekly_volume %}
+                        {% set max_vol = 1000.0 %}
+                        {% set pct = (week.volume_k / max_vol * 100) | int if week.volume_k > 0 else 5 %}
+                        <div class="chart-bar-container group" style="--bar-height: {{ pct if pct < 100 else 100 }}%;">
                             <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 1: $120k</div>
+                                <div class="chart-bar__tooltip">Week {{ week.week_num }}: ${{ week.volume_k }}k</div>
                             </div>
                         </div>
-                        <div class="chart-bar-container group" style="--bar-height: 65%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 2: $195k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 45%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 3: $135k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 85%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 4: $255k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 55%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 5: $165k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 95%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 6: $285k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 30%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 7: $90k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 70%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 8: $210k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 50%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 9: $150k</div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-container group" style="--bar-height: 100%;">
-                            <div class="chart-bar">
-                                <div class="chart-bar__tooltip">Week 10: $300k</div>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
                     <div class="custom-chart__axis">
-                        <span class="custom-chart__label">Oct 01</span>
-                        <span class="custom-chart__label">Oct 15</span>
-                        <span class="custom-chart__label">Oct 30</span>
+                        {% for week in admin_stats.weekly_volume %}
+                        <span class="custom-chart__label">{{ week.label }}</span>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -419,25 +966,50 @@
                 <h3 class="visual-card__title">Distribution</h3>
                 <p class="visual-card__subtitle visual-card__subtitle--spaced">Inventory by Type</p>
 
+                {% set apt_count = admin_stats.inventory_distribution.get('Apartment', 0) | int %}
+                {% set villa_count = admin_stats.inventory_distribution.get('Villa', 0) | int %}
+                {% set comm_count = admin_stats.inventory_distribution.get('Commercial', 0) | int %}
+                {% set land_count = admin_stats.inventory_distribution.get('Land', 0) | int %}
+                {% set total_inv = admin_stats.total_properties | int %}
+                {% if total_inv == 0 %}
+                    {% set total_inv = 1 %}
+                {% endif %}
+                {% set apt_pct = (apt_count / total_inv * 100) | round | int %}
+                {% set villa_pct = (villa_count / total_inv * 100) | round | int %}
+                {% set comm_pct = (comm_count / total_inv * 100) | round | int %}
+                {% set land_pct = (land_count / total_inv * 100) | round | int %}
+
+                {% set apt_len = (apt_pct / 100 * 251.3) | round(1) %}
+                {% set villa_len = (villa_pct / 100 * 251.3) | round(1) %}
+                {% set comm_len = (comm_pct / 100 * 251.3) | round(1) %}
+                {% set land_len = (land_pct / 100 * 251.3) | round(1) %}
+
+                {% set apt_offset = 0 %}
+                {% set villa_offset = -apt_len %}
+                {% set comm_offset = -(apt_len + villa_len) %}
+                {% set land_offset = -(apt_len + villa_len + comm_len) %}
+
                 <div class="donut-chart-container">
                     <!-- Custom CSS / SVG Donut Chart -->
                     <div class="donut-chart">
                         <svg class="donut-chart__svg" viewBox="0 0 100 100">
                             <!-- Background Circle -->
                             <circle class="donut-chart__bg" cx="50" cy="50" r="40" />
-                            <!-- Apartment Segment (45%) -->
-                            <circle class="donut-chart__segment donut-chart__segment--apartments" cx="50" cy="50"
-                                r="40" />
-                            <!-- Villa Segment (25%) -->
-                            <circle class="donut-chart__segment donut-chart__segment--villas" cx="50" cy="50" r="40" />
-                            <!-- Commercial Segment (20%) -->
-                            <circle class="donut-chart__segment donut-chart__segment--commercial" cx="50" cy="50"
-                                r="40" />
-                            <!-- Land Segment (10%) -->
-                            <circle class="donut-chart__segment donut-chart__segment--land" cx="50" cy="50" r="40" />
+                            <!-- Apartment Segment -->
+                            <circle class="donut-chart__segment donut-chart__segment--apartments" cx="50" cy="50" r="40"
+                                style="stroke-dasharray: {{ apt_len }} 251.3; stroke-dashoffset: {{ apt_offset }}; fill: transparent; stroke-width: 8;" />
+                            <!-- Villa Segment -->
+                            <circle class="donut-chart__segment donut-chart__segment--villas" cx="50" cy="50" r="40"
+                                style="stroke-dasharray: {{ villa_len }} 251.3; stroke-dashoffset: {{ villa_offset }}; fill: transparent; stroke-width: 8;" />
+                            <!-- Commercial Segment -->
+                            <circle class="donut-chart__segment donut-chart__segment--commercial" cx="50" cy="50" r="40"
+                                style="stroke-dasharray: {{ comm_len }} 251.3; stroke-dashoffset: {{ comm_offset }}; fill: transparent; stroke-width: 8;" />
+                            <!-- Land Segment -->
+                            <circle class="donut-chart__segment donut-chart__segment--land" cx="50" cy="50" r="40"
+                                style="stroke-dasharray: {{ land_len }} 251.3; stroke-dashoffset: {{ land_offset }}; fill: transparent; stroke-width: 8;" />
                         </svg>
                         <div class="donut-chart__content">
-                            <span class="donut-chart__number">124</span>
+                            <span class="donut-chart__number">{{ admin_stats.total_properties }}</span>
                             <span class="donut-chart__label">Total</span>
                         </div>
                     </div>
@@ -446,19 +1018,19 @@
                 <div class="donut-legend">
                     <div class="donut-legend__item">
                         <div class="donut-legend__indicator donut-legend__indicator--apartments"></div>
-                        <span class="donut-legend__text">Apartments (45%)</span>
+                        <span class="donut-legend__text">Apartments ({{ apt_pct }}%)</span>
                     </div>
                     <div class="donut-legend__item">
                         <div class="donut-legend__indicator donut-legend__indicator--villas"></div>
-                        <span class="donut-legend__text">Villas (25%)</span>
+                        <span class="donut-legend__text">Villas ({{ villa_pct }}%)</span>
                     </div>
                     <div class="donut-legend__item">
                         <div class="donut-legend__indicator donut-legend__indicator--commercial"></div>
-                        <span class="donut-legend__text">Commercial (20%)</span>
+                        <span class="donut-legend__text">Commercial ({{ comm_pct }}%)</span>
                     </div>
                     <div class="donut-legend__item">
                         <div class="donut-legend__indicator donut-legend__indicator--land"></div>
-                        <span class="donut-legend__text">Land (10%)</span>
+                        <span class="donut-legend__text">Land ({{ land_pct }}%)</span>
                     </div>
                 </div>
             </div>
@@ -473,7 +1045,7 @@
                         <span class="material-symbols-outlined text-primary">event_note</span>
                         <h3 class="details-card__title">Today's Schedule</h3>
                     </div>
-                    <span class="badge badge--success-light">5 Appointments</span>
+                    <span class="badge badge--success-light">{{ admin_stats.upcoming_schedule|length }} Appointments</span>
                 </div>
 
                 <div class="table-container">
@@ -487,50 +1059,28 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for visit in admin_stats.upcoming_schedule %}
                             <tr>
-                                <td class="schedule-table__time">10:00 AM</td>
-                                <td>Luxury Penthouse #42</td>
+                                <td class="schedule-table__time">{{ visit.visitTime.strftime('%I:%M %p') }}</td>
+                                <td>{{ visit.property_obj.title }}</td>
                                 <td>
                                     <div class="agent-profile">
                                         <div class="agent-profile__avatar"></div>
-                                        <span class="agent-profile__name">Marcelle T.</span>
+                                        <span class="agent-profile__name">{{ visit.employee.user.fullName if visit.employee else 'Agent Assigned' }}</span>
                                     </div>
                                 </td>
-                                <td><span class="status-badge status-badge--confirmed">Confirmed</span></td>
-                            </tr>
-                            <tr>
-                                <td class="schedule-table__time">11:30 AM</td>
-                                <td>Beachfront Villa Saida</td>
                                 <td>
-                                    <div class="agent-profile">
-                                        <div class="agent-profile__avatar"></div>
-                                        <span class="agent-profile__name">George K.</span>
-                                    </div>
+                                    <span class="status-badge {% if visit.status.lower() == 'scheduled' %}status-badge--confirmed{% elif visit.status.lower() == 'completed' %}status-badge--confirmed{% elif visit.status.lower() == 'cancelled' %}status-badge--pending{% else %}status-badge--active{% endif %}">
+                                        {{ visit.status }}
+                                    </span>
                                 </td>
-                                <td><span class="status-badge status-badge--active">On Route</span></td>
                             </tr>
+                            {% endfor %}
+                            {% if not admin_stats.upcoming_schedule %}
                             <tr>
-                                <td class="schedule-table__time">02:00 PM</td>
-                                <td>Modern Office Beirut</td>
-                                <td>
-                                    <div class="agent-profile">
-                                        <div class="agent-profile__avatar"></div>
-                                        <span class="agent-profile__name">Nadine S.</span>
-                                    </div>
-                                </td>
-                                <td><span class="status-badge status-badge--pending">Pending</span></td>
+                                <td colspan="4" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No upcoming appointments scheduled.</td>
                             </tr>
-                            <tr>
-                                <td class="schedule-table__time">04:15 PM</td>
-                                <td>Apartment 204 Downtown</td>
-                                <td>
-                                    <div class="agent-profile">
-                                        <div class="agent-profile__avatar"></div>
-                                        <span class="agent-profile__name">Raymond S.</span>
-                                    </div>
-                                </td>
-                                <td><span class="status-badge status-badge--confirmed">Confirmed</span></td>
-                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -541,51 +1091,30 @@
                 <h3 class="details-card__title details-card__title--spaced">Top Regions</h3>
 
                 <div class="regions-list">
+                    {% for reg in admin_stats.regions %}
                     <div class="region-item">
                         <div class="region-item__info">
-                            <span class="region-item__name">Beirut Central District</span>
-                            <span class="region-item__percentage">42% Vol.</span>
+                            <span class="region-item__name">{{ reg.name }}</span>
+                            <span class="region-item__percentage">{{ reg.percentage }}% Vol.</span>
                         </div>
                         <div class="region-item__progress-bar">
-                            <div class="region-item__progress" style="width: 42%;"></div>
+                            <div class="region-item__progress" style="width: {{ reg.percentage }}%;"></div>
                         </div>
                     </div>
-
-                    <div class="region-item">
-                        <div class="region-item__info">
-                            <span class="region-item__name">Mount Lebanon</span>
-                            <span class="region-item__percentage">28% Vol.</span>
-                        </div>
-                        <div class="region-item__progress-bar">
-                            <div class="region-item__progress" style="width: 28%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="region-item">
-                        <div class="region-item__info">
-                            <span class="region-item__name">Saida</span>
-                            <span class="region-item__percentage">18% Vol.</span>
-                        </div>
-                        <div class="region-item__progress-bar">
-                            <div class="region-item__progress" style="width: 18%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="region-item">
-                        <div class="region-item__info">
-                            <span class="region-item__name">Tripoli</span>
-                            <span class="region-item__percentage">12% Vol.</span>
-                        </div>
-                        <div class="region-item__progress-bar">
-                            <div class="region-item__progress" style="width: 12%;"></div>
-                        </div>
-                    </div>
+                    {% endfor %}
+                    {% if not admin_stats.regions %}
+                    <p style="text-align: center; padding: 24px 12px; font-size: 13px; color: var(--on-surface-variant);">No regional data available.</p>
+                    {% endif %}
                 </div>
 
                 <div class="insight-box">
                     <p class="insight-box__text">
-                        <span class="insight-box__title">Insight:</span> Beirut Central District continues to lead
-                        transaction volume, increasing by 5% this month.
+                        <span class="insight-box__title">Insight:</span>
+                        {% if admin_stats.regions %}
+                        {{ admin_stats.regions[0].name }} continues to lead inventory volume, accounting for {{ admin_stats.regions[0].percentage }}% of listings.
+                        {% else %}
+                        No listings inventory available to analyze.
+                        {% endif %}
                     </p>
                 </div>
             </div>
@@ -604,24 +1133,39 @@
                 </div>
 
                 <div class="timeline">
+                    {% for log in admin_stats.recent_activity %}
+                    {% set icon = 'history' %}
+                    {% set icon_class = 'timeline__icon--calendar' %}
+                    {% if log.tableName.lower() == 'property' %}
+                        {% set icon = 'add_home' %}
+                        {% set icon_class = 'timeline__icon--home' %}
+                    {% elif log.tableName.lower() in ['visit', 'scheduled'] %}
+                        {% set icon = 'event_available' %}
+                        {% set icon_class = 'timeline__icon--calendar' %}
+                    {% elif log.tableName.lower() == 'users' %}
+                        {% set icon = 'person' %}
+                        {% set icon_class = 'timeline__icon--home' %}
+                    {% elif log.tableName.lower() == 'transaction' %}
+                        {% set icon = 'payments' %}
+                        {% set icon_class = 'timeline__icon--calendar' %}
+                    {% elif log.tableName.lower() == 'consultation' %}
+                        {% set icon = 'chat_bubble' %}
+                        {% set icon_class = 'timeline__icon--home' %}
+                    {% endif %}
                     <div class="timeline__item">
-                        <div class="timeline__icon timeline__icon--home">
-                            <span class="material-symbols-outlined">add_home</span>
+                        <div class="timeline__icon {{ icon_class }}">
+                            <span class="material-symbols-outlined">{{ icon }}</span>
                         </div>
                         <div class="timeline__content">
-                            <p class="timeline__title">Listing Published</p>
-                            <p class="timeline__description">Downtown Luxury Apt #204 approved.</p>
+                            <p class="timeline__title">{{ log.action }}</p>
+                            <p class="timeline__description">{{ log.description }}</p>
+                            <p class="timeline__time" style="font-size: 11px; color: var(--on-surface-variant); margin-top: 2px;">{{ log.createdAt.strftime('%b %d • %H:%M') }}</p>
                         </div>
                     </div>
-                    <div class="timeline__item">
-                        <div class="timeline__icon timeline__icon--calendar">
-                            <span class="material-symbols-outlined">event_available</span>
-                        </div>
-                        <div class="timeline__content">
-                            <p class="timeline__title">Viewing Scheduled</p>
-                            <p class="timeline__description">Villa #402 requested for tomorrow.</p>
-                        </div>
-                    </div>
+                    {% endfor %}
+                    {% if not admin_stats.recent_activity %}
+                    <p style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No recent system logs/activities found.</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -630,11 +1174,11 @@
 
 
                 <div class="actions-grid">
-                    <button class="action-grid-btn action-grid-btn--gold">
+                    <button class="action-grid-btn action-grid-btn--gold" onclick="window.location.href='/sell-rent'">
                         <span class="material-symbols-outlined">add_circle</span>
                         <span class="action-grid-btn__label">New Property</span>
                     </button>
-                    <button class="action-grid-btn">
+                    <button class="action-grid-btn" onclick="window.location.href='/customers/'">
                         <span class="material-symbols-outlined">person_add</span>
                         <span class="action-grid-btn__label">Add User</span>
                     </button>

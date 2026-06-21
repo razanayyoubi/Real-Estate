@@ -40,6 +40,32 @@ class VisitService:
             )
             db.session.add(new_visit)
             db.session.commit()
+            
+            # Send notifications (wrapped to prevent errors from breaking main action)
+            try:
+                from app.services.notification_service import NotificationService
+                from app.models.property import Property
+                
+                prop = Property.query.get(property_id)
+                prop_title = prop.title if prop else "Property"
+                
+                # 1. Notify Customer
+                NotificationService.create_notification(
+                    user_id=user_id,
+                    message=f"Your visit request for property '{prop_title}' on {visit_date} at {visit_time} has been scheduled successfully.",
+                    action_url="/dashboard"
+                )
+                
+                # 2. Notify assigned Employee
+                if employee:
+                    NotificationService.create_notification(
+                        user_id=employee.userID,
+                        message=f"A new visit has been scheduled for property '{prop_title}' on {visit_date} at {visit_time}.",
+                        action_url="/control-panel/visits"
+                    )
+            except Exception as notif_err:
+                print(f"[Warning] Failed to send visit scheduling notifications: {str(notif_err)}")
+
             return {'success': True, 'message': 'Visit Scheduled Successfully!', 'code': 201}
         except Exception as e:
             db.session.rollback()
@@ -91,6 +117,21 @@ class VisitService:
             visit.status = new_status
             visit.updatedAt = datetime.now()
             db.session.commit()
+            
+            # Send notifications (wrapped)
+            try:
+                from app.services.notification_service import NotificationService
+                cust_user_id = visit.customer.userID if (visit.customer and visit.customer.user) else None
+                if cust_user_id:
+                    prop_title = visit.property_obj.title if visit.property_obj else "Property"
+                    NotificationService.create_notification(
+                        user_id=cust_user_id,
+                        message=f"The status of your visit request for property '{prop_title}' on {visit.visitDate} has been updated to: {new_status}.",
+                        action_url="/dashboard"
+                    )
+            except Exception as notif_err:
+                print(f"[Warning] Failed to send status update notification: {str(notif_err)}")
+
             return {'success': True, 'message': 'Visit status updated successfully'}
         except Exception as e:
             db.session.rollback()
@@ -113,6 +154,32 @@ class VisitService:
             visit.employeeID = employee_id
             visit.updatedAt = datetime.now()
             db.session.commit()
+            
+            # Send notifications (wrapped)
+            try:
+                from app.services.notification_service import NotificationService
+                prop_title = visit.property_obj.title if visit.property_obj else "Property"
+                
+                # 1. Notify Employee
+                if employee:
+                    NotificationService.create_notification(
+                        user_id=employee.userID,
+                        message=f"You have been assigned as the consultant for a visit to property '{prop_title}' on {visit.visitDate} at {visit.visitTime}.",
+                        action_url="/control-panel/visits"
+                    )
+                
+                # 2. Notify Customer
+                cust_user_id = visit.customer.userID if (visit.customer and visit.customer.user) else None
+                if cust_user_id:
+                    emp_name = employee.user.fullName if (employee and employee.user) else "a property specialist"
+                    NotificationService.create_notification(
+                        user_id=cust_user_id,
+                        message=f"A consultant ({emp_name}) has been assigned to guide you through your visit for property '{prop_title}' on {visit.visitDate} at {visit.visitTime}.",
+                        action_url="/dashboard"
+                    )
+            except Exception as notif_err:
+                print(f"[Warning] Failed to send consultant assignment notifications: {str(notif_err)}")
+
             return {'success': True, 'message': 'Consultant assigned successfully'}
         except Exception as e:
             db.session.rollback()
