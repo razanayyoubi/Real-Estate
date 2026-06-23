@@ -3,7 +3,7 @@
 {% block title %}Property Inventory | LebEstates{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="/static/css/properties_mgmt.css?v=1.1" />
+<link rel="stylesheet" href="/static/css/properties_mgmt.css?v=1.6" />
 {% endblock %}
 
 {% block content %}
@@ -268,39 +268,47 @@
         <div class="insights-card schema-card bg-primary-dark">
             <h3 class="insights-title text-white">Inventory Breakdown</h3>
             <div class="schema-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
+                <div class="schema-item"
+                    style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
                     <div class="schema-item-header">
                         <span class="material-symbols-outlined text-secondary">apartment</span>
                         <span class="schema-item-title text-white" style="margin-left: 8px;">Apartments</span>
                     </div>
-                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                    <div
+                        style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
                         {{ type_counts.get('Apartment', 0) }}
                     </div>
                 </div>
-                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
+                <div class="schema-item"
+                    style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
                     <div class="schema-item-header">
                         <span class="material-symbols-outlined text-secondary">villa</span>
                         <span class="schema-item-title text-white" style="margin-left: 8px;">Villas</span>
                     </div>
-                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                    <div
+                        style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
                         {{ type_counts.get('Villa', 0) }}
                     </div>
                 </div>
-                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
+                <div class="schema-item"
+                    style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
                     <div class="schema-item-header">
                         <span class="material-symbols-outlined text-secondary">storefront</span>
                         <span class="schema-item-title text-white" style="margin-left: 8px;">Commercial</span>
                     </div>
-                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                    <div
+                        style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
                         {{ type_counts.get('Commercial', 0) }}
                     </div>
                 </div>
-                <div class="schema-item" style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
+                <div class="schema-item"
+                    style="padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
                     <div class="schema-item-header">
                         <span class="material-symbols-outlined text-secondary">terrain</span>
                         <span class="schema-item-title text-white" style="margin-left: 8px;">Lands</span>
                     </div>
-                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
+                    <div
+                        style="font-size: 24px; font-weight: 800; color: #ffffff; margin-top: 8px; font-family: var(--font-headline, sans-serif);">
                         {{ type_counts.get('Land', 0) }}
                     </div>
                 </div>

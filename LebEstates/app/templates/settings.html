@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | LebEstates Management Portal{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/settings.css" />
+{% endblock %}
+
+{% block content %}
+<main class="main-content" id="mainContent">
+    <div class="main-content__body">
+        
+        <!-- Page Header -->
+        <div class="hub-header">
+            <div class="hub-header-top">
+                <span class="hub-header-line"></span>
+                <span class="hub-header-tag">Portal Security</span>
+            </div>
+            <div class="hub-header-main-flex">
+                <div class="hub-header-details">
+                    <h2 class="hub-title">System Access & Security</h2>
+                    <p class="hub-subtitle">Configure your authentication protocols and monitor active management sessions.</p>
+                </div>
+                <div class="hub-header-actions">
+                    <button class="btn btn-security" id="btnDownloadReport">
+                        <span class="material-symbols-outlined">file_download</span>
+                        <span>Security Report</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="settings-grid-layout">
+            
+            <!-- Left Column: Credentials Reset -->
+            <div class="settings-main-column">
+                <div class="premium-card command-card">
+                    <div class="card-header">
+                        <div class="card-header__icon">
+                            <span class="material-symbols-outlined">lock_reset</span>
+                        </div>
+                        <div class="card-header__text">
+                            <h3>Change Credentials</h3>
+                            <p>Update your account password regularly to maintain integrity.</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form id="change-password-form" class="credentials-form">
+                            <div class="form-group full-width">
+                                <label class="form-label" for="current_password">Current Password</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="current_password" name="current_password" class="form-input" placeholder="Enter current management password" required>
+                                    <span class="material-symbols-outlined password-visibility-toggle" id="toggle-current-password">visibility</span>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="new_password">New Password</label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="new_password" name="new_password" class="form-input" placeholder="••••••••••••" required oninput="evaluatePasswordStrength(this.value)">
+                                    </div>
+                                    <div class="password-strength-container">
+                                        <div class="password-strength-bar">
+                                            <div class="strength-segment" id="strength-seg-1"></div>
+                                            <div class="strength-segment" id="strength-seg-2"></div>
+                                            <div class="strength-segment" id="strength-seg-3"></div>
+                                        </div>
+                                        <div class="password-strength-text" id="strength-label"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="confirm_password">Confirm New Password</label>
+                                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="••••••••••••" required>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-save-credentials">
+                                    <span>Save New Credentials</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: 2FA & Analytics -->
+            <div class="settings-sidebar-column">
+                
+                <!-- Two-Factor Authentication Card -->
+                <div class="premium-card tf-card">
+                    <div class="card-header">
+                        <div class="card-header__icon">
+                            <span class="material-symbols-outlined">verified_user</span>
+                        </div>
+                        <div class="card-header__text">
+                            <h3>Two-Factor (2FA)</h3>
+                            <p>Secure your account using <span class="gold-text">Google Authenticator</span> as your primary verification method.</p>
+                        </div>
+                        <div class="card-header__action">
+                            <label class="switch">
+                                <input type="checkbox" id="twofactor-toggle" {% if user.twoFactorEnabled %}checked{% endif %} onchange="toggleTwoFactor()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Status Indicators -->
+                        <div class="security-status-box {% if user.twoFactorEnabled %}status-active{% else %}status-disabled{% endif %}" id="security-status-container">
+                            <span class="material-symbols-outlined status-icon" id="security-status-icon">{% if user.twoFactorEnabled %}verified_user{% else %}warning{% endif %}</span>
+                            <div class="status-details">
+                                <span class="status-title-lbl">Status</span>
+                                <span class="status-value-lbl" id="security-status-text">{% if user.twoFactorEnabled %}Protocol Active{% else %}Protection Disabled{% endif %}</span>
+                            </div>
+                        </div>
+
+                        <!-- Toggleable 2FA setup details -->
+                        <div id="twofactor-setup-area" class="two-factor-setup-container" style="display: {% if user.twoFactorEnabled %}flex{% else %}none{% endif %};">
+                            
+                            <div id="2fa-qr-container" style="display: {% if user.twoFactorEnabled %}none{% else %}block{% endif %}; width: 100%;">
+                                <p class="setup-instructions">Scan this QR code in Google Authenticator</p>
+                                <div class="qr-code-wrapper">
+                                    <img id="2fa-qr-img" src="" alt="Scan QR Code" style="width: 130px; height: 130px; display: none;">
+                                    <div id="2fa-qr-placeholder" style="width: 130px; height: 130px; position: relative; margin: 0 auto;">
+                                        <div class="mock-qr-corner top-left"></div>
+                                        <div class="mock-qr-corner top-right"></div>
+                                        <div class="mock-qr-corner bottom-left"></div>
+                                        <div class="mock-qr-pattern"></div>
+                                    </div>
+                                </div>
+                                <p class="setup-instructions-sub">Or enter code manually:</p>
+                                <div class="secret-key-display" id="mock-secret-key">JBSWY3DPEHPK3PXP</div>
+                            </div>
+
+                            <div id="2fa-recovery-container" style="display: {% if user.twoFactorEnabled %}block{% else %}none{% endif %}; width: 100%;">
+                                <p class="recovery-title-lbl">Backup Recovery Codes:</p>
+                                <div class="backup-tokens-grid">
+                                    <div class="backup-token-item">ABCD-1234</div>
+                                    <div class="backup-token-item">EFGH-5678</div>
+                                    <div class="backup-token-item">IJKL-9012</div>
+                                    <div class="backup-token-item">MNOP-3456</div>
+                                </div>
+                                <p class="recovery-disclaimer">Store these safely. You can use them if you lose access to your device.</p>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Access Analytics Card -->
+                <div class="premium-card analytics-card">
+                    <div class="card-header">
+                        <div class="card-header__icon">
+                            <span class="material-symbols-outlined">insights</span>
+                        </div>
+                        <div class="card-header__text">
+                            <h3>Access Analytics</h3>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="analytics-row">
+                            <div class="analytics-icon-box">
+                                <span class="material-symbols-outlined">calendar_today</span>
+                            </div>
+                            <div class="analytics-info">
+                                <p class="analytics-lbl">Recent Entry</p>
+                                <p class="analytics-val">{% if login_history|length > 0 %}{{ login_history[0].loginAt.strftime('%b %d, %Y @ %H:%M') }} UTC{% else %}N/A{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="analytics-row">
+                            <div class="analytics-icon-box">
+                                <span class="material-symbols-outlined">location_on</span>
+                            </div>
+                            <div class="analytics-info">
+                                <p class="analytics-lbl">Point of Origin</p>
+                                <p class="analytics-val">{% if login_history|length > 0 %}{{ login_history[0].ipAddress }}{% else %}N/A{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="analytics-metrics">
+                            <div class="metric-item">
+                                <p class="metric-val">{{ login_history|length }}</p>
+                                <p class="metric-lbl">Total 30d</p>
+                            </div>
+                            <div class="metric-item border-x">
+                                <p class="metric-val">
+                                    {% set failures = namespace(val=0) %}
+                                    {% for log in login_history %}
+                                        {% if log.status != 'Success' %}
+                                            {% set failures.val = failures.val + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ failures.val }}
+                                </p>
+                                <p class="metric-lbl">Failures</p>
+                            </div>
+                            <div class="metric-item">
+                                <p class="metric-val">{% if failures.val == 0 %}100%{% elif failures.val == 1 %}96%{% elif failures.val == 2 %}90%{% else %}85%{% endif %}</p>
+                                <p class="metric-lbl">Trust Score</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Active Sessions Section -->
+        <div class="settings-section">
+            <div class="section-header-flex">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">devices</span>
+                    <h3>Active Management Sessions</h3>
+                </div>
+                {% if sessions|length > 1 %}
+                <button class="btn btn-revoke-all" onclick="revokeAllOtherSessions()">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span>Global Sign-out</span>
+                </button>
+                {% endif %}
+            </div>
+            <p class="section-subtitle">Hardware and software footprints currently logged into the portal.</p>
+            
+            <div class="unified-table-container">
+                <table class="unified-table active-sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Device / OS</th>
+                            <th>Network Data</th>
+                            <th>Last Sync</th>
+                            <th>Security State</th>
+                            <th style="text-align: right;">Operations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sessions %}
+                        <tr id="session-row-{{ s.sessionID }}">
+                            <td>
+                                <div class="device-cell">
+                                    <span class="material-symbols-outlined device-icon">
+                                        {% if 'Windows' in s.userAgent %}
+                                        laptop_windows
+                                        {% elif 'Macintosh' in s.userAgent %}
+                                        laptop_mac
+                                        {% elif 'iPhone' in s.userAgent or 'iPad' in s.userAgent %}
+                                        smartphone
+                                        {% elif 'Android' in s.userAgent %}
+                                        smartphone
+                                        {% else %}
+                                        devices
+                                        {% endif %}
+                                    </span>
+                                    <div class="device-details">
+                                        <span class="device-name">
+                                            {% if 'Windows' in s.userAgent %}
+                                            Windows PC
+                                            {% elif 'Macintosh' in s.userAgent %}
+                                            Macintosh Device
+                                            {% elif 'iPhone' in s.userAgent or 'iPad' in s.userAgent %}
+                                            iOS Device
+                                            {% elif 'Android' in s.userAgent %}
+                                            Android Device
+                                            {% else %}
+                                            Unknown Device
+                                            {% endif %}
+                                        </span>
+                                        <span class="device-ua" title="{{ s.userAgent }}">{{ s.userAgent[:70] }}{% if s.userAgent|length > 70 %}...{% endif %}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="network-cell">
+                                    <span class="ip-address">{{ s.ipAddress }}</span>
+                                    <span class="location-name">Point of Access</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="sync-cell">
+                                    {% if s.token == current_token %}
+                                    <span class="sync-indicator pulse-green"></span>
+                                    <span class="sync-time font-bold">Current Session</span>
+                                    {% else %}
+                                    <span class="sync-indicator"></span>
+                                    <span class="sync-time">{{ s.lastActive.strftime('%b %d, %Y - %H:%M') }} UTC</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge--success">Verified Active</span>
+                            </td>
+                            <td class="col-action" style="text-align: right;">
+                                <button class="btn-revoke" onclick="revokeSession({{ s.sessionID }})">
+                                    {% if s.token == current_token %}Revoke Access{% else %}Terminate{% endif %}
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Security Event Log Section -->
+        <div class="settings-section">
+            <div class="section-header-flex">
+                <div class="section-title">
+                    <span class="material-symbols-outlined">history</span>
+                    <h3>Security Event Log</h3>
+                </div>
+            </div>
+            <p class="section-subtitle">Audit trail of all authentication attempts.</p>
+            
+            <div class="unified-table-container">
+                <table class="unified-table login-history-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Entry Point</th>
+                            <th>Environment</th>
+                            <th>IP Reference</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in login_history %}
+                        <tr>
+                            <td><span class="timestamp-val">{{ log.loginAt.strftime('%Y-%m-%d %H:%M:%S') }} UTC</span></td>
+                            <td><span class="entry-point-val">
+                                {% if 'Windows' in log.userAgent %}
+                                Windows Device
+                                {% elif 'Mac' in log.userAgent %}
+                                Mac Device
+                                {% elif 'Android' in log.userAgent %}
+                                Android Device
+                                {% elif 'iPhone' in log.userAgent %}
+                                iPhone
+                                {% else %}
+                                Unknown Device
+                                {% endif %}
+                            </span></td>
+                            <td><span class="env-val" title="{{ log.userAgent }}">{{ log.userAgent[:70] }}{% if log.userAgent|length > 70 %}...{% endif %}</span></td>
+                            <td><span class="ip-val">{{ log.ipAddress }}</span></td>
+                            <td>
+                                {% if log.status == 'Success' %}
+                                <div class="status-indicator status-success">
+                                    <span class="status-dot"></span>
+                                    <span>Successful</span>
+                                </div>
+                                {% else %}
+                                <div class="status-indicator status-failed">
+                                    <span class="status-dot"></span>
+                                    <span>Auth Failed</span>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--on-surface-variant); padding: 24px;">No recent security events found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Danger Zone Section -->
+        <div class="settings-section danger-zone-section">
+            <div class="section-title text-error">
+                <span class="material-symbols-outlined">gpp_maybe</span>
+                <h3>System Overrides</h3>
+            </div>
+            
+            <div class="danger-zone-box">
+                <!-- Action Item 1 -->
+                <div class="danger-action-row">
+                    <div class="danger-action-info">
+                        <h5>System-Wide Sign-Out <span class="badge badge--danger-light">Re-auth Required</span></h5>
+                        <p>Force termination of all active tokens across all devices. Highly recommended if device loss is suspected.</p>
+                    </div>
+                    <button class="btn btn-danger-outline" onclick="revokeAllOtherSessions()">Execute All Sign-Out</button>
+                </div>
+                
+                <!-- Action Item 2 -->
+                <div class="danger-action-row">
+                    <div class="danger-action-info">
+                        <h5>Deactivate Access Control</h5>
+                        <p>Temporarily suspend portal permissions. Your configuration data and financial records will be preserved but inaccessible until reactivation.</p>
+                    </div>
+                    <button class="btn btn-warning-outline" onclick="deactivatePortal()">Deactivate Portal</button>
+                </div>
+                
+                <!-- Action Item 3 -->
+                <div class="danger-action-row bg-error-tint">
+                    <div class="danger-action-info">
+                        <h5 class="text-error font-bold">Irreversible Deletion <span class="material-symbols-outlined text-sm align-middle">warning</span></h5>
+                        <p>Permanently wipe your account profile and all management associations. This action bypasses standard recovery procedures.</p>
+                    </div>
+                    <button class="btn btn-danger-filled" onclick="purgeAccount()">Confirm Account Purge</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Container for dynamically spawned Toast notifications -->
+<div id="toast-container"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/settings.js"></script>
+{% endblock %}

@@ -43,6 +43,15 @@
                             <span class="field-error-msg" id="err-password">Please enter your password.</span>
                         </div>
 
+                        <div class="form-field-group" id="2fa-field-group" style="display: none;">
+                            <label class="label-md uppercase-tracking" for="code">2FA Authenticator Code</label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined input-icon">lock_open</span>
+                                <input class="form-input" id="code" placeholder="000000" type="text" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code"/>
+                            </div>
+                            <span class="field-error-msg" id="err-code">Please enter your 6-digit TOTP code.</span>
+                        </div>
+
                         <div style="display: flex; justify-content: flex-end;">
                             <a class="terms-link caption" href="/forgot-password">Forgot Password?</a>
                         </div>

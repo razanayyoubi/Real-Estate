@@ -108,7 +108,8 @@ def properties_list():
         pending_count=data['pending_count'],
         portfolio_valuation=data['portfolio_valuation'],
         pending_queue=data['pending_queue'],
-        image_count=data['image_count']
+        image_count=data['image_count'],
+        type_counts=data['type_counts']
     )
 
 @properties_bp.route('/properties/<int:prop_id>/approve', methods=['POST'])

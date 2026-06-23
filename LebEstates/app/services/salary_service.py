@@ -77,7 +77,10 @@ class SalaryService:
                 'commission': comm_sum,
                 'net_value': net_value,
                 'status': status,
-                'salary_id': salary_id
+                'salary_id': salary_id,
+                'email': user.email,
+                'phone': user.phoneNumber or '',
+                'employee_status': employee.status
             })
 
         # Calculate KPIs

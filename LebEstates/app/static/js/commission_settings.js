@@ -91,24 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
             buyerComm = price * (buyerRate / 100);
             sellerComm = price * (sellerRate / 100);
         } else {
-            // Rent calculation rules
-            if (rentRule === '5% of Annual') {
-                // Total commission = 5% of annual rent. Split 50/50
-                const annualRent = price * 12;
-                const totalComm = annualRent * 0.05;
-                buyerComm = totalComm * 0.5;
-                sellerComm = totalComm * 0.5;
-            } else if (rentRule === '10% of Annual') {
-                // Total commission = 10% of annual rent. Split 50/50
-                const annualRent = price * 12;
-                const totalComm = annualRent * 0.10;
-                buyerComm = totalComm * 0.5;
-                sellerComm = totalComm * 0.5;
-            } else {
-                // Default: "1 Month" rent. Split 50/50
-                buyerComm = price * 0.5;
-                sellerComm = price * 0.5;
-            }
+            // "1 Month" rent. Split 50/50
+            buyerComm = price;
+            sellerComm = price * 0.5;
         }
 
         const gross = buyerComm + sellerComm;

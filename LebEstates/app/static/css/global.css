@@ -1109,6 +1109,11 @@ body {
   .header__hamburger {
     display: flex !important;
   }
+
+  .header__actions .btn,
+  .header__divider {
+    display: none !important;
+  }
 }
 
 /* Force Admin pages body to behave as a vertical column to prevent horizontal squishing */

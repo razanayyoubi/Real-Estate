@@ -87,8 +87,8 @@
                 <span class="material-symbols-outlined">percent</span>
                 <span class="sidebar__nav-label">Commissions</span>
             </a>
-            <a class="sidebar__nav-item {% if request.path == '/control-panel/commission-settings' %}sidebar__nav-item--active{% endif %}"
-                href="{{ url_for('transactions.commission_settings') }}">
+            <a class="sidebar__nav-item {% if request.path == '/control-panel/settings' %}sidebar__nav-item--active{% endif %}"
+                href="/control-panel/settings">
                 <span class="material-symbols-outlined">settings</span>
                 <span class="sidebar__nav-label">Settings</span>
             </a>
@@ -272,6 +272,9 @@
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="/profile" class="profile-dropdown__item">
                         <span class="material-symbols-outlined">account_circle</span> View Profile
+                    </a>
+                    <a href="/control-panel/settings" class="profile-dropdown__item">
+                        <span class="material-symbols-outlined">settings</span> Security Settings
                     </a>
                     <a href="/favorites" class="profile-dropdown__item">
                         <span class="material-symbols-outlined">favorite</span> Favorite Properties

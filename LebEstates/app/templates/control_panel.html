@@ -129,6 +129,79 @@
                     </div>
                 </div>
 
+                {% if role == 'accountant' %}
+                <!-- All Transactions -->
+                <div class="module-card" data-icon="receipt_long" data-href="{{ url_for('transactions.transactions_ledger') }}" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                    </div>
+                    <h3 class="module-card__title">All Transactions</h3>
+                    <p class="module-card__description">Centralized ledger for all completed property sales and rental agreements.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Revenue Dashboard -->
+                <div class="module-card" data-icon="bar_chart" data-href="{{ url_for('transactions.transactions_revenue_dashboard') }}" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">bar_chart</span>
+                    </div>
+                    <h3 class="module-card__title">Revenue Dashboard</h3>
+                    <p class="module-card__description">Visual analytics and financial reporting tools to monitor fiscal health.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Agent Commissions -->
+                <div class="module-card" data-icon="groups_2" data-href="{{ url_for('commissions.commissions_dashboard') }}" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">groups_2</span>
+                    </div>
+                    <h3 class="module-card__title">Agent Commissions</h3>
+                    <p class="module-card__description">Performance tracking and earnings management for sales and rental teams.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Payment Tracking -->
+                <div class="module-card" data-icon="account_balance_wallet" data-href="{{ url_for('transactions.transactions_payment_tracking') }}" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                    </div>
+                    <h3 class="module-card__title">Payment Tracking</h3>
+                    <p class="module-card__description">Monitor accounts receivable and complete payment reconciliation.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Commission Settings -->
+                <div class="module-card" data-icon="tune" data-href="{{ url_for('transactions.commission_settings') }}" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">tune</span>
+                    </div>
+                    <h3 class="module-card__title">Commission Settings</h3>
+                    <p class="module-card__description">Configure global commission structures and payout rules.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Employee Salaries -->
+                <div class="module-card" data-icon="paid" data-href="{{ url_for('transactions.salaries_payroll_ledger') }}" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">paid</span>
+                    </div>
+                    <h3 class="module-card__title">Employee Salaries</h3>
+                    <p class="module-card__description">Manage staff payroll, base salaries, bonuses, and payout records.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+                {% else %}
                 <!-- Transactions -->
                 <div class="module-card" data-icon="payments"
                     data-href="{{ url_for('transactions.transactions_list') }}" style="cursor: pointer;">
@@ -141,6 +214,7 @@
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -217,6 +291,19 @@
                     </div>
                     <h3 class="module-card__title">Audit Logs</h3>
                     <p class="module-card__description">Trace all admin actions, modifications, and access logs.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="module-card" data-icon="settings" data-href="/control-panel/settings"
+                    style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">settings</span>
+                    </div>
+                    <h3 class="module-card__title">Security Settings</h3>
+                    <p class="module-card__description">Configure access credentials, session logs, and Two-Factor (2FA) protocols.</p>
                     <div class="module-card__action">
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>

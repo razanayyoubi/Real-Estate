@@ -158,14 +158,103 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // 8. Visual interaction: slight row shifting on mouse hover
-    document.querySelectorAll('.ledger-row').forEach(row => {
-        row.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
-        row.addEventListener('mouseenter', () => {
-            row.style.transform = 'translateX(8px)';
+    // 8. Modals handling
+    window.openModal = (modalId) => {
+        const overlay = document.getElementById('modalOverlay');
+        const modals = overlay.querySelectorAll('.modal-container');
+        
+        overlay.classList.add('active');
+        modals.forEach(m => {
+            m.classList.remove('active', 'show');
         });
-        row.addEventListener('mouseleave', () => {
-            row.style.transform = 'translateX(0)';
+        
+        const target = document.getElementById(modalId);
+        target.classList.add('active');
+        setTimeout(() => {
+            target.classList.add('show');
+        }, 10);
+    };
+
+    window.closeModals = () => {
+        const overlay = document.getElementById('modalOverlay');
+        if (!overlay) return;
+        const modals = overlay.querySelectorAll('.modal-container');
+        
+        modals.forEach(m => {
+            m.classList.remove('show');
+            setTimeout(() => {
+                m.classList.remove('active');
+            }, 300);
         });
-    });
+        
+        setTimeout(() => {
+            overlay.classList.remove('active');
+        }, 300);
+    };
+
+    window.openEditSalaryModal = (id, name, email, phone, position, salary, status) => {
+        document.getElementById('editEmployeeID').value = id;
+        document.getElementById('editEmployeeName').value = name;
+        document.getElementById('editEmployeeEmail').value = email;
+        document.getElementById('editEmployeePhone').value = (phone === 'None' || !phone) ? '' : phone;
+        document.getElementById('editEmployeePosition').value = position;
+        document.getElementById('editEmployeeSalary').value = parseFloat(salary) || 0.0;
+        document.getElementById('editEmployeeStatus').value = status || 'Active';
+        openModal('editEmployeeModal');
+    };
+
+    window.submitEditSalary = () => {
+        const id = document.getElementById('editEmployeeID').value;
+        const full_name = document.getElementById('editEmployeeName').value.trim();
+        const email = document.getElementById('editEmployeeEmail').value.trim();
+        const phone = document.getElementById('editEmployeePhone').value.trim();
+        const position = document.getElementById('editEmployeePosition').value.trim();
+        const salary = document.getElementById('editEmployeeSalary').value;
+        const status = document.getElementById('editEmployeeStatus').value;
+
+        if (!full_name || !email || !position || !salary) {
+            showToast('Please fill in all required fields.', true);
+            return;
+        }
+
+        const payload = {
+            full_name: full_name,
+            email: email,
+            phone: phone,
+            position: position,
+            base_salary: salary,
+            status: status
+        };
+
+        fetch(`/employees/edit/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, true);
+            } else {
+                showToast('Employee details and salary updated successfully!');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        })
+        .catch(err => {
+            showToast('An error occurred. Please try again.', true);
+            console.error(err);
+        });
+    };
+
+    // Close on overlay click
+    const overlay = document.getElementById('modalOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) closeModals();
+        });
+    }
 });

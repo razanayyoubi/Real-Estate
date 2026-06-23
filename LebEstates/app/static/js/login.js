@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupErrorClearing('email', 'err-email');
     setupErrorClearing('password', 'err-password');
+    setupErrorClearing('code', 'err-code');
 
     const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
 
@@ -70,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
+        const codeInput = document.getElementById('code');
+        const fieldGroup2fa = document.getElementById('2fa-field-group');
 
         let isValid = true;
 
@@ -83,6 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
             isValid = false;
         }
 
+        const is2faVisible = fieldGroup2fa && fieldGroup2fa.style.display !== 'none';
+        if (is2faVisible && (!codeInput.value || codeInput.value.length !== 6)) {
+            toggleFieldError('code', 'err-code', true);
+            isValid = false;
+        }
+
         if (!isValid) {
             const firstErr = form.querySelector('.input-error');
             if (firstErr) firstErr.focus();
@@ -93,6 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
             email: emailInput.value.trim(),
             password: passwordInput.value
         };
+
+        if (is2faVisible) {
+            payload.code = codeInput.value.trim();
+        }
 
         const originalBtnContent = btnSubmit.innerHTML;
         btnSubmit.disabled = true;
@@ -116,18 +129,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (response.ok) {
-                // Success State
-                showAlert('Login successful! Redirecting to dashboard...', 'success');
-                btnSubmit.innerHTML = `
-                    <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
-                    <span>Success</span>
-                `;
-                btnSubmit.style.backgroundColor = '#198754';
+                if (result.two_factor_required) {
+                    // Show 2FA input
+                    showAlert('Two-Factor Authentication is required. Please check your Authenticator app.', 'success');
+                    fieldGroup2fa.style.display = 'block';
+                    codeInput.setAttribute('required', 'true');
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = `
+                        <span>Verify & Login</span>
+                        <span class="material-symbols-outlined arrow-icon">verified_user</span>
+                    `;
+                    btnSubmit.style.backgroundColor = '';
+                    codeInput.focus();
+                } else {
+                    // Success State
+                    showAlert('Login successful! Redirecting to dashboard...', 'success');
+                    btnSubmit.innerHTML = `
+                        <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+                        <span>Success</span>
+                    `;
+                    btnSubmit.style.backgroundColor = '#198754';
 
-                // Redirect to dashboard (defaulting to / for now until dashboard exists)
-                setTimeout(() => {
-                    window.location.href = result.redirect_url || '/';
-                }, 1200);
+                    // Redirect to dashboard (defaulting to / for now until dashboard exists)
+                    setTimeout(() => {
+                        window.location.href = result.redirect_url || '/';
+                    }, 1200);
+                }
 
             } else {
                 showAlert(result.error || 'Invalid credentials. Please try again.', 'error');

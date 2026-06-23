@@ -46,6 +46,7 @@ def login_submit():
 
     email = data.get('email', '').strip()
     password = data.get('password', '')
+    code = data.get('code', '').strip()
 
     if not email or not password:
         return jsonify({'error': 'Email and Password are required.'}), 400
@@ -56,6 +57,22 @@ def login_submit():
         role_id = result['role_id']
         full_name = result['full_name']
         role_name = result['role_name']
+
+        # Check if 2FA is enabled for this user
+        user_obj = AuthService.get_user_by_id(user_id)
+        if user_obj and user_obj.twoFactorEnabled:
+            if not code:
+                return jsonify({
+                    'two_factor_required': True,
+                    'message': 'Two-Factor Authentication is required.'
+                }), 200
+            
+            # Verify the TOTP code
+            import pyotp
+            totp = pyotp.TOTP(user_obj.twoFactorSecret)
+            if not totp.verify(code):
+                AuthService.log_login_attempt(user_id, request.remote_addr, request.headers.get('User-Agent', ''), 'Failed')
+                return jsonify({'error': 'Invalid 2FA verification code.'}), 400
 
         # Delegate session creation to service
         session_token = AuthService.create_user_session(user_id, request.remote_addr, request.headers.get('User-Agent', ''))
@@ -76,13 +93,8 @@ def login_submit():
             return jsonify({'error': 'Failed to create active session.'}), 500
     else:
         # Check if email is registered to log failed attempt
-        temp_user = AuthService.verify_forgot_password_totp(email, '') # A simple query trick or fetch user
-        # We can just fetch user by email or let verify_credentials return the user_id if we want, but check user in service is better
-        # Let's get user by email to log failure if they exist
-        from app.models.users import Users # Wait, we shouldn't import model, let's create a service method if needed, or just let AuthService handle it.
-        # Actually, let's look at verify_credentials: it could log failure itself! But we can keep it simple or do a quick search.
-        # Let's check user existence in AuthService
-        user = Users.query.filter_by(email=email).first() if email else None # wait, imports not clean? Let's use get_user_by_id or add a get_user_by_email
+        from app.models.users import Users
+        user = Users.query.filter_by(email=email).first() if email else None
         if user:
             AuthService.log_login_attempt(user.userID, request.remote_addr, request.headers.get('User-Agent', ''), 'Failed')
 
@@ -200,6 +212,23 @@ def profile():
                            sessions=data['sessions'], 
                            login_history=data['login_history'],
                            current_token=session.get('session_token'))
+
+@auth_bp.route('/control-panel/settings', methods=['GET'])
+def settings_page():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login_page'))
+        
+    data = AuthService.get_profile_data(session['user_id'])
+    if not data:
+        session.clear()
+        return redirect(url_for('auth.login_page'))
+
+    return render_template('settings.html', 
+                           user=data['user'], 
+                           sessions=data['sessions'], 
+                           login_history=data['login_history'],
+                           current_token=session.get('session_token'))
+
 
 @auth_bp.route('/profile/edit-details', methods=['POST'])
 def edit_profile_details():
