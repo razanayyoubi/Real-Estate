@@ -7,6 +7,8 @@ import secrets
 import os
 import pyotp
 import urllib.parse
+import random
+import string
 from datetime import datetime
 
 def check_password(password_hash, password):
@@ -157,17 +159,35 @@ class AuthService:
 
     @staticmethod
     def verify_forgot_password_totp(email, totp_code):
-        """Verify 2FA TOTP code for password recovery."""
+        """Verify 2FA TOTP code or backup code for password recovery."""
         user = Users.query.filter_by(email=email).first()
         if not user:
             return {"success": False, "error": "Account not found.", "code": 404}
         if not user.twoFactorEnabled:
             return {"success": False, "error": "Two-Factor Authentication is not enabled for this account.", "code": 400}
         if not totp_code:
-            return {"success": False, "error": "6-digit verification code is required.", "code": 400}
+            return {"success": False, "error": "Verification code is required.", "code": 400}
 
+        # Check if it is a backup code format (XXXX-XXXX)
+        totp_code_clean = totp_code.strip().upper()
+        if len(totp_code_clean) == 9 and '-' in totp_code_clean:
+            if user.twoFactorBackupCodes:
+                codes_list = [c.strip().upper() for c in user.twoFactorBackupCodes.split(',') if c.strip()]
+                if totp_code_clean in codes_list:
+                    # Valid backup code
+                    codes_list.remove(totp_code_clean)
+                    user.twoFactorBackupCodes = ",".join(codes_list)
+                    try:
+                        db.session.commit()
+                        return {"success": True, "user_id": user.userID}
+                    except Exception as commit_err:
+                        db.session.rollback()
+                        return {"success": False, "error": "Failed to update backup codes in database.", "code": 500}
+            return {"success": False, "error": "Invalid backup code or code already used.", "code": 400}
+
+        # Standard 6-digit TOTP validation
         totp = pyotp.TOTP(user.twoFactorSecret)
-        if totp.verify(totp_code):
+        if totp.verify(totp_code_clean):
             return {"success": True, "user_id": user.userID}
         else:
             return {"success": False, "error": "Invalid 2FA verification code.", "code": 400}
@@ -322,23 +342,27 @@ class AuthService:
 
     @staticmethod
     def toggle_user_2fa(user_id):
-        """Toggle 2FA state, generating secrets if enabling."""
+        """Toggle 2FA state, generating secrets to verify if enabling, or disabling directly."""
         user = Users.query.get(user_id)
         if not user:
             return {"success": False, "error": "User not found", "code": 404}
 
-        user.twoFactorEnabled = not user.twoFactorEnabled
         qr_url = None
         if user.twoFactorEnabled:
+            # Disable immediately
+            user.twoFactorEnabled = False
+            user.twoFactorSecret = None
+            user.twoFactorBackupCodes = None
+            status = "disabled"
+        else:
+            # Do NOT enable yet. Generate secret & QR code for verification step
             user.twoFactorSecret = pyotp.random_base32()
             prov_uri = pyotp.TOTP(user.twoFactorSecret).provisioning_uri(name=user.email, issuer_name="LebEstates")
             qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={urllib.parse.quote(prov_uri)}"
-        else:
-            user.twoFactorSecret = None
+            status = "setup initiated"
 
         try:
             db.session.commit()
-            status = "enabled" if user.twoFactorEnabled else "disabled"
             return {
                 "success": True,
                 "message": f"2FA setup has been {status}.",
@@ -349,6 +373,40 @@ class AuthService:
         except Exception as e:
             db.session.rollback()
             return {"success": False, "error": "Failed to toggle 2FA.", "code": 500}
+
+    @staticmethod
+    def verify_and_enable_2fa(user_id, totp_code):
+        """Verify the initial setup TOTP code, enable 2FA, and generate backup codes."""
+        user = Users.query.get(user_id)
+        if not user:
+            return {"success": False, "error": "User not found", "code": 404}
+        if not user.twoFactorSecret:
+            return {"success": False, "error": "2FA setup secret not generated. Please toggle 2FA switch again.", "code": 400}
+
+        totp = pyotp.TOTP(user.twoFactorSecret)
+        if not totp.verify(totp_code.strip()):
+            return {"success": False, "error": "Invalid verification code. Please try again.", "code": 400}
+
+        # Generate 8 backup codes of format XXXX-XXXX
+        backup_codes = []
+        chars = string.ascii_uppercase + string.digits
+        for _ in range(8):
+            part1 = ''.join(random.choices(chars, k=4))
+            part2 = ''.join(random.choices(chars, k=4))
+            backup_codes.append(f"{part1}-{part2}")
+
+        user.twoFactorBackupCodes = ",".join(backup_codes)
+        user.twoFactorEnabled = True
+
+        try:
+            db.session.commit()
+            return {
+                "success": True,
+                "backup_codes": backup_codes
+            }
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "error": "Failed to enable 2FA in the database.", "code": 500}
 
     @staticmethod
     def revoke_user_session(user_id, session_id, current_token):

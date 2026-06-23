@@ -67,12 +67,35 @@ def login_submit():
                     'message': 'Two-Factor Authentication is required.'
                 }), 200
             
-            # Verify the TOTP code
-            import pyotp
-            totp = pyotp.TOTP(user_obj.twoFactorSecret)
-            if not totp.verify(code):
+            # Verify the TOTP code or backup code
+            code_clean = code.strip().upper()
+            verified = False
+            
+            # Check backup code format
+            if len(code_clean) == 9 and '-' in code_clean:
+                if user_obj.twoFactorBackupCodes:
+                    from app.models.base import db
+                    codes_list = [c.strip().upper() for c in user_obj.twoFactorBackupCodes.split(',') if c.strip()]
+                    if code_clean in codes_list:
+                        codes_list.remove(code_clean)
+                        user_obj.twoFactorBackupCodes = ",".join(codes_list)
+                        try:
+                            db.session.commit()
+                            verified = True
+                        except Exception:
+                            db.session.rollback()
+                            return jsonify({'error': 'Database error while consuming backup code.'}), 500
+            else:
+                # Check standard 6-digit TOTP
+                if len(code_clean) == 6 and code_clean.isdigit():
+                    import pyotp
+                    totp = pyotp.TOTP(user_obj.twoFactorSecret)
+                    if totp.verify(code_clean):
+                        verified = True
+
+            if not verified:
                 AuthService.log_login_attempt(user_id, request.remote_addr, request.headers.get('User-Agent', ''), 'Failed')
-                return jsonify({'error': 'Invalid 2FA verification code.'}), 400
+                return jsonify({'error': 'Invalid 2FA verification code or backup code.'}), 400
 
         # Delegate session creation to service
         session_token = AuthService.create_user_session(user_id, request.remote_addr, request.headers.get('User-Agent', ''))
@@ -223,10 +246,14 @@ def settings_page():
         session.clear()
         return redirect(url_for('auth.login_page'))
 
+    user = data['user']
+    backup_codes = [c.strip() for c in user.twoFactorBackupCodes.split(',') if c.strip()] if user.twoFactorBackupCodes else []
+
     return render_template('settings.html', 
-                           user=data['user'], 
+                           user=user, 
                            sessions=data['sessions'], 
                            login_history=data['login_history'],
+                           backup_codes=backup_codes,
                            current_token=session.get('session_token'))
 
 
@@ -300,6 +327,29 @@ def toggle_2fa():
         }), 200
     else:
         return jsonify({'error': res.get('error')}), res.get('code', 500)
+
+@auth_bp.route('/profile/verify-2fa', methods=['POST'])
+def verify_2fa():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form
+
+    code = data.get('code', '').strip()
+    if not code:
+        return jsonify({'error': 'Verification code is required.'}), 400
+
+    res = AuthService.verify_and_enable_2fa(session['user_id'], code)
+    if res.get('success'):
+        return jsonify({
+            'message': 'Two-Factor Authentication activated successfully!',
+            'backup_codes': res['backup_codes']
+        }), 200
+    else:
+        return jsonify({'error': res.get('error')}), res.get('code', 400)
 
 @auth_bp.route('/profile/revoke-session/<int:session_id>', methods=['POST'])
 def revoke_session(session_id):

@@ -603,6 +603,23 @@ input:checked + .slider:before {
   letter-spacing: 0.05em;
 }
 
+/* 2FA Verification section */
+.two-factor-verification-wrapper {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(197, 198, 207, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.two-factor-verif-input {
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  font-size: 16px;
+}
+
 /* Recovery codes styling */
 .recovery-title-lbl {
   font-family: var(--font-body);

@@ -281,6 +281,133 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearchAutocomplete('searchInputMobile', 'searchSuggestionsMobile');
 
     /* ─────────────────────────────────────────────────────────
+       SIDEBAR "POST NEW PROPERTY" CTA REDIRECT
+       ───────────────────────────────────────────────────────── */
+    const postPropertyBtn = document.getElementById('sidebarPostPropertyBtn');
+    if (postPropertyBtn) {
+        postPropertyBtn.addEventListener('click', () => {
+            window.location.href = '/sell-rent';
+        });
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       NOTIFICATION BADGE & DROPDOWN MANAGEMENT
+    ───────────────────────────────────────────────────────── */
+    const bellBtn = document.getElementById('notificationBellBtn');
+    const dropdown = document.getElementById('notificationDropdown');
+    const badge = document.getElementById('notificationBadge');
+    const list = document.getElementById('notificationList');
+    const markAllBtn = document.getElementById('markAllReadBtn');
+
+    if (bellBtn) {
+        // Fetch unread count to show badge
+        function updateUnreadCount() {
+            fetch('/api/notifications/unread-count')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const count = data.count;
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.classList.add('notification-badge--visible');
+                        } else {
+                            badge.classList.remove('notification-badge--visible');
+                        }
+                    }
+                })
+                .catch(err => console.error('Error fetching unread notification count:', err));
+        }
+
+        // Fetch and render notification list
+        function loadNotifications() {
+            fetch('/api/notifications')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const notifs = data.notifications;
+                        list.innerHTML = '';
+                        if (notifs.length === 0) {
+                            list.innerHTML = `
+                                <div class="notification-empty">
+                                    <span class="material-symbols-outlined notification-empty__icon">notifications_off</span>
+                                    <p class="notification-empty__text">No notifications yet.</p>
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        notifs.forEach(n => {
+                            const item = document.createElement('div');
+                            item.className = `notification-item ${n.isRead ? '' : 'unread'}`;
+
+                            item.innerHTML = `
+                                <div class="notification-item__message">
+                                    ${n.message}
+                                </div>
+                                <div class="notification-item__date">
+                                    ${n.createdAt}
+                                </div>
+                            `;
+
+                            item.addEventListener('click', () => {
+                                fetch(`/api/notifications/${n.notificationID}/read`, { method: 'POST' })
+                                    .then(() => {
+                                        updateUnreadCount();
+                                        if (n.actionURL) {
+                                            window.location.href = n.actionURL;
+                                        } else {
+                                            loadNotifications();
+                                        }
+                                    });
+                            });
+
+                            list.appendChild(item);
+                        });
+                    }
+                })
+                .catch(err => console.error('Error loading notifications:', err));
+        }
+
+        // Bell click toggle
+        bellBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isHidden = !dropdown.classList.contains('notification-dropdown--open');
+            dropdown.classList.toggle('notification-dropdown--open', isHidden);
+            if (isHidden) {
+                loadNotifications();
+            }
+        });
+
+        // Close on clicking outside
+        document.addEventListener('click', (e) => {
+            if (dropdown.classList.contains('notification-dropdown--open') && !dropdown.contains(e.target) && e.target !== bellBtn) {
+                dropdown.classList.remove('notification-dropdown--open');
+            }
+        });
+
+        // Mark all read
+        if (markAllBtn) {
+            markAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fetch('/api/notifications/read-all', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateUnreadCount();
+                            loadNotifications();
+                        }
+                    });
+            });
+        }
+
+        // Initial load
+        updateUnreadCount();
+
+        // Poll for updates every 15s
+        setInterval(updateUnreadCount, 15000);
+    }
+
+    /* ─────────────────────────────────────────────────────────
        USER PROFILE DROPDOWN MENU
     ───────────────────────────────────────────────────────── */
     const profileToggle = document.getElementById('profileDropdownToggle');

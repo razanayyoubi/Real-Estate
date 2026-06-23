@@ -130,15 +130,25 @@
                                 </div>
                                 <p class="setup-instructions-sub">Or enter code manually:</p>
                                 <div class="secret-key-display" id="mock-secret-key">JBSWY3DPEHPK3PXP</div>
+
+                                <!-- Verification input for initial activation -->
+                                <div class="two-factor-verification-wrapper">
+                                    <p class="setup-instructions-sub">Enter the 6-digit verification code:</p>
+                                    <div class="form-group">
+                                        <input type="text" id="2fa-verif-code" class="form-input two-factor-verif-input" placeholder="000000" maxlength="6" autocomplete="off">
+                                    </div>
+                                    <button type="button" id="btn-verify-2fa" class="btn btn-save-credentials" style="width: 100%;">
+                                        <span>Verify & Activate 2FA</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <div id="2fa-recovery-container" style="display: {% if user.twoFactorEnabled %}block{% else %}none{% endif %}; width: 100%;">
                                 <p class="recovery-title-lbl">Backup Recovery Codes:</p>
-                                <div class="backup-tokens-grid">
-                                    <div class="backup-token-item">ABCD-1234</div>
-                                    <div class="backup-token-item">EFGH-5678</div>
-                                    <div class="backup-token-item">IJKL-9012</div>
-                                    <div class="backup-token-item">MNOP-3456</div>
+                                <div class="backup-tokens-grid" id="backup-codes-list">
+                                    {% for code in backup_codes %}
+                                    <div class="backup-token-item">{{ code }}</div>
+                                    {% endfor %}
                                 </div>
                                 <p class="recovery-disclaimer">Store these safely. You can use them if you lose access to your device.</p>
                             </div>

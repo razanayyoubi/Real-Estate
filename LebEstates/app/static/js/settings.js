@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (changeCredentialsForm) {
         changeCredentialsForm.addEventListener('submit', submitChangePassword);
     }
+
+    // Bind verification button
+    const verify2faBtn = document.getElementById('btn-verify-2fa');
+    if (verify2faBtn) {
+        verify2faBtn.addEventListener('click', verifyAndEnableTwoFactor);
+    }
 });
 
 // Toast Notification System
@@ -176,15 +182,15 @@ function toggleTwoFactor() {
                 toggle.checked = !toggle.checked; // Revert checkbox
             } else {
                 showToast('Security Update', data.message, 'success');
-                if (data.enabled) {
+                if (data.enabled === false && data.qr_url) {
                     setupArea.style.display = 'flex';
                     qrContainer.style.display = 'block';
                     recoveryContainer.style.display = 'none';
                     
-                    if (statusContainer) {
-                        statusContainer.className = 'security-status-box status-active';
-                        statusIcon.textContent = 'verified_user';
-                        statusText.textContent = 'Protocol Active';
+                    if (statusContainer && statusIcon && statusText) {
+                        statusContainer.className = 'security-status-box status-disabled';
+                        statusIcon.textContent = 'warning';
+                        statusText.textContent = 'Setup Pending Verification';
                     }
 
                     const secretKeyField = document.getElementById('mock-secret-key');
@@ -195,25 +201,18 @@ function toggleTwoFactor() {
                     const qrImg = document.getElementById('2fa-qr-img');
                     const qrPlaceholder = document.getElementById('2fa-qr-placeholder');
                     if (qrImg && qrPlaceholder) {
-                        if (data.qr_url) {
-                            qrImg.src = data.qr_url;
-                            qrImg.style.display = 'block';
-                            qrPlaceholder.style.display = 'none';
-                        } else {
-                            qrImg.style.display = 'none';
-                            qrPlaceholder.style.display = 'block';
-                        }
+                        qrImg.src = data.qr_url;
+                        qrImg.style.display = 'block';
+                        qrPlaceholder.style.display = 'none';
                     }
 
-                    // After a mock 5 seconds, "complete" configuration to show recovery tokens
-                    setTimeout(() => {
-                        qrContainer.style.display = 'none';
-                        recoveryContainer.style.display = 'block';
-                        showToast('2FA Configured', 'Google Authenticator linked. Backup recovery codes generated.', 'success');
-                    }, 5000);
+                    const codeInput = document.getElementById('2fa-verif-code');
+                    if (codeInput) {
+                        codeInput.value = '';
+                    }
                 } else {
                     setupArea.style.display = 'none';
-                    if (statusContainer) {
+                    if (statusContainer && statusIcon && statusText) {
                         statusContainer.className = 'security-status-box status-disabled';
                         statusIcon.textContent = 'warning';
                         statusText.textContent = 'Protection Disabled';
@@ -225,6 +224,58 @@ function toggleTwoFactor() {
             console.error(err);
             showToast('Error', 'An error occurred during 2FA configuration.', 'error');
             toggle.checked = !toggle.checked;
+        });
+}
+
+// Verify entered code and enable 2FA
+function verifyAndEnableTwoFactor() {
+    const codeInput = document.getElementById('2fa-verif-code');
+    if (!codeInput) return;
+    
+    const code = codeInput.value.trim();
+    if (code.length !== 6 || isNaN(code)) {
+        showToast('Validation Error', 'Please enter a valid 6-digit TOTP code.', 'error');
+        return;
+    }
+
+    const qrContainer = document.getElementById('2fa-qr-container');
+    const recoveryContainer = document.getElementById('2fa-recovery-container');
+    
+    const statusContainer = document.getElementById('security-status-container');
+    const statusIcon = document.getElementById('security-status-icon');
+    const statusText = document.getElementById('security-status-text');
+
+    fetch('/profile/verify-2fa', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: code })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                showToast('Verification Failed', data.error, 'error');
+            } else {
+                showToast('2FA Configured', 'Google Authenticator linked. Backup recovery codes generated.', 'success');
+                if (qrContainer) qrContainer.style.display = 'none';
+                if (recoveryContainer) recoveryContainer.style.display = 'block';
+                
+                if (statusContainer && statusIcon && statusText) {
+                    statusContainer.className = 'security-status-box status-active';
+                    statusIcon.textContent = 'verified_user';
+                    statusText.textContent = 'Protocol Active';
+                }
+
+                const codesList = document.getElementById('backup-codes-list');
+                if (codesList && data.backup_codes) {
+                    codesList.innerHTML = data.backup_codes.map(c => `<div class="backup-token-item">${c}</div>`).join('');
+                }
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('Error', 'An error occurred during 2FA verification.', 'error');
         });
 }
 

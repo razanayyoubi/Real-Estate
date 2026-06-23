@@ -99,4 +99,18 @@ def create_app(config_class=Config):
                 pass
         return dict(current_user=None)
 
+    # Auto-migration for 2FA backup codes column
+    with app.app_context():
+        try:
+            db.session.execute(db.text("SELECT twoFactorBackupCodes FROM users LIMIT 1"))
+        except Exception:
+            db.session.rollback()
+            try:
+                db.session.execute(db.text("ALTER TABLE users ADD COLUMN twoFactorBackupCodes TEXT NULL"))
+                db.session.commit()
+                app.logger.info("Database migration: Added twoFactorBackupCodes column to users table.")
+            except Exception as migrate_err:
+                db.session.rollback()
+                app.logger.error(f"Database migration failed: {migrate_err}")
+
     return app

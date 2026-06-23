@@ -95,11 +95,11 @@
         </nav>
 
         {% if session.get('role_name', '').lower() in ['admin', 'employee'] %}
-        <div class="sidebar__cta-container">
-            <button class="sidebar__cta" onclick="window.location.href='/sell-rent'">
+        <div class="sidebar__post-property-container">
+            <a class="sidebar__post-property-btn" href="/sell-rent">
                 <span class="material-symbols-outlined">add_business</span>
-                <span class="sidebar__cta-label">Post New Property</span>
-            </button>
+                <span class="sidebar__post-property-label">Post New Property</span>
+            </a>
         </div>
         {% endif %}
     </aside>
@@ -107,7 +107,8 @@
     <div class="sidebar-overlay" id="dashboardSidebarOverlay"></div>
     {% endif %}
 
-    {% if not (session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant']) %}
+    {% if not (session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'])
+    %}
     <!-- Customer / Guest Sidebar for mobile view -->
     <aside class="sidebar" id="sideNav">
         <div class="sidebar__brand-container">
@@ -152,23 +153,20 @@
             </a>
         </nav>
 
-        <div class="sidebar__footer"
-            style="margin-top: auto; padding: 24px 16px 0; border-top: 1px solid var(--outline-variant); display: flex; flex-direction: column; gap: 8px;">
+        <div class="sidebar__footer">
             {% if session.get('user_id') %}
             <a class="sidebar__nav-item {% if request.path == '/profile' %}sidebar__nav-item--active{% endif %}"
-                href="/profile" style="padding: 12px 16px;">
+                href="/profile">
                 <span class="material-symbols-outlined">account_circle</span>
                 <span class="sidebar__nav-label">Profile</span>
             </a>
-            <a class="sidebar__logout-link" href="/logout" style="padding: 12px 16px; margin-bottom: 0px;">
+            <a class="sidebar__logout-link" href="/logout">
                 <span class="material-symbols-outlined">logout</span>
                 <span class="sidebar__logout-label">Logout</span>
             </a>
             {% else %}
-            <button class="btn btn-primary-outline label-md" onclick="window.location.href='/login'"
-                style="width: 100%; justify-content: center; height: 44px; border-radius: 8px;">Login</button>
-            <button class="btn btn-secondary label-md" onclick="window.location.href='/register'"
-                style="width: 100%; justify-content: center; height: 44px; border-radius: 8px;">Get Started</button>
+            <button class="btn btn-primary-outline label-md" onclick="window.location.href='/login'">Login</button>
+            <button class="btn btn-secondary label-md" onclick="window.location.href='/register'">Get Started</button>
             {% endif %}
         </div>
     </aside>
@@ -179,7 +177,8 @@
     <!-- TopNavBar (Premium Header) -->
     <header class="header">
         <div class="header__left">
-            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
+            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant']
+            %}
             <!-- Always show hamburger button for admin/employee to toggle the aside sideNav -->
             <button class="header__hamburger hamburger admin-hamburger" id="hamburger" aria-label="Toggle navigation">
                 <span class="material-symbols-outlined">menu</span>
@@ -190,17 +189,18 @@
                 <span class="material-symbols-outlined">menu</span>
             </button>
             {% endif %}
-            <a class="header__logo" href="/" style="text-decoration: none;">LebEstates</a>
+            <a class="header__logo" href="/">LebEstates</a>
         </div>
 
         <div class="header__search-container">
-            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant'] %}
+            {% if session.get('user_id') and session.get('role_name', '').lower() in ['admin', 'employee', 'accountant']
+            %}
             <!-- Centered search bar for logged in Employee/Admin -->
             <div class="header__search">
                 <span class="material-symbols-outlined header__search-icon">search</span>
                 <input class="header__search-input" id="searchInput"
                     placeholder="Search for property, user ID, or transaction..." type="text">
-                <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+                <div class="search-suggestions" id="searchSuggestions"></div>
             </div>
             {% else %}
             <!-- Navigation links for guest or logged in Customer -->
@@ -223,7 +223,7 @@
                 <div class="header__search">
                     <span class="material-symbols-outlined header__search-icon">search</span>
                     <input class="header__search-input" id="searchInputMobile" placeholder="Search" type="text">
-                    <div class="search-suggestions" id="searchSuggestionsMobile" style="display: none;"></div>
+                    <div class="search-suggestions" id="searchSuggestionsMobile"></div>
                 </div>
             </div>
             {% endif %}
@@ -232,19 +232,19 @@
         <div class="header__actions">
             {% if session.get('user_id') %}
             <!-- Logged-in state (Admin, Employee, Customer) -->
-            <div class="header__action-buttons" style="position: relative;">
-                <button class="header__action-btn" id="notificationBellBtn" aria-label="Notifications" style="position: relative;">
+            <div class="header__action-buttons">
+                <button class="header__action-btn" id="notificationBellBtn" aria-label="Notifications">
                     <span class="material-symbols-outlined">notifications</span>
-                    <span class="notification-badge" id="notificationBadge" style="display: none; position: absolute; top: -2px; right: -2px; background-color: #ba1a1a; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid var(--surface, #fff);">0</span>
+                    <span class="notification-badge" id="notificationBadge">0</span>
                 </button>
-                
+
                 <!-- Notification Dropdown -->
-                <div class="notification-dropdown" id="notificationDropdown" style="display: none; position: absolute; top: 100%; right: 0; width: 320px; background-color: var(--surface-container-lowest, #ffffff); border: 1px solid var(--outline-variant, #c5c6cf); border-radius: 16px; box-shadow: 0 8px 32px rgba(10, 31, 68, 0.15); z-index: 10000; padding: 16px; margin-top: 12px; font-family: var(--font-body, 'Inter', sans-serif); text-align: left;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--outline-variant, #e5e6ef); padding-bottom: 10px; margin-bottom: 12px;">
-                        <h4 style="margin: 0; font-family: var(--font-headline, 'Montserrat', sans-serif); font-size: 16px; font-weight: 700; color: var(--primary, #0d1b2a);">Notifications</h4>
-                        <button id="markAllReadBtn" style="background: none; border: none; font-family: var(--font-body); font-size: 11.5px; font-weight: 700; color: var(--secondary, #735c00); cursor: pointer; text-decoration: underline; padding: 4px;">Mark all read</button>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-dropdown__header">
+                        <h4 class="notification-dropdown__title">Notifications</h4>
+                        <button id="markAllReadBtn" class="notification-dropdown__mark-all">Mark all read</button>
                     </div>
-                    <div id="notificationList" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;" class="custom-scrollbar">
+                    <div id="notificationList" class="notification-dropdown__list custom-scrollbar">
                         <!-- Loaded dynamically -->
                     </div>
                 </div>
@@ -258,11 +258,9 @@
                     <p class="header__profile-role">{{ session.get('role_name', 'Customer') }}</p>
                 </div>
                 <!-- Default Avatar Person Icon -->
-                <div class="avatar border-white shadow-sm"
-                    style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: var(--primary-container); color: var(--on-primary-container); border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--outline-variant);">
+                <div class="avatar border-white shadow-sm">
                     {% if current_user and current_user.avatar %}
-                    <img src="{{ current_user.avatar_url }}" alt="Profile"
-                        style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="{{ current_user.avatar_url }}" alt="Profile">
                     {% else %}
                     <span class="material-symbols-outlined">person</span>
                     {% endif %}
@@ -303,21 +301,21 @@
 
     <!-- Main Content -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flash-messages-container" style="max-width: 1200px; margin: 24px auto 0 auto; padding: 0 24px;">
-          {% for category, message in messages %}
-            <div class="flash-message flash-message--{{ category }}" style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 12px; margin-bottom: 16px; font-family: var(--font-body, 'Inter', sans-serif); font-size: 14px; font-weight: 500; box-shadow: var(--shadow-sm); {% if category == 'error' %}background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;{% else %}background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;{% endif %}">
-              <span class="material-symbols-outlined" style="font-size: 20px;">
+    {% if messages %}
+    <div class="flash-messages-container">
+        {% for category, message in messages %}
+        <div class="flash-message flash-message--{{ category }}">
+            <span class="material-symbols-outlined flash-message__icon">
                 {% if category == 'error' %}error{% else %}check_circle{% endif %}
-              </span>
-              <span>{{ message }}</span>
-              <button onclick="this.parentElement.remove()" style="margin-left: auto; background: none; border: none; cursor: pointer; color: inherit; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
-              </button>
-            </div>
-          {% endfor %}
+            </span>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="flash-message__close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-      {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
 
     {% block content %}
@@ -329,12 +327,16 @@
             <div class="footer-info">
                 <div class="headline-md utility-mb-6">LebEstates</div>
                 <p class="body-md">
-                    Defining luxury and stability in the Lebanese real estate market. Timeless prestige for modern living.
+                    Defining luxury and stability in the Lebanese real estate market. Timeless prestige for modern
+                    living.
                 </p>
                 <div class="social-links">
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;" data-icon="public">public</span></a>
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;" data-icon="mail">mail</span></a>
-                    <a class="social-link" href="#"><span class="material-symbols-outlined" style="font-size:20px;" data-icon="phone">phone</span></a>
+                    <a class="social-link" href="#"><span class="material-symbols-outlined"
+                            data-icon="public">public</span></a>
+                    <a class="social-link" href="#"><span class="material-symbols-outlined"
+                            data-icon="mail">mail</span></a>
+                    <a class="social-link" href="#"><span class="material-symbols-outlined"
+                            data-icon="phone">phone</span></a>
                 </div>
             </div>
 
@@ -343,7 +345,7 @@
                     <h6 class="footer-heading">Quick Links</h6>
                     <ul class="footer-links label-md">
                         <li><a href="#">Properties</a></li>
-                        <li><a href="#">Sel+l/Rent</a></li>
+                        <li><a href="#">Sell/Rent</a></li>
                         <li><a href="/consultation">Consultations</a></li>
                         <li><a href="/about">About Us</a></li>
                         <li><a href="/contact">Contact Us</a></li>
@@ -361,16 +363,16 @@
                 <div>
                     <h6 class="footer-heading">Contact</h6>
                     <ul class="footer-links label-md">
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;" data-icon="location_on">location_on</span>
+                        <li>
+                            <span class="material-symbols-outlined" data-icon="location_on">location_on</span>
                             Ashrafieh, Beirut, Lebanon
                         </li>
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;" data-icon="call">call</span>
+                        <li>
+                            <span class="material-symbols-outlined" data-icon="call">call</span>
                             +961 1 234 567
                         </li>
-                        <li style="display:flex; align-items:flex-start; gap:8px;">
-                            <span class="material-symbols-outlined" style="font-size:20px;" data-icon="alternate_email">alternate_email</span>
+                        <li>
+                            <span class="material-symbols-outlined" data-icon="alternate_email">alternate_email</span>
                             contact@lebestates.com
                         </li>
                     </ul>
@@ -390,138 +392,7 @@
 
     {% block scripts %}{% endblock %}
 
-    {% if session.get('user_id') %}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const bellBtn = document.getElementById('notificationBellBtn');
-            const dropdown = document.getElementById('notificationDropdown');
-            const badge = document.getElementById('notificationBadge');
-            const list = document.getElementById('notificationList');
-            const markAllBtn = document.getElementById('markAllReadBtn');
 
-            if (!bellBtn) return;
-
-            // Fetch unread count to show badge
-            function updateUnreadCount() {
-                fetch('/api/notifications/unread-count')
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            const count = data.count;
-                            if (count > 0) {
-                                badge.textContent = count;
-                                badge.style.display = 'flex';
-                            } else {
-                                badge.style.display = 'none';
-                            }
-                        }
-                    })
-                    .catch(err => console.error('Error fetching unread notification count:', err));
-            }
-
-            // Fetch and render notification list
-            function loadNotifications() {
-                fetch('/api/notifications')
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            const notifs = data.notifications;
-                            list.innerHTML = '';
-                            if (notifs.length === 0) {
-                                list.innerHTML = `
-                                    <div style="text-align: center; padding: 24px 8px; color: var(--on-surface-variant, #5c5e69);">
-                                        <span class="material-symbols-outlined" style="font-size: 32px; opacity: 0.5; margin-bottom: 8px;">notifications_off</span>
-                                        <p style="margin: 0; font-size: 13px; font-weight: 500;">No notifications yet.</p>
-                                    </div>
-                                `;
-                                return;
-                            }
-
-                            notifs.forEach(n => {
-                                const item = document.createElement('div');
-                                item.className = `notification-item ${n.isRead ? '' : 'unread'}`;
-                                item.style.cssText = `
-                                    padding: 10px 12px;
-                                    border-radius: 8px;
-                                    background-color: ${n.isRead ? 'transparent' : 'rgba(255, 214, 91, 0.1)'};
-                                    border-left: 3px solid ${n.isRead ? 'transparent' : 'var(--secondary, #735c00)'};
-                                    cursor: pointer;
-                                    transition: background-color 0.2s ease;
-                                    text-align: left;
-                                `;
-                                item.addEventListener('mouseenter', () => {
-                                    item.style.backgroundColor = n.isRead ? 'rgba(0, 8, 30, 0.03)' : 'rgba(255, 214, 91, 0.15)';
-                                });
-                                item.addEventListener('mouseleave', () => {
-                                    item.style.backgroundColor = n.isRead ? 'transparent' : 'rgba(255, 214, 91, 0.1)';
-                                });
-
-                                item.innerHTML = `
-                                    <div style="font-size: 12.5px; font-weight: ${n.isRead ? '500' : '700'}; color: var(--on-surface, #1b1b1f); line-height: 1.4; margin-bottom: 4px;">
-                                        ${n.message}
-                                    </div>
-                                    <div style="font-size: 10px; color: var(--on-surface-variant, #5c5e69); font-weight: 500;">
-                                        ${n.createdAt}
-                                    </div>
-                                `;
-
-                                item.addEventListener('click', () => {
-                                    fetch(`/api/notifications/${n.notificationID}/read`, { method: 'POST' })
-                                        .then(() => {
-                                            updateUnreadCount();
-                                            if (n.actionURL) {
-                                                window.location.href = n.actionURL;
-                                            } else {
-                                                loadNotifications();
-                                            }
-                                        });
-                                });
-
-                                list.appendChild(item);
-                            });
-                        }
-                    })
-                    .catch(err => console.error('Error loading notifications:', err));
-            }
-
-            // Bell click toggle
-            bellBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isHidden = dropdown.style.display === 'none';
-                dropdown.style.display = isHidden ? 'block' : 'none';
-                if (isHidden) {
-                    loadNotifications();
-                }
-            });
-
-            // Close on clicking outside
-            document.addEventListener('click', (e) => {
-                if (dropdown.style.display === 'block' && !dropdown.contains(e.target) && e.target !== bellBtn) {
-                    dropdown.style.display = 'none';
-                }
-            });
-
-            // Mark all read
-            markAllBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                fetch('/api/notifications/read-all', { method: 'POST' })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            updateUnreadCount();
-                            loadNotifications();
-                        }
-                    });
-            });
-
-            // Initial load
-            updateUnreadCount();
-            
-            // Poll for updates every 15s
-            setInterval(updateUnreadCount, 15000);
-        });
-    </script>
-    {% endif %}
 
 </body>
 

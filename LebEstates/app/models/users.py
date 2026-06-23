@@ -20,6 +20,7 @@ class Users(db.Model):
     avatar = db.Column(db.LargeBinary(length=2**24), nullable=True)
     twoFactorEnabled = db.Column(db.Boolean, default=False)
     twoFactorSecret = db.Column(db.String(100), nullable=True)
+    twoFactorBackupCodes = db.Column(db.Text, nullable=True)
     createdAt = db.Column(db.DateTime, default=datetime.now)
     updatedAt = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 

@@ -44,12 +44,12 @@
                         </div>
 
                         <div class="form-field-group" id="2fa-field-group" style="display: none;">
-                            <label class="label-md uppercase-tracking" for="code">2FA Authenticator Code</label>
+                            <label class="label-md uppercase-tracking" for="code">2FA Authenticator or Backup Code</label>
                             <div class="input-icon-wrapper">
                                 <span class="material-symbols-outlined input-icon">lock_open</span>
-                                <input class="form-input" id="code" placeholder="000000" type="text" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code"/>
+                                <input class="form-input" id="code" placeholder="000000 or XXXX-XXXX" type="text" maxlength="9" pattern="[a-zA-Z0-9-]{6,9}" autocomplete="off"/>
                             </div>
-                            <span class="field-error-msg" id="err-code">Please enter your 6-digit TOTP code.</span>
+                            <span class="field-error-msg" id="err-code">Please enter your 6-digit TOTP code or 9-character backup code.</span>
                         </div>
 
                         <div style="display: flex; justify-content: flex-end;">

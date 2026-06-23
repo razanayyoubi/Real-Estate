@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const is2faVisible = fieldGroup2fa && fieldGroup2fa.style.display !== 'none';
-        if (is2faVisible && (!codeInput.value || codeInput.value.length !== 6)) {
+        if (is2faVisible && (!codeInput.value || (codeInput.value.length !== 6 && codeInput.value.length !== 9))) {
             toggleFieldError('code', 'err-code', true);
             isValid = false;
         }
