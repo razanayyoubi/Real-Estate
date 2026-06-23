@@ -118,6 +118,7 @@
                 {% endif %}
 
                 <!-- Consultations -->
+                {% if role in ['admin', 'employee'] %}
                 <div class="module-card" data-icon="chat_bubble" data-href="{{ url_for('consultations.consultations_list') }}" style="cursor: pointer;">
                     <div class="module-card__icon-wrapper">
                         <span class="material-symbols-outlined">chat_bubble</span>
@@ -128,6 +129,7 @@
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
+                {% endif %}
 
                 {% if role == 'accountant' %}
                 <!-- All Transactions -->

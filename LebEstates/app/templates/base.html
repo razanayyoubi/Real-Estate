@@ -65,11 +65,11 @@
                 <span class="material-symbols-outlined">group</span>
                 <span class="sidebar__nav-label">Users</span>
             </a>
-            {% endif %}
             <a class="sidebar__nav-item" href="#">
                 <span class="material-symbols-outlined">chat_bubble</span>
                 <span class="sidebar__nav-label">Consultations</span>
             </a>
+            {% endif %}
             {% if session.get('role_name', '').lower() in ['admin', 'employee'] %}
             <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/visits') or request.blueprint == 'visits' %}sidebar__nav-item--active{% endif %}"
                 href="{{ url_for('visits.visits_list') }}">
@@ -343,7 +343,7 @@
                     <h6 class="footer-heading">Quick Links</h6>
                     <ul class="footer-links label-md">
                         <li><a href="#">Properties</a></li>
-                        <li><a href="#">Sell/Rent</a></li>
+                        <li><a href="#">Sel+l/Rent</a></li>
                         <li><a href="/consultation">Consultations</a></li>
                         <li><a href="/about">About Us</a></li>
                         <li><a href="/contact">Contact Us</a></li>

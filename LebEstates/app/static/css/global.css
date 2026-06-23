@@ -96,7 +96,6 @@ body {
   z-index: 90;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.35s ease, visibility 0.35s ease;
 }
 
 .sidebar-overlay.active {
@@ -1127,7 +1126,7 @@ body.control-panel-body {
 }
 
 /* -------------------------------------------------------------
-   GLOBAL SIDEBAR STYLES (Admin & Employee roles)
+   GLOBAL SIDEBAR STYLES (User roles)
    ------------------------------------------------------------- */
 .sidebar {
   font-family: var(--font-body);
@@ -1143,7 +1142,7 @@ body.control-panel-body {
   flex-direction: column;
   padding: 24px 0;
   box-shadow: var(--shadow-lg);
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: left 0.3s ease;
 }
 
 .sidebar--open {
