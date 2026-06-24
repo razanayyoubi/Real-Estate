@@ -57,15 +57,20 @@ def get_property_image(image_id):
 
 @properties_bp.route('/properties', methods=['GET'])
 def properties_browse():
-    q = request.args.get('q', '')
-    location = request.args.get('location', 'All')
-    listing_type = request.args.get('listing_type', 'All')
-    
     filters = {
-        'q': q,
-        'location': location,
-        'listing_type': listing_type,
-        'sort': 'newest'
+        'q': request.args.get('q', ''),
+        'location': request.args.get('location', 'All'),
+        'listing_type': request.args.get('listing_type', 'All'),
+        'property_types': request.args.get('property_types', ''),
+        'price_min': request.args.get('price_min', ''),
+        'price_max': request.args.get('price_max', ''),
+        'area_min': request.args.get('area_min', ''),
+        'area_max': request.args.get('area_max', ''),
+        'rooms': request.args.get('rooms', ''),
+        'bathrooms': request.args.get('bathrooms', ''),
+        'floor': request.args.get('floor', ''),
+        'parking': request.args.get('parking', 'Any'),
+        'sort': request.args.get('sort', 'newest')
     }
     
     user_id = session.get('user_id')

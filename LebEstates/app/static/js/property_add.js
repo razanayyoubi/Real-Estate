@@ -48,11 +48,40 @@ document.addEventListener('DOMContentLoaded', () => {
     let map = null;
     let marker = null;
     const regionCoordinates = {
-        'Beirut': [33.8938, 35.5018],
         'Achrafieh': [33.8872, 35.5222],
-        'Faraya': [34.0131, 35.8111],
+        'Akkar': [34.5428, 36.0792],
+        'Aley': [33.8056, 35.6028],
+        'Baabda': [33.8344, 35.5414],
+        'Baalbek': [34.0044, 36.2111],
+        'Batroun': [34.2541, 35.6583],
+        'Beirut': [33.8938, 35.5018],
+        'Bint Jbeil': [33.1219, 35.4339],
+        'Bsharri': [34.2514, 36.0125],
         'Byblos': [34.1228, 35.6521],
-        'Batroun': [34.2541, 35.6583]
+        'Byblos (Jbeil)': [34.1228, 35.6521],
+        'Chouf': [33.6947, 35.5678],
+        'Dahye': [33.8489, 35.5039],
+        'Faraya': [34.0131, 35.8111],
+        'Hasbaya': [33.3983, 35.6881],
+        'Hermel': [34.3986, 36.3861],
+        'Jezzine': [33.5419, 35.5861],
+        'Keserwan': [33.9922, 35.6983],
+        'Koura': [34.3414, 35.7956],
+        'Marjeyoun': [33.3592, 35.5908],
+        'Matn': [33.8933, 35.6667],
+        'Miniyeh-Danniyeh': [34.4333, 36.0167],
+        'Nabatieh': [33.3761, 35.4828],
+        'North': [34.4379, 35.8367],
+        'Rashaya': [33.5008, 35.8361],
+        'Saida': [33.5597, 35.3725],
+        'Sidon (Saida)': [33.5597, 35.3725],
+        'South': [33.2708, 35.2039],
+        'Sour': [33.2708, 35.1939],
+        'Tyre (Sour)': [33.2708, 35.1939],
+        'Tripoli': [34.4367, 35.8497],
+        'West Bekaa': [33.6333, 35.7833],
+        'Zahle': [33.8439, 35.9072],
+        'Zgharta': [34.3989, 35.8958]
     };
 
     const initMap = () => {
@@ -120,8 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (inputRegion) {
-        inputRegion.addEventListener('change', (e) => {
-            const val = e.target.value;
+        const handleRegionChange = (e) => {
+            const val = e.target.value.trim();
             previewRegion.textContent = val || 'Select Region';
             
             // Pan map to the selected region center if initialized
@@ -138,7 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (latInput) latInput.value = coords[0].toFixed(6);
                 if (lngInput) lngInput.value = coords[1].toFixed(6);
             }
-        });
+        };
+        inputRegion.addEventListener('change', handleRegionChange);
+        inputRegion.addEventListener('input', handleRegionChange);
     }
 
     // Listing Type Radio Sync
@@ -568,6 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resetLoadingState();
         });
     };
+
 
     const resetLoadingState = () => {
         nextBtn.disabled = false;

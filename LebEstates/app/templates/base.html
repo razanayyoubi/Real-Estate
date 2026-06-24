@@ -392,7 +392,63 @@
 
     {% block scripts %}{% endblock %}
 
-
+    <script>
+        // Overrides the native alert() function to show custom-styled premium toasts instead
+        (function() {
+            window.alert = function(message) {
+                if (message === undefined || message === null) return;
+                
+                let type = 'info';
+                let icon = 'info';
+                let title = 'Notification';
+                
+                const lowerMsg = String(message).toLowerCase();
+                if (lowerMsg.includes('error') || lowerMsg.includes('failed') || lowerMsg.includes('unauthorized') || lowerMsg.includes('must be logged in') || lowerMsg.includes('invalid') || lowerMsg.includes('network error')) {
+                    type = 'error';
+                    icon = 'error';
+                    title = 'Error';
+                } else if (lowerMsg.includes('success') || lowerMsg.includes('successful') || lowerMsg.includes('approved') || lowerMsg.includes('saved')) {
+                    type = 'success';
+                    icon = 'check_circle';
+                    title = 'Success';
+                }
+                
+                let container = document.getElementById('custom-toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'custom-toast-container';
+                    document.body.appendChild(container);
+                }
+                
+                const toast = document.createElement('div');
+                toast.className = 'custom-toast toast-' + type;
+                
+                toast.innerHTML = `
+                    <span class="material-symbols-outlined toast-icon">${icon}</span>
+                    <div class="toast-content">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Trigger transition
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 10);
+                
+                // Auto close
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                }, 5000);
+            };
+        })();
+    </script>
 
 </body>
 

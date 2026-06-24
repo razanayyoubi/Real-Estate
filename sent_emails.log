@@ -103,3 +103,215 @@ BODY:
             
 ==================================================
 
+==================================================
+DATE/TIME: Wed 06/24/2026 12:41 PM
+TO: admin@lebestates.com
+SUBJECT: New Notification | LebEstates
+BODY:
+
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dddddd; border-radius: 8px;">
+                        <h2 style="color: #0d1b2a;">LebEstates Notification</h2>
+                        <p>Hello Admin User,</p>
+                        <p>Your property listing 'Villa' has been successfully submitted! Status: Published.</p>
+                        <p><a href="http://localhost:5000/control-panel/properties" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px;">View Action</a></p>
+                        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #777777;">This is an automated email from LebEstates. Please do not reply directly to this message.</p>
+                    </div>
+                </body>
+            </html>
+            
+==================================================
+
+==================================================
+DATE/TIME: Wed 06/24/2026 12:43 PM
+TO: admin@lebestates.com
+SUBJECT: New Notification | LebEstates
+BODY:
+
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dddddd; border-radius: 8px;">
+                        <h2 style="color: #0d1b2a;">LebEstates Notification</h2>
+                        <p>Hello Admin User,</p>
+                        <p>Your property listing 'Villa' has been successfully submitted! Status: Published.</p>
+                        <p><a href="http://localhost:5000/control-panel/properties" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px;">View Action</a></p>
+                        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #777777;">This is an automated email from LebEstates. Please do not reply directly to this message.</p>
+                    </div>
+                </body>
+            </html>
+            
+==================================================
+
+==================================================
+DATE/TIME: Wed 06/24/2026 12:52 PM
+TO: admin@lebestates.com
+SUBJECT: New Notification | LebEstates
+BODY:
+
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dddddd; border-radius: 8px;">
+                        <h2 style="color: #0d1b2a;">LebEstates Notification</h2>
+                        <p>Hello Admin User,</p>
+                        <p>Your property listing 'Office' has been successfully submitted! Status: Published.</p>
+                        <p><a href="http://localhost:5000/control-panel/properties" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px;">View Action</a></p>
+                        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #777777;">This is an automated email from LebEstates. Please do not reply directly to this message.</p>
+                    </div>
+                </body>
+            </html>
+            
+==================================================
+
+==================================================
+DATE/TIME: Wed 06/24/2026 01:06 PM
+TO: admin@lebestates.com
+SUBJECT: New Notification | LebEstates
+BODY:
+
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dddddd; border-radius: 8px;">
+                        <h2 style="color: #0d1b2a;">LebEstates Notification</h2>
+                        <p>Hello Admin User,</p>
+                        <p>Your property listing 'Apartment' has been successfully submitted! Status: Published.</p>
+                        <p><a href="http://localhost:5000/control-panel/properties" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px;">View Action</a></p>
+                        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #777777;">This is an automated email from LebEstates. Please do not reply directly to this message.</p>
+                    </div>
+                </body>
+            </html>
+            
+==================================================
+
+==================================================
+DATE/TIME: Wed 06/24/2026 02:31 PM
+TO: hishamayoubi62@gmail.com
+SUBJECT: Reset your LebEstates Password
+BODY:
+
+        <html>
+            <body style="font-family: 'Inter', sans-serif; background-color: #f4f6f9; padding: 30px; margin: 0;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e1e8ed;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #0b132b; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">LebEstates</h2>
+                        <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0;">Secure Account Recovery</p>
+                    </div>
+                    <div style="color: #334155; font-size: 16px; line-height: 1.6;">
+                        <p>Hello <strong>Hisham Ayoubi</strong>,</p>
+                        <p>We received a request to reset your LebEstates password. You can reset your password by clicking the button below:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="http://127.0.0.1:5000/reset-password?token=Imhpc2hhbWF5b3ViaTYyQGdtYWlsLmNvbSI.ajvAFA.KNUVyeyN-7K7q6RHkNw12sJ_7uA" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; box-shadow: 0 4px 10px rgba(255, 214, 91, 0.3); transition: all 0.2s ease;">Reset Password</a>
+                        </div>
+                        <p style="color: #64748b; font-size: 14px;">This link will expire in 1 hour. If you did not make this request, you can safely ignore this email.</p>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                    <div style="text-align: center; font-size: 12px; color: #94a3b8;">
+                        <p style="margin: 4px 0;">Sent by fmy316@usal.edu.lb (LebEstates Administrator)</p>
+                        <p style="margin: 4px 0;">&copy; 2026 LebEstates. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        
+==================================================
+
+==================================================
+DATE/TIME: Wed 06/24/2026 02:35 PM
+TO: hishamayoubi62@gmail.com
+SUBJECT: Reset your LebEstates Password
+BODY:
+
+        <html>
+            <body style="font-family: 'Inter', sans-serif; background-color: #f4f6f9; padding: 30px; margin: 0;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e1e8ed;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #0b132b; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">LebEstates</h2>
+                        <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0;">Secure Account Recovery</p>
+                    </div>
+                    <div style="color: #334155; font-size: 16px; line-height: 1.6;">
+                        <p>Hello <strong>Hisham Ayoubi</strong>,</p>
+                        <p>We received a request to reset your LebEstates password. You can reset your password by clicking the button below:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="http://127.0.0.1:5000/reset-password?token=Imhpc2hhbWF5b3ViaTYyQGdtYWlsLmNvbSI.ajvBHg.bqMqI-jGQuD7hAU7Ij-tFispyL0" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; box-shadow: 0 4px 10px rgba(255, 214, 91, 0.3); transition: all 0.2s ease;">Reset Password</a>
+                        </div>
+                        <p style="color: #64748b; font-size: 14px;">This link will expire in 1 hour. If you did not make this request, you can safely ignore this email.</p>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                    <div style="text-align: center; font-size: 12px; color: #94a3b8;">
+                        <p style="margin: 4px 0;">Sent by fmy316@usal.edu.lb (LebEstates Administrator)</p>
+                        <p style="margin: 4px 0;">&copy; 2026 LebEstates. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        
+==================================================
+
+==================================================
+DATE/TIME: Wed 06/24/2026 02:37 PM
+TO: rawanayyoubi@gmail.com
+SUBJECT: Reset your LebEstates Password
+BODY:
+
+        <html>
+            <body style="font-family: 'Inter', sans-serif; background-color: #f4f6f9; padding: 30px; margin: 0;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e1e8ed;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #0b132b; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">LebEstates</h2>
+                        <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0;">Secure Account Recovery</p>
+                    </div>
+                    <div style="color: #334155; font-size: 16px; line-height: 1.6;">
+                        <p>Hello <strong>Rawan Ayoubi</strong>,</p>
+                        <p>We received a request to reset your LebEstates password. You can reset your password by clicking the button below:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="http://127.0.0.1:5000/reset-password?token=InJhd2FuYXl5b3ViaUBnbWFpbC5jb20i.ajvBXw.vWqgWS6QjWhqhMUs06UaeQWMWqY" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; box-shadow: 0 4px 10px rgba(255, 214, 91, 0.3); transition: all 0.2s ease;">Reset Password</a>
+                        </div>
+                        <p style="color: #64748b; font-size: 14px;">This link will expire in 1 hour. If you did not make this request, you can safely ignore this email.</p>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                    <div style="text-align: center; font-size: 12px; color: #94a3b8;">
+                        <p style="margin: 4px 0;">Sent by fmy316@usal.edu.lb (LebEstates Administrator)</p>
+                        <p style="margin: 4px 0;">&copy; 2026 LebEstates. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        
+==================================================
+
+==================================================
+DATE/TIME: Wed 06/24/2026 02:37 PM
+TO: rawanayyoubi@gmail.com
+SUBJECT: Reset your LebEstates Password
+BODY:
+
+        <html>
+            <body style="font-family: 'Inter', sans-serif; background-color: #f4f6f9; padding: 30px; margin: 0;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e1e8ed;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #0b132b; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">LebEstates</h2>
+                        <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0;">Secure Account Recovery</p>
+                    </div>
+                    <div style="color: #334155; font-size: 16px; line-height: 1.6;">
+                        <p>Hello <strong>Rawan Ayoubi</strong>,</p>
+                        <p>We received a request to reset your LebEstates password. You can reset your password by clicking the button below:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="http://127.0.0.1:5000/reset-password?token=InJhd2FuYXl5b3ViaUBnbWFpbC5jb20i.ajvBYg.WdeZaEPxisF_g2GwwWYJyDq8HD0" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; box-shadow: 0 4px 10px rgba(255, 214, 91, 0.3); transition: all 0.2s ease;">Reset Password</a>
+                        </div>
+                        <p style="color: #64748b; font-size: 14px;">This link will expire in 1 hour. If you did not make this request, you can safely ignore this email.</p>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                    <div style="text-align: center; font-size: 12px; color: #94a3b8;">
+                        <p style="margin: 4px 0;">Sent by fmy316@usal.edu.lb (LebEstates Administrator)</p>
+                        <p style="margin: 4px 0;">&copy; 2026 LebEstates. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        
+==================================================
+

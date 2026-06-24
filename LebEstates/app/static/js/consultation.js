@@ -2,6 +2,61 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    /* ─────────────────────────────────────────────────────────
+       1. DYNAMIC CONTROLS & INTERACTIONS (Mouse Parallax & Stats Counter)
+       ───────────────────────────────────────────────────────── */
+
+    // Mouse Parallax for Glass Panel
+    document.addEventListener('mousemove', (e) => {
+        const panels = document.querySelectorAll('.glass-panel');
+        const x = (window.innerWidth - e.pageX * 2) / 60;
+        const y = (window.innerHeight - e.pageY * 2) / 60;
+
+        panels.forEach(panel => {
+            panel.style.transform = `translate(${x}px, ${y}px)`;
+        });
+    });
+
+    // Stats Counter Animation
+    const statsElements = document.querySelectorAll('[data-target]');
+    
+    const animateValue = (element) => {
+        const target = parseInt(element.getAttribute('data-target'), 10);
+        const suffix = element.getAttribute('data-suffix') || '';
+        const duration = 1500; // 1.5 seconds
+        let startTimestamp = null;
+        
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Ease out quad
+            const ease = progress * (2 - progress);
+            const current = Math.floor(ease * target);
+            element.textContent = current + suffix;
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                element.textContent = target + suffix;
+            }
+        };
+        
+        window.requestAnimationFrame(step);
+    };
+
+    const countObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateValue(entry.target);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    statsElements.forEach(el => {
+        countObserver.observe(el);
+    });
+
 
     /* ─────────────────────────────────────────────────────────
        2. SMOOTH SCROLL – Hero CTA → form section

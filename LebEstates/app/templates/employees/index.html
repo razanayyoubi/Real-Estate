@@ -78,7 +78,7 @@
             <div class="filter-actions">
                 <select class="filter-select" id="filterStatus" onchange="applyFilters()">
                     <option>All Status</option>
-                    <option>Active</option>
+                    <option selected>Active</option>
                     <option>OnLeave</option>
                     <option>Terminated</option>
                 </select>
@@ -636,6 +636,11 @@
     // Close on overlay click
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
         if(e.target === this) closeModals();
+    });
+
+    // Apply default filters on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        applyFilters();
     });
 </script>
 {% endblock %}

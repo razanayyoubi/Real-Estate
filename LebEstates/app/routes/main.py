@@ -31,7 +31,21 @@ def consultation():
         res = request_consultation(session['user_id'], data)
         return jsonify(res), res.get('code', 200)
 
-    return render_template('consultation.html')
+    from app.models.property import Property
+    from app.models.operations import Transaction
+    from app.models.customer import Customer
+
+    # Fetch active properties count
+    properties_count = Property.query.filter_by(status='Published').count()
+
+    # Fetch total customers count as clients served
+    clients_served = Customer.query.count()
+
+    return render_template(
+        'consultation.html',
+        properties_count=properties_count,
+        clients_served=clients_served
+    )
 
 @main_bp.route('/dashboard')
 def dashboard():

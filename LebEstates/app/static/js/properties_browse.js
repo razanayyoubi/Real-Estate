@@ -497,6 +497,60 @@ const init = () => {
     if (searchParam && searchInput) {
         searchInput.value = searchParam;
     }
+    const listingTypeParam = urlParams.get('listing_type');
+    if (listingTypeParam && listingTypeSelect) {
+        listingTypeSelect.value = listingTypeParam;
+    }
+    const locationParam = urlParams.get('location');
+    if (locationParam && locationSelect) {
+        locationSelect.value = locationParam;
+    }
+    const priceMinParam = urlParams.get('price_min');
+    if (priceMinParam && priceMinInput) {
+        priceMinInput.value = priceMinParam;
+    }
+    const priceMaxParam = urlParams.get('price_max');
+    if (priceMaxParam && priceMaxInput) {
+        priceMaxInput.value = priceMaxParam;
+        updateSliderFromPriceInputs();
+    }
+    const areaMinParam = urlParams.get('area_min');
+    if (areaMinParam && areaMinInput) {
+        areaMinInput.value = areaMinParam;
+    }
+    const areaMaxParam = urlParams.get('area_max');
+    if (areaMaxParam && areaMaxInput) {
+        areaMaxInput.value = areaMaxParam;
+    }
+    const roomsParam = urlParams.get('rooms');
+    if (roomsParam && roomsInput) {
+        roomsInput.value = roomsParam;
+    }
+    const bathroomsParam = urlParams.get('bathrooms');
+    if (bathroomsParam && bathroomsInput) {
+        bathroomsInput.value = bathroomsParam;
+    }
+    const floorParam = urlParams.get('floor');
+    if (floorParam && floorInput) {
+        floorInput.value = floorParam;
+    }
+    const parkingParam = urlParams.get('parking');
+    if (parkingParam && parkingSelect) {
+        parkingSelect.value = parkingParam;
+    }
+    const sortParam = urlParams.get('sort');
+    if (sortParam && sortSelect) {
+        sortSelect.value = sortParam;
+    }
+    const propertyTypesParam = urlParams.get('property_types');
+    if (propertyTypesParam && typeCheckboxes.length > 0) {
+        const typesList = propertyTypesParam.split(',').map(t => t.trim().toLowerCase());
+        typeCheckboxes.forEach(cb => {
+            if (typesList.includes(cb.value.trim().toLowerCase())) {
+                cb.checked = true;
+            }
+        });
+    }
 
     // Set initial load more container display
     if (loadMoreContainer) {

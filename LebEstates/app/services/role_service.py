@@ -15,6 +15,8 @@ def get_staff_users_paginated(page=1, per_page=6):
     if customer_role:
         query = query.filter(Users.roleID != customer_role.roleID)
         
+    query = query.filter(Users.status == 'Active')
+        
     total = query.count()
     
     # Calculate offset and limit

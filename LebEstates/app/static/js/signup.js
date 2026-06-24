@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupErrorClearing('full_name', 'err-full-name');
     setupErrorClearing('email', 'err-email');
+    setupErrorClearing('phone_number', 'err-phone-number');
     setupErrorClearing('password', 'err-password');
     setupErrorClearing('confirm_password', 'err-confirm-password');
     setupErrorClearing('terms', 'err-terms');
@@ -101,6 +102,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isValidEmail(emailInput.value)) {
             toggleFieldError('email', 'err-email', true);
             isValid = false;
+        }
+
+        if (phoneInput && phoneInput.value.trim()) {
+            const phoneVal = phoneInput.value.trim();
+            const phoneRegex = /^\+?[0-9\s\-()]+$/;
+            const digitsOnly = phoneVal.replace(/\D/g, '');
+            if (!phoneRegex.test(phoneVal) || digitsOnly.length < 6) {
+                toggleFieldError('phone_number', 'err-phone-number', true);
+                isValid = false;
+            }
         }
 
         if (passwordInput.value.length < 6) {

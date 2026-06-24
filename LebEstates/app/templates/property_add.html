@@ -3,14 +3,15 @@
 {% block title %}Post Property | LebEstates{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <link rel="stylesheet" href="/static/css/property_add.css" />
 {% endblock %}
 
 {% block content %}
 <main class="post-property-main">
     <div class="post-property-container">
-        
+
         <!-- Breadcrumb / Header -->
         <header class="post-property-header">
             <a class="back-link" href="{% if is_employee %}/dashboard{% else %}/{% endif %}">
@@ -18,14 +19,15 @@
                 Back to {% if is_employee %}Dashboard{% else %}Home{% endif %}
             </a>
             <h2 class="page-title">Create New Listing</h2>
-            <p class="page-subtitle">Fill in the details below to publish a new prestigious property to the LebEstates collection.</p>
+            <p class="page-subtitle">Fill in the details below to publish a new prestigious property to the LebEstates
+                collection.</p>
         </header>
 
         <div class="post-property-layout">
-            
+
             <!-- Left Side: Sticky Progress Tracker & Live Preview -->
             <div class="layout-left-sidebar">
-                
+
                 <!-- Sticky Steps Progress Tracker -->
                 <div class="steps-progress-tracker">
                     <div class="step-item step-active" id="step-nav-1" data-step="1">
@@ -85,7 +87,7 @@
             <!-- Right Side: Form Wizard -->
             <div class="layout-main-content">
                 <form id="property-form" enctype="multipart/form-data" novalidate>
-                    
+
                     <!-- Hidden property type field -->
                     <input type="hidden" id="input-property-type" name="property_type" value="Villa" />
 
@@ -95,25 +97,29 @@
                             <h3>General Information</h3>
                             <p>Let's start with the basics of the listing.</p>
                         </div>
-                        
+
                         <div class="form-grid">
-                            
+
                             <!-- Select Owner (Employee/Admin Only) -->
                             {% if is_employee %}
                             <div class="form-group full-width owner-selection-group">
-                                <label class="form-label" for="input-owner">Select Property Owner (Customer) <span class="required-star">*</span></label>
+                                <label class="form-label" for="input-owner">Select Property Owner (Customer) <span
+                                        class="required-star">*</span></label>
                                 <select class="form-control" id="input-owner" name="owner_id" required>
                                     <option value="" disabled selected>-- Choose Owner Customer --</option>
                                     {% for customer in active_customers %}
-                                    <option value="{{ customer.raw_customer.customerID }}">{{ customer.full_name }} ({{ customer.email }})</option>
+                                    <option value="{{ customer.raw_customer.customerID }}">{{ customer.full_name }} ({{
+                                        customer.email }})</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             {% endif %}
 
                             <div class="form-group full-width">
-                                <label class="form-label" for="input-title">Listing Title <span class="required-star">*</span></label>
-                                <input type="text" class="form-control" id="input-title" name="title" placeholder="e.g., Ultra-Modern Villa in Faraya with Mountain View" required />
+                                <label class="form-label" for="input-title">Listing Title <span
+                                        class="required-star">*</span></label>
+                                <input type="text" class="form-control" id="input-title" name="title"
+                                    placeholder="e.g., Ultra-Modern Villa in Faraya with Mountain View" required />
                                 <span class="error-msg" id="err-title">Listing title is required.</span>
                             </div>
 
@@ -132,10 +138,12 @@
                             </div>
 
                             <div class="form-group half-width">
-                                <label class="form-label" for="input-price">Listing Price ($) <span class="required-star">*</span></label>
+                                <label class="form-label" for="input-price">Listing Price ($) <span
+                                        class="required-star">*</span></label>
                                 <div class="price-input-wrapper">
                                     <span class="price-symbol">$</span>
-                                    <input type="number" class="form-control" id="input-price" name="price" placeholder="1,500,000" min="0" required />
+                                    <input type="number" class="form-control" id="input-price" name="price"
+                                        placeholder="1,500,000" min="0" required />
                                 </div>
                                 <span class="error-msg" id="err-price">A valid price is required.</span>
                             </div>
@@ -179,10 +187,14 @@
                             </div>
 
                             <!-- Custom Specify Field (Visible only when 'Other' type selected) -->
-                            <div class="form-group full-width custom-property-type-wrapper" id="custom-property-type-wrapper" style="display: none;">
-                                <label class="form-label" for="input-custom-property-type">Specify Property Type <span class="required-star">*</span></label>
-                                <input type="text" class="form-control" id="input-custom-property-type" placeholder="e.g. Warehouse, Penthouse, Showroom" />
-                                <span class="error-msg" id="err-custom-property-type">Please specify the custom property type.</span>
+                            <div class="form-group full-width custom-property-type-wrapper"
+                                id="custom-property-type-wrapper" style="display: none;">
+                                <label class="form-label" for="input-custom-property-type">Specify Property Type <span
+                                        class="required-star">*</span></label>
+                                <input type="text" class="form-control" id="input-custom-property-type"
+                                    placeholder="e.g. Warehouse, Penthouse, Showroom" />
+                                <span class="error-msg" id="err-custom-property-type">Please specify the custom property
+                                    type.</span>
                             </div>
                         </div>
                     </section>
@@ -193,11 +205,13 @@
                             <h3>Property Specifications</h3>
                             <p>Detailed metrics and interior configurations.</p>
                         </div>
-                        
+
                         <div class="form-grid">
                             <div class="form-group third-width">
-                                <label class="form-label" for="input-area">Total Area (m²) <span class="required-star">*</span></label>
-                                <input type="number" class="form-control" id="input-area" name="area" placeholder="e.g., 450" min="0" required />
+                                <label class="form-label" for="input-area">Total Area (m²) <span
+                                        class="required-star">*</span></label>
+                                <input type="number" class="form-control" id="input-area" name="area"
+                                    placeholder="e.g., 450" min="0" required />
                                 <span class="error-msg" id="err-area">A valid total area is required.</span>
                             </div>
 
@@ -229,17 +243,22 @@
 
                             <div class="form-group half-width">
                                 <label class="form-label" for="input-floor-number">Floor Number</label>
-                                <input type="number" class="form-control" id="input-floor-number" name="floor_number" placeholder="e.g., 5" min="0" />
+                                <input type="number" class="form-control" id="input-floor-number" name="floor_number"
+                                    placeholder="e.g., 5" min="0" />
                             </div>
 
                             <div class="form-group half-width">
                                 <label class="form-label" for="input-parking-spots">Parking Spots</label>
-                                <input type="number" class="form-control" id="input-parking-spots" name="parking_spots" placeholder="e.g., 2" min="0" />
+                                <input type="number" class="form-control" id="input-parking-spots" name="parking_spots"
+                                    placeholder="e.g., 2" min="0" />
                             </div>
 
                             <div class="form-group full-width">
                                 <label class="form-label" for="input-description">Detailed Description</label>
-                                <textarea class="form-control text-area-control" id="input-description" name="description" placeholder="Describe the property's unique features, historical significance, or architectural details..." rows="6"></textarea>
+                                <textarea class="form-control text-area-control" id="input-description"
+                                    name="description"
+                                    placeholder="Describe the property's unique features, historical significance, or architectural details..."
+                                    rows="6"></textarea>
                             </div>
                         </div>
                     </section>
@@ -250,48 +269,80 @@
                             <h3>Location & Media</h3>
                             <p>Finalize with visuals and geographical placement.</p>
                         </div>
-                        
-                        <div class="form-grid">
-                            <div class="form-group half-width">
-                                <label class="form-label" for="input-region">Region <span class="required-star">*</span></label>
-                                <select class="form-control select-control" id="input-region" name="region" required>
-                                    <option value="" disabled selected>Select Region</option>
-                                    <option value="Beirut">Beirut Central District</option>
-                                    <option value="Achrafieh">Achrafieh</option>
-                                    <option value="Faraya">Faraya</option>
-                                    <option value="Byblos">Byblos (Jbeil)</option>
-                                    <option value="Batroun">Batroun</option>
-                                </select>
-                                <span class="error-msg" id="err-region">Please select a region.</span>
-                            </div>
 
-                            <div class="form-group half-width">
-                                <label class="form-label" for="input-address">Full Address <span class="required-star">*</span></label>
-                                <input type="text" class="form-control" id="input-address" name="address" placeholder="Street name, Building No." required />
-                                <span class="error-msg" id="err-address">Full address is required.</span>
-                            </div>
+                        <div class="form-group full-width">
+                            <label class="form-label" for="input-region">Region / City <span
+                                    class="required-star">*</span></label>
+                            <input type="text" id="input-region" name="region" class="form-control select-control mt-2"
+                                placeholder="Type or select region..." list="region-list" required />
+                            <datalist id="region-list">
+                                <option value="Achrafieh"></option>
+                                <option value="Akkar"></option>
+                                <option value="Aley"></option>
+                                <option value="Baabda"></option>
+                                <option value="Baalbek"></option>
+                                <option value="Batroun"></option>
+                                <option value="Beirut"></option>
+                                <option value="Bint Jbeil"></option>
+                                <option value="Bsharri"></option>
+                                <option value="Byblos"></option>
+                                <option value="Chouf"></option>
+                                <option value="Dahye"></option>
+                                <option value="Faraya"></option>
+                                <option value="Hasbaya"></option>
+                                <option value="Hermel"></option>
+                                <option value="Jezzine"></option>
+                                <option value="Keserwan"></option>
+                                <option value="Koura"></option>
+                                <option value="Marjeyoun"></option>
+                                <option value="Matn"></option>
+                                <option value="Miniyeh-Danniyeh"></option>
+                                <option value="Nabatieh"></option>
+                                <option value="North"></option>
+                                <option value="Rashaya"></option>
+                                <option value="Saida"></option>
+                                <option value="South"></option>
+                                <option value="Tyre"></option>
+                                <option value="Tripoli"></option>
+                                <option value="West Bekaa"></option>
+                                <option value="Zahle"></option>
+                                <option value="Zgharta"></option>
+                            </datalist>
+                            <span class="error-msg" id="err-region">Region/City is required.</span>
+                        </div>
 
-                            <!-- Media Upload Dropzone -->
-                            <div class="form-group full-width">
-                                <label class="form-label">Property Photos <span class="required-star">*</span></label>
-                                <div class="media-upload-dropzone" id="media-dropzone">
-                                    <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
-                                    <p class="dropzone-title">Drag & Drop High-Res Photos or <span class="browse-link">Browse</span></p>
-                                    <p class="dropzone-subtitle">Minimum 1920x1080px. PNG, JPG, JPEG, WEBP or GIF.</p>
-                                    <input type="file" id="input-photos" name="photos" multiple accept="image/*" style="display: none;" />
-                                </div>
-                                <div class="photos-preview-gallery" id="photos-gallery"></div>
-                                <span class="error-msg" id="err-photos">At least one high-res photo is required.</span>
-                            </div>
+                        <div class="form-group half-width">
+                            <label class="form-label" for="input-address">Full Address <span
+                                    class="required-star">*</span></label>
+                            <input type="text" class="form-control" id="input-address" name="address"
+                                placeholder="Street name, Building No." required />
+                            <span class="error-msg" id="err-address">Full address is required.</span>
+                        </div>
 
-                            <!-- Map Placement -->
-                            <input type="hidden" id="input-latitude" name="latitude" />
-                            <input type="hidden" id="input-longitude" name="longitude" />
-                            <div class="form-group full-width">
-                                <label class="form-label">Pin on Map <span class="caption text-on-surface-variant">(Click on the map or drag the pin to set the coordinates)</span></label>
-                                <div class="map-placement-wrapper">
-                                    <div id="map-container" style="width: 100%; height: 100%; z-index: 1;"></div>
-                                </div>
+                        <!-- Media Upload Dropzone -->
+                        <div class="form-group full-width">
+                            <label class="form-label">Property Photos <span class="required-star">*</span></label>
+                            <div class="media-upload-dropzone" id="media-dropzone">
+                                <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+                                <p class="dropzone-title">Drag & Drop High-Res Photos or <span
+                                        class="browse-link">Browse</span></p>
+                                <p class="dropzone-subtitle">Minimum 1920x1080px. PNG, JPG, JPEG, WEBP or GIF.</p>
+                                <input type="file" id="input-photos" name="photos" multiple accept="image/*"
+                                    style="display: none;" />
+                            </div>
+                            <div class="photos-preview-gallery" id="photos-gallery"></div>
+                            <span class="error-msg" id="err-photos">At least one high-res photo is required.</span>
+                        </div>
+
+                        <!-- Map Placement -->
+                        <input type="hidden" id="input-latitude" name="latitude" />
+                        <input type="hidden" id="input-longitude" name="longitude" />
+                        <div class="form-group full-width">
+                            <label class="form-label">Pin on Map <span class="caption text-on-surface-variant">(Click on
+                                    the map or drag the pin to set
+                                    the coordinates)</span></label>
+                            <div class="map-placement-wrapper">
+                                <div id="map-container" style="width: 100%; height: 100%; z-index: 1;"></div>
                             </div>
                         </div>
                     </section>
@@ -302,7 +353,7 @@
                             <span class="material-symbols-outlined">chevron_left</span>
                             Previous Step
                         </button>
-                        
+
                         <div class="actions-right-wrapper">
                             <button type="button" class="btn-draft" id="draft-btn">
                                 Save as Draft
@@ -321,6 +372,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="/static/js/property_add.js"></script>
 {% endblock %}

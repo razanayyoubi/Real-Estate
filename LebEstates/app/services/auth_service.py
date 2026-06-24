@@ -100,6 +100,9 @@ class AuthService:
         if not user:
             return {"success": False, "error": "Invalid email or password.", "code": 401}
 
+        if user.status != 'Active':
+            return {"success": False, "error": "Your account has been deactivated. Please contact support.", "code": 403}
+
         # Compare password hash
         if check_password(user.passwordHash, password):
             return {
@@ -121,6 +124,7 @@ class AuthService:
                 userID=user_id,
                 token=session_token,
                 ipAddress=ip_address,
+        #Stores information about the user's browser and device
                 userAgent=user_agent[:255] if user_agent else ''
             )
             db.session.add(new_sess)
@@ -496,5 +500,3 @@ class AuthService:
             'transactions_count': len(transactions),
             'active_deal': active_deal
         }
-
-

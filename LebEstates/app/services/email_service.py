@@ -38,7 +38,7 @@ class EmailService:
             smtp_port = current_app.config.get('MAIL_PORT', 587)
             smtp_user = current_app.config.get('MAIL_USERNAME')
             smtp_pwd = current_app.config.get('MAIL_PASSWORD')
-            sender = current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@lebestates.com')
+            sender = current_app.config.get('MAIL_DEFAULT_SENDER', 'fmy316@usal.edu.lb')
 
             if smtp_server and smtp_user and smtp_pwd:
                 msg = MIMEMultipart("alternative")

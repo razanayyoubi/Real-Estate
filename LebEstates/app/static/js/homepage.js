@@ -38,7 +38,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 queryParams.push(`listing_type=${encodeURIComponent(listingType)}`);
             }
             if (location) {
-                queryParams.push(`q=${encodeURIComponent(location)}`); // Use q parameter to match browse route search query
+                const predefinedRegions = [
+                    'achrafieh', 'akkar', 'aley', 'baabda', 'baalbek', 'batroun', 'beirut', 
+                    'bint jbeil', 'bsharri', 'byblos', 'chouf', 'dahye', 'faraya', 'hasbaya', 
+                    'hermel', 'jezzine', 'keserwan', 'koura', 'marjeyoun', 'matn', 
+                    'miniyeh-danniyeh', 'nabatieh', 'north', 'rashaya', 'saida', 'south', 
+                    'sour', 'tripoli', 'west bekkaa', 'west bekaa', 'zahle', 'zgharta'
+                ];
+                if (predefinedRegions.includes(location.toLowerCase())) {
+                    queryParams.push(`location=${encodeURIComponent(location)}`);
+                } else {
+                    queryParams.push(`q=${encodeURIComponent(location)}`);
+                }
             }
             if (priceRange !== 'All') {
                 const parts = priceRange.split('-');

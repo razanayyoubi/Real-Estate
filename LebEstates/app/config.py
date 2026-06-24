@@ -8,4 +8,5 @@ class Config:
     # Format: mysql+pymysql://<username>:<password>@<host>:<port>/<database_name>
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:project567@localhost:3306/lebestates'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAIL_DEFAULT_SENDER = 'fmy316@usal.edu.lb'
 

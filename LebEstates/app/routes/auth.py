@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app, flash, Response
 from app.services.auth_service import AuthService
+from app.models.users import Users
 
 auth_bp = Blueprint('auth', __name__)
+
+RESET_TOKENS = {}
 
 @auth_bp.route('/register', methods=['GET'])
 def register_page():
@@ -26,6 +29,13 @@ def register_submit():
         return jsonify({'error': 'Email address is required.'}), 400
     if not password or len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters long.'}), 400
+
+    if phone_number:
+        import re
+        if not re.match(r'^\+?[0-9\s\-()]+$', phone_number):
+            return jsonify({'error': 'Phone number must contain only numbers.'}), 400
+        if len(re.sub(r'\D', '', phone_number)) < 6:
+            return jsonify({'error': 'Phone number must contain at least 6 digits.'}), 400
 
     result = AuthService.register_customer(full_name, email, phone_number, password, address)
     if result["success"]:
@@ -148,24 +158,24 @@ def forgot_password_submit():
         data = request.form
 
     email = data.get('email', '').strip()
-    recovery_method = data.get('method', 'email')
+    recovery_method = data.get('method', '2fa')
     totp_code = data.get('code', '').strip()
 
     if not email:
         return jsonify({'error': 'Email address is required.'}), 400
 
-    if recovery_method == '2fa':
-        result = AuthService.verify_forgot_password_totp(email, totp_code)
-        if result["success"]:
-            session['reset_password_user_id'] = result['user_id']
-            return jsonify({
-                'message': 'Code verified successfully.',
-                'redirect_url': '/reset-password'
-            }), 200
-        else:
-            return jsonify({'error': result['error']}), result['code']
+    if recovery_method != '2fa':
+        return jsonify({'error': 'Invalid recovery method.'}), 400
+
+    result = AuthService.verify_forgot_password_totp(email, totp_code)
+    if result["success"]:
+        session['reset_password_user_id'] = result['user_id']
+        return jsonify({
+            'message': 'Code verified successfully.',
+            'redirect_url': '/reset-password'
+        }), 200
     else:
-        return jsonify({'message': f'A recovery email has been sent to {email} (Simulated).'}), 200
+        return jsonify({'error': result['error']}), result['code']
 
 @auth_bp.route('/reset-password', methods=['GET'])
 def reset_password_page():
