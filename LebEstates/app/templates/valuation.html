@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Property Valuation | LebEstates - Prestige Real Estate{% endblock %}
+
+{% block styles %}
+<style>
+    /* Premium Valuation Page Styles */
+    .val-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 24px;
+        position: relative;
+        z-index: 1;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .val-hero {
+        background: radial-gradient(circle at 0% 0%, rgba(115, 92, 0, 0.08) 0%, transparent 60%),
+                    radial-gradient(circle at 100% 100%, rgba(10, 31, 68, 0.06) 0%, transparent 60%),
+                    #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.25);
+        border-radius: 24px;
+        padding: 60px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 8, 30, 0.03);
+    }
+
+    .val-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #D4AF37 0%, #0a1f44 100%);
+    }
+
+    .val-tag {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-weight: 700;
+        color: #735c00;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .val-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 42px;
+        font-weight: 800;
+        color: #00081e;
+        margin: 0 0 16px 0;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+
+    .val-subtitle {
+        font-size: 16px;
+        color: #44464e;
+        margin: 0;
+        line-height: 1.6;
+        max-width: 800px;
+    }
+
+    .val-grid {
+        display: grid;
+        grid-template-columns: 7fr 5fr;
+        gap: 40px;
+        align-items: start;
+    }
+
+    @media (max-width: 991px) {
+        .val-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+        .val-hero {
+            padding: 40px 24px;
+        }
+        .val-title {
+            font-size: 32px;
+        }
+    }
+
+    /* Cards */
+    .premium-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(10, 31, 68, 0.03);
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #D4AF37 0%, transparent 100%);
+    }
+
+    .premium-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 36px rgba(10, 31, 68, 0.06);
+        border-color: rgba(212, 175, 55, 0.25);
+    }
+
+    .card-header {
+        padding: 24px 30px;
+        background-color: #f8f9ff;
+        border-bottom: 1px solid rgba(180, 198, 244, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .card-icon {
+        width: 42px;
+        height: 42px;
+        background-color: rgba(10, 31, 68, 0.05);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #D4AF37;
+    }
+
+    .card-title-text h3 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 0;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
+    /* Form Fields */
+    .val-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 576px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #00081e;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        background-color: #f8f9ff;
+        border: 1px solid #c5c6cf;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #121c2a;
+        outline: none;
+        transition: all 0.25s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        background-color: #ffffff;
+    }
+
+    .btn-val-submit {
+        background: linear-gradient(135deg, #ffe088 0%, #D4AF37 100%);
+        color: #00081e;
+        border: none;
+        padding: 14px 28px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .btn-val-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
+        filter: brightness(1.05);
+    }
+
+    /* Benefits Column */
+    .benefits-list {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .benefit-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        gap: 20px;
+        box-shadow: 0 4px 12px rgba(10, 31, 68, 0.01);
+        transition: all 0.25s ease;
+    }
+
+    .benefit-card:hover {
+        transform: translateX(5px);
+        border-color: rgba(212, 175, 55, 0.2);
+        box-shadow: 0 8px 20px rgba(10, 31, 68, 0.03);
+    }
+
+    .benefit-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background-color: rgba(115, 92, 0, 0.06);
+        color: #735c00;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .benefit-content h4 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 0 0 8px 0;
+    }
+
+    .benefit-content p {
+        font-size: 13.5px;
+        color: #44464e;
+        line-height: 1.5;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="val-container">
+    
+    <!-- Hero Block -->
+    <div class="val-hero">
+        <span class="val-tag">Expert Valuation Services</span>
+        <h1 class="val-title">Discover the Real Worth of Your Asset.</h1>
+        <p class="val-subtitle">
+            LebEstates provides certified, highly accurate, and market-reflective property valuations across Lebanon. Harnessing local insight and historical transaction logs, we ensure your asset is positioned for maximum returns.
+        </p>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="val-grid">
+        
+        <!-- Left: Valuation Request Form -->
+        <div class="premium-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <span class="material-symbols-outlined">analytics</span>
+                </div>
+                <div class="card-title-text">
+                    <h3>Request a Valuation</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="valuation-request-form" class="val-form" onsubmit="handleValuationSubmit(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="full_name">Full Name</label>
+                            <input type="text" id="full_name" class="form-input" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email Address</label>
+                            <input type="email" id="email" class="form-input" placeholder="name@domain.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Phone Number</label>
+                            <input type="tel" id="phone" class="form-input" placeholder="e.g. +961 70 123 456" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="property_type">Property Type</label>
+                            <select id="property_type" class="form-select" required>
+                                <option value="" disabled selected>Select property type</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="Villa">Villa / Mansion</option>
+                                <option value="Penthouse">Penthouse</option>
+                                <option value="Commercial">Commercial / Office</option>
+                                <option value="Land">Land / Plot</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="location">Location / Region</label>
+                            <input type="text" id="location" class="form-input" placeholder="e.g. Ashrafieh, Beirut" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="size">Size (Sqm)</label>
+                            <input type="number" id="size" class="form-input" placeholder="e.g. 250" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="notes">Property Details & Notes</label>
+                        <textarea id="notes" class="form-textarea" rows="4" placeholder="Describe layout, views, renovations, or special features of the asset..."></textarea>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn-val-submit">
+                            <span>Request Professional Valuation</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: Benefits & Advisory Info -->
+        <div class="benefits-list">
+            
+            <div class="benefit-card">
+                <div class="benefit-icon-box">
+                    <span class="material-symbols-outlined">query_stats</span>
+                </div>
+                <div class="benefit-content">
+                    <h4>Comparative Market Analysis</h4>
+                    <p>We evaluate active listings, historical sales files, and real-time market shifts to produce an uncompromised valuation.</p>
+                </div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon-box">
+                    <span class="material-symbols-outlined">verified</span>
+                </div>
+                <div class="benefit-content">
+                    <h4>Certified Local Valuers</h4>
+                    <p>Our valuations are generated by registered appraisal specialists holding deep knowledge of regional asset trends.</p>
+                </div>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon-box">
+                    <span class="material-symbols-outlined">encrypted</span>
+                </div>
+                <div class="benefit-content">
+                    <h4>Absolute Discretion</h4>
+                    <p>Your property particulars and estimated valuation reports are stored with secure encryption keys and full privacy protocols.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function handleValuationSubmit(event) {
+        event.preventDefault();
+        
+        const name = document.getElementById('full_name').value;
+        const email = document.getElementById('email').value;
+        const type = document.getElementById('property_type').value;
+        
+        // Show success alert/toast override
+        alert(`Thank you, ${name}. Your valuation request for a ${type} has been submitted successfully! An estate advisor will contact you at ${email} shortly.`);
+        
+        document.getElementById('valuation-request-form').reset();
+    }
+</script>
+{% endblock %}

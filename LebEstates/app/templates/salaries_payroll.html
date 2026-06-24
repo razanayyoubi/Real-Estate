@@ -30,9 +30,6 @@
                     <button class="btn btn-outline btn-lg" id="btnExportLedger">
                         <span class="material-symbols-outlined">ios_share</span> Export Ledger
                     </button>
-                    <button class="btn btn-secondary btn-lg" id="btnGenerateBatch">
-                        <span class="material-symbols-outlined">sync</span> Generate Batch
-                    </button>
                 </div>
             </div>
         </div>
@@ -78,19 +75,26 @@
     <section class="treasury-content">
         <!-- Control Center Bar -->
         <div class="control-bar">
-            <div class="control-bar__months">
+            <div class="control-bar__months" style="position: relative;">
                 {% for m in months %}
                 <button class="month-btn {% if m.value == selected_month %}month-btn--active{% endif %}" onclick="filterMonth('{{ m.value }}')">
                     {{ m.label }}
                 </button>
                 {% endfor %}
+                <button class="month-btn" onclick="document.getElementById('monthPicker').showPicker()" style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; min-width: 40px; border-radius: 8px; margin-left: 4px;" title="Select any month">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">calendar_month</span>
+                </button>
+                <input type="month" id="monthPicker" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;" onchange="filterMonth(this.value)">
             </div>
             <div class="control-bar__filters">
                 <div class="filter-wrapper">
                     <select class="custom-select" id="departmentFilter">
                         <option value="All">All Departments</option>
-                        <option value="Broker">Sales & Brokerage</option>
-                        <option value="Admin">Administration</option>
+                        <option value="Administration">Administration</option>
+                        <option value="Employee">Employee</option>
+                        <option value="Sales">Sales</option>
+                        <option value="Accountant">Accountant</option>
+                        <option value="Agent">Agent</option>
                     </select>
                 </div>
                 <div class="vertical-divider"></div>
@@ -117,7 +121,21 @@
                     </thead>
                     <tbody>
                         {% for emp in ledger %}
-                        <tr class="ledger-row" data-position="{{ emp.position }}">
+                        {% set emp_dept = 'Administration' %}
+                        {% if 'broker' in emp.position|lower or 'sales' in emp.position|lower %}
+                            {% set emp_dept = 'Sales' %}
+                        {% elif 'agent' in emp.position|lower %}
+                            {% set emp_dept = 'Agent' %}
+                        {% elif 'accountant' in emp.position|lower %}
+                            {% set emp_dept = 'Accountant' %}
+                        {% else %}
+                            {% if emp.role_name|lower == 'admin' %}
+                                {% set emp_dept = 'Administration' %}
+                            {% else %}
+                                {% set emp_dept = 'Employee' %}
+                            {% endif %}
+                        {% endif %}
+                        <tr class="ledger-row" data-position="{{ emp.position }}" data-dept="{{ emp_dept }}">
                             <td>
                                 <div class="stakeholder">
                                     <div class="stakeholder__avatar">
@@ -131,7 +149,7 @@
                             </td>
                             <td>
                                 <p class="designation-title">{{ emp.position }}</p>
-                                <p class="designation-dept">{% if 'Broker' in emp.position or 'Agent' in emp.position %}Brokerage Div.{% else %}Administration{% endif %}</p>
+                                <p class="designation-dept">{{ emp_dept }}</p>
                             </td>
                             <td>
                                 <span class="monospaced-value">${{ "{:,.2f}".format(emp.base_salary) }}</span>

@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}Real Estate Investments | LebEstates - Prestige Real Estate{% endblock %}
+
+{% block styles %}
+<style>
+    /* Premium Investments Page Styles */
+    .inv-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 24px;
+        position: relative;
+        z-index: 1;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .inv-hero {
+        background: radial-gradient(circle at 0% 0%, rgba(10, 31, 68, 0.08) 0%, transparent 60%),
+                    radial-gradient(circle at 100% 100%, rgba(115, 92, 0, 0.06) 0%, transparent 60%),
+                    #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.25);
+        border-radius: 24px;
+        padding: 60px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 8, 30, 0.03);
+    }
+
+    .inv-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #D4AF37 0%, #0a1f44 100%);
+    }
+
+    .inv-tag {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-weight: 700;
+        color: #735c00;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .inv-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 42px;
+        font-weight: 800;
+        color: #00081e;
+        margin: 0 0 16px 0;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+
+    .inv-subtitle {
+        font-size: 16px;
+        color: #44464e;
+        margin: 0;
+        line-height: 1.6;
+        max-width: 800px;
+    }
+
+    .inv-grid {
+        display: grid;
+        grid-template-columns: 7fr 5fr;
+        gap: 40px;
+        align-items: start;
+    }
+
+    @media (max-width: 991px) {
+        .inv-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+        .inv-hero {
+            padding: 40px 24px;
+        }
+        .inv-title {
+            font-size: 32px;
+        }
+    }
+
+    /* Cards */
+    .premium-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(10, 31, 68, 0.03);
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s ease;
+        margin-bottom: 30px;
+    }
+
+    .premium-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #D4AF37 0%, transparent 100%);
+    }
+
+    .premium-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 36px rgba(10, 31, 68, 0.06);
+        border-color: rgba(212, 175, 55, 0.25);
+    }
+
+    .card-header {
+        padding: 24px 30px;
+        background-color: #f8f9ff;
+        border-bottom: 1px solid rgba(180, 198, 244, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .card-icon {
+        width: 42px;
+        height: 42px;
+        background-color: rgba(10, 31, 68, 0.05);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #D4AF37;
+    }
+
+    .card-title-text h3 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 0;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
+    /* Calculator Specifics */
+    .calc-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .calc-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 576px) {
+        .calc-inputs {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .calc-results {
+        background-color: #f8f9ff;
+        border: 1px solid rgba(180, 198, 244, 0.2);
+        border-radius: 12px;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 10px;
+    }
+
+    .calc-result-box {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .calc-result-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #44464e;
+        letter-spacing: 0.05em;
+    }
+
+    .calc-result-value {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        color: #00081e;
+    }
+
+    .calc-result-value.highlight {
+        color: #735c00;
+    }
+
+    /* Investment Categories */
+    .inv-categories {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .category-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        gap: 20px;
+        box-shadow: 0 4px 12px rgba(10, 31, 68, 0.01);
+        transition: all 0.25s ease;
+    }
+
+    .category-card:hover {
+        transform: translateX(5px);
+        border-color: rgba(212, 175, 55, 0.2);
+        box-shadow: 0 8px 20px rgba(10, 31, 68, 0.03);
+    }
+
+    .category-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background-color: rgba(115, 92, 0, 0.06);
+        color: #735c00;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .category-content h4 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 0 0 8px 0;
+    }
+
+    .category-content p {
+        font-size: 13.5px;
+        color: #44464e;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* Forms */
+    .inv-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #00081e;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        background-color: #f8f9ff;
+        border: 1px solid #c5c6cf;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #121c2a;
+        outline: none;
+        transition: all 0.25s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        background-color: #ffffff;
+    }
+
+    .btn-inv-submit {
+        background: linear-gradient(135deg, #00081e 0%, #0a1f44 100%);
+        color: #ffffff;
+        border: none;
+        padding: 14px 28px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(10, 31, 68, 0.15);
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .btn-inv-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(10, 31, 68, 0.3);
+        filter: brightness(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="inv-container">
+    
+    <!-- Hero Block -->
+    <div class="inv-hero">
+        <span class="inv-tag">Premium Investment Portfolios</span>
+        <h1 class="inv-title">High-Yield Wealth Preservation & Growth.</h1>
+        <p class="inv-subtitle">
+            LebEstates aggregates high-yield real estate projects and institutional portfolios across prime locations in Lebanon. Leverage historical yield stability and secure premium assets crafted for generational growth.
+        </p>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="inv-grid">
+        
+        <!-- Left: Investment Info & Interactive ROI Calculator -->
+        <div>
+            <!-- Categories -->
+            <div class="premium-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <span class="material-symbols-outlined">domain</span>
+                    </div>
+                    <div class="card-title-text">
+                        <h3>Strategic Asset Classes</h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="inv-categories">
+                        <div class="category-card">
+                            <div class="category-icon-box">
+                                <span class="material-symbols-outlined">hotel</span>
+                            </div>
+                            <div class="category-content">
+                                <h4>Luxury Residential</h4>
+                                <p>Prime penthouses and private villas in Ashrafieh, Yarze, and Faqra. Historical appreciation rates are stable with reliable luxury tenancy yields.</p>
+                            </div>
+                        </div>
+
+                        <div class="category-card">
+                            <div class="category-icon-box">
+                                <span class="material-symbols-outlined">beach_access</span>
+                            </div>
+                            <div class="category-content">
+                                <h4>Coastal & Resort Developments</h4>
+                                <p>Exclusive seafront land and residential complexes in Batroun and Byblos, offering seasonal short-term premium rental premiums.</p>
+                            </div>
+                        </div>
+
+                        <div class="category-card">
+                            <div class="category-icon-box">
+                                <span class="material-symbols-outlined">corporate_fare</span>
+                            </div>
+                            <div class="category-content">
+                                <h4>Commercial Real Estate & REITs</h4>
+                                <p>Retail hubs, headquarters, and mixed-use commercial space offering long-term institutional leases with indexed inflation protection.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROI Calculator -->
+            <div class="premium-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <span class="material-symbols-outlined">calculate</span>
+                    </div>
+                    <div class="card-title-text">
+                        <h3>Interactive ROI Estimator</h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="calc-container">
+                        <div class="calc-inputs">
+                            <div class="form-group">
+                                <label class="form-label" for="calc_amount">Investment Principal ($)</label>
+                                <input type="number" id="calc_amount" class="form-input" value="100000" min="10000" step="5000" oninput="calculateROI()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="calc_type">Asset Class</label>
+                                <select id="calc_type" class="form-select" onchange="calculateROI()">
+                                    <option value="residential" data-yield="6.5">Luxury Residential (6.5% Yield)</option>
+                                    <option value="coastal" data-yield="8.2">Coastal & Resort (8.2% Yield)</option>
+                                    <option value="commercial" data-yield="5.8">Commercial REITs (5.8% Yield)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="calc-inputs">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" for="calc_years">Duration: <span id="years_label">5</span> Years</label>
+                                <input type="range" id="calc_years" min="1" max="15" value="5" step="1" style="width: 100%; accent-color: #D4AF37;" oninput="updateYearsLabel(); calculateROI();">
+                            </div>
+                        </div>
+
+                        <div class="calc-results">
+                            <div class="calc-result-box">
+                                <span class="calc-result-label">Projected End Value</span>
+                                <span id="projected_value" class="calc-result-value highlight">$137,008</span>
+                            </div>
+                            <div class="calc-result-box">
+                                <span class="calc-result-label">Total Earnings</span>
+                                <span id="projected_earnings" class="calc-result-value">$37,008</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Inquiry Form -->
+        <div class="premium-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <span class="material-symbols-outlined">send</span>
+                </div>
+                <div class="card-title-text">
+                    <h3>Investor Inquiry</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="investor-inquiry-form" class="inv-form" onsubmit="handleInquirySubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="investor_name">Full Name</label>
+                        <input type="text" id="investor_name" class="form-input" placeholder="Enter your name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="investor_email">Email Address</label>
+                        <input type="email" id="investor_email" class="form-input" placeholder="name@domain.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="investor_phone">Phone Number</label>
+                        <input type="tel" id="investor_phone" class="form-input" placeholder="e.g. +961 70 123 456" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="investor_budget">Target Investment Budget</label>
+                        <select id="investor_budget" class="form-select" required>
+                            <option value="" disabled selected>Select investment tier</option>
+                            <option value="tier1">$50,000 - $150,000</option>
+                            <option value="tier2">$150,000 - $500,000</option>
+                            <option value="tier3">$500,000 - $1,500,000</option>
+                            <option value="tier4">$1,500,000+</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="investor_message">Investment Profile & Goals</label>
+                        <textarea id="investor_message" class="form-textarea" rows="4" placeholder="Detail your investment horizon, geographical preference, or specific requests..."></textarea>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn-inv-submit">
+                            <span>Submit Investment Brief</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateYearsLabel() {
+        const val = document.getElementById('calc_years').value;
+        document.getElementById('years_label').innerText = val;
+    }
+
+    function calculateROI() {
+        const amount = parseFloat(document.getElementById('calc_amount').value) || 0;
+        const years = parseInt(document.getElementById('calc_years').value) || 0;
+        
+        const typeSelect = document.getElementById('calc_type');
+        const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+        const yieldRate = parseFloat(selectedOption.getAttribute('data-yield')) / 100.0;
+        
+        // Compound interest formula: A = P(1 + r)^t
+        const endValue = amount * Math.pow(1 + yieldRate, years);
+        const earnings = endValue - amount;
+        
+        // Formatting options
+        const formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 0
+        });
+        
+        document.getElementById('projected_value').innerText = formatter.format(endValue);
+        document.getElementById('projected_earnings').innerText = formatter.format(earnings);
+    }
+
+    function handleInquirySubmit(event) {
+        event.preventDefault();
+        
+        const name = document.getElementById('investor_name').value;
+        const budgetSelect = document.getElementById('investor_budget');
+        const budgetText = budgetSelect.options[budgetSelect.selectedIndex].text;
+        
+        alert(`Thank you, ${name}. Your investment brief for a target budget of ${budgetText} has been submitted successfully. A portfolio manager will contact you within 24 hours.`);
+        
+        document.getElementById('investor-inquiry-form').reset();
+    }
+
+    // Initial calculation on load
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateROI();
+    });
+</script>
+{% endblock %}

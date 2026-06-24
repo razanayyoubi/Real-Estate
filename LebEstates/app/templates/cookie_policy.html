@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Cookie Policy | LebEstates - Prestige Real Estate{% endblock %}
+
+{% block styles %}
+<style>
+    /* Premium Cookies Page Styles */
+    .policy-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px;
+        position: relative;
+        z-index: 1;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .policy-hero {
+        background: radial-gradient(circle at 0% 0%, rgba(10, 31, 68, 0.05) 0%, transparent 60%),
+                    #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.25);
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 8, 30, 0.02);
+    }
+
+    .policy-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0a1f44 0%, #D4AF37 100%);
+    }
+
+    .policy-tag {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 700;
+        color: #0a1f44;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .policy-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 32px;
+        font-weight: 800;
+        color: #00081e;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    .policy-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(10, 31, 68, 0.03);
+        padding: 40px;
+        line-height: 1.7;
+        color: #44464e;
+    }
+
+    .policy-card h2 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 30px 0 12px 0;
+    }
+
+    .policy-card h2:first-of-type {
+        margin-top: 0;
+    }
+
+    .policy-card p {
+        font-size: 14.5px;
+        margin-bottom: 16px;
+    }
+
+    .policy-card ul {
+        margin-left: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .policy-card li {
+        font-size: 14px;
+    }
+
+    .policy-card strong {
+        color: #00081e;
+    }
+
+    .last-updated {
+        font-size: 12px;
+        color: #c5c6cf;
+        border-bottom: 1px solid rgba(180, 198, 244, 0.15);
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="policy-container">
+    
+    <!-- Hero Block -->
+    <div class="policy-hero">
+        <span class="policy-tag">LebEstates Legal & Disclosures</span>
+        <h1 class="policy-title">Cookie Policy</h1>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="policy-card">
+        <div class="last-updated">Last Updated: June 25, 2026</div>
+
+        <h2>1. What Are Cookies?</h2>
+        <p>Cookies are small text files stored on your computer or mobile device when you visit websites. They are widely used to make websites work or perform more efficiently, as well as to provide information to the site owners.</p>
+
+        <h2>2. How We Use Cookies</h2>
+        <p>LebEstates uses cookies to enhance your browsing experience, specifically for:</p>
+        <ul>
+            <li><strong>Authentication & Sessions:</strong> Maintaining your logged-in session state so you do not have to authenticate on every single page load.</li>
+            <li><strong>User Preferences:</strong> Storing search filters, sorting options, and layout preferences in our property browse pages.</li>
+            <li><strong>Analytics & Improvements:</strong> Collecting anonymous analytics to understand how visitors interact with our content, templates, and buttons.</li>
+        </ul>
+
+        <h2>3. Types of Cookies We Use</h2>
+        <ul>
+            <li><strong>Essential Cookies:</strong> Critical for account logins, forms submission, and basic navigation. Without these, the core website functionalities will fail.</li>
+            <li><strong>Performance Cookies:</strong> Keep track of loading speeds and page errors so we can fix bugs and speed up the application.</li>
+            <li><strong>Preference Cookies:</strong> Allow our server to remember your favorite properties or previous searches.</li>
+        </ul>
+
+        <h2>4. Managing Cookies</h2>
+        <p>Most web browsers allow you to control cookies through their settings preferences. You can delete existing cookies or configure your browser to block them entirely. Please note that blocking essential cookies will prevent you from logging in or using interactive features on LebEstates.</p>
+    </div>
+</div>
+{% endblock %}

@@ -65,7 +65,7 @@
                 <span class="material-symbols-outlined">group</span>
                 <span class="sidebar__nav-label">Users</span>
             </a>
-            <a class="sidebar__nav-item" href="#">
+            <a class="sidebar__nav-item {% if request.path == '/consultation' %}sidebar__nav-item--active{% endif %}"href="/consultation">
                 <span class="material-symbols-outlined">chat_bubble</span>
                 <span class="sidebar__nav-label">Consultations</span>
             </a>
@@ -344,9 +344,8 @@
                 <div>
                     <h6 class="footer-heading">Quick Links</h6>
                     <ul class="footer-links label-md">
-                        <li><a href="#">Properties</a></li>
-                        <li><a href="#">Sell/Rent</a></li>
-                        <li><a href="/consultation">Consultations</a></li>
+                        <li><a href="/properties">Properties</a></li>
+                        <li><a href="/sell-rent">Sell/Rent</a></li>
                         <li><a href="/about">About Us</a></li>
                         <li><a href="/contact">Contact Us</a></li>
                     </ul>
@@ -354,10 +353,10 @@
                 <div>
                     <h6 class="footer-heading">Services</h6>
                     <ul class="footer-links label-md">
-                        <li><a href="#">Valuation</a></li>
-                        <li><a href="#">Property Mgmt</a></li>
-                        <li><a href="#">Legal Support</a></li>
-                        <li><a href="#">Investments</a></li>
+                        <li><a href="/services/valuation">Valuation</a></li>
+                        <li><a href="/consultation">Consultations</a></li>
+                        <li><a href="/services/legal-support">Legal Support</a></li>
+                        <li><a href="/services/investments">Investments</a></li>
                     </ul>
                 </div>
                 <div>
@@ -365,11 +364,11 @@
                     <ul class="footer-links label-md">
                         <li>
                             <span class="material-symbols-outlined" data-icon="location_on">location_on</span>
-                            Ashrafieh, Beirut, Lebanon
+                            Beirut, Lebanon
                         </li>
                         <li>
                             <span class="material-symbols-outlined" data-icon="call">call</span>
-                            +961 1 234 567
+                            +961 3 612 742
                         </li>
                         <li>
                             <span class="material-symbols-outlined" data-icon="alternate_email">alternate_email</span>
@@ -383,9 +382,9 @@
         <div class="container footer-bottom">
             <p class="caption">© 2024 LebEstates. Timeless Prestige in Lebanese Real Estate.</p>
             <div class="footer-bottom-links caption">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">Cookie Policy</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/terms-of-service">Terms of Service</a>
+                <a href="/cookie-policy">Cookie Policy</a>
             </div>
         </div>
     </footer>
@@ -394,14 +393,14 @@
 
     <script>
         // Overrides the native alert() function to show custom-styled premium toasts instead
-        (function() {
-            window.alert = function(message) {
+        (function () {
+            window.alert = function (message) {
                 if (message === undefined || message === null) return;
-                
+
                 let type = 'info';
                 let icon = 'info';
                 let title = 'Notification';
-                
+
                 const lowerMsg = String(message).toLowerCase();
                 if (lowerMsg.includes('error') || lowerMsg.includes('failed') || lowerMsg.includes('unauthorized') || lowerMsg.includes('must be logged in') || lowerMsg.includes('invalid') || lowerMsg.includes('network error')) {
                     type = 'error';
@@ -412,17 +411,17 @@
                     icon = 'check_circle';
                     title = 'Success';
                 }
-                
+
                 let container = document.getElementById('custom-toast-container');
                 if (!container) {
                     container = document.createElement('div');
                     container.id = 'custom-toast-container';
                     document.body.appendChild(container);
                 }
-                
+
                 const toast = document.createElement('div');
                 toast.className = 'custom-toast toast-' + type;
-                
+
                 toast.innerHTML = `
                     <span class="material-symbols-outlined toast-icon">${icon}</span>
                     <div class="toast-content">
@@ -431,14 +430,14 @@
                     </div>
                     <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
                 `;
-                
+
                 container.appendChild(toast);
-                
+
                 // Trigger transition
                 setTimeout(() => {
                     toast.classList.add('show');
                 }, 10);
-                
+
                 // Auto close
                 setTimeout(() => {
                     toast.classList.remove('show');

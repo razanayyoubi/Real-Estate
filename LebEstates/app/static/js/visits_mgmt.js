@@ -125,15 +125,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Status Dropdown Inline Updates
     document.querySelectorAll('.status-dropdown').forEach(dropdown => {
-        dropdown.dataset.originalStatus = dropdown.value;
+        // For overdue visits the current value is 'Overdue'; store the real DB status
+        dropdown.dataset.originalStatus = dropdown.dataset.actualStatus || dropdown.value;
         
         dropdown.addEventListener('change', (e) => {
             const id = dropdown.dataset.id;
             const newStatus = dropdown.value;
-            const oldStatus = dropdown.dataset.originalStatus;
+            const oldDisplayStatus = dropdown.dataset.originalStatus;
+
+            // If user selects 'Overdue' (display-only option), revert without calling API
+            if (newStatus === 'Overdue') {
+                dropdown.value = 'Overdue';
+                return;
+            }
+
+            // The actual status to restore on cancel/error is what's in DB
+            const oldStatus = dropdown.dataset.actualStatus || oldDisplayStatus;
             
             if (!confirm(`Are you sure you want to change the status of visit #${id} to ${newStatus}?`)) {
-                dropdown.value = oldStatus;
+                // Restore previous display
+                if (dropdown.querySelector('option[value="Overdue"]') && oldStatus === 'Scheduled') {
+                    dropdown.value = 'Overdue';
+                } else {
+                    dropdown.value = oldStatus;
+                }
                 return;
             }
 
@@ -147,17 +162,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.success) {
                     dropdown.className = `status-dropdown status-${newStatus.toLowerCase()}`;
                     dropdown.dataset.originalStatus = newStatus;
+                    dropdown.dataset.actualStatus = newStatus;
+                    // Remove the 'Overdue' option if it was there (no longer overdue after update)
+                    const overdueOpt = dropdown.querySelector('option[value="Overdue"]');
+                    if (overdueOpt) overdueOpt.remove();
                     // Reload to update stats cards and note entries
                     location.reload();
                 } else {
                     alert(data.error || 'Failed to update status.');
-                    dropdown.value = oldStatus;
+                    if (dropdown.querySelector('option[value="Overdue"]') && (dropdown.dataset.actualStatus === 'Scheduled')) {
+                        dropdown.value = 'Overdue';
+                    } else {
+                        dropdown.value = oldStatus;
+                    }
                 }
             })
             .catch(err => {
                 console.error(err);
                 alert('Network error occurred.');
-                dropdown.value = oldStatus;
+                if (dropdown.querySelector('option[value="Overdue"]') && (dropdown.dataset.actualStatus === 'Scheduled')) {
+                    dropdown.value = 'Overdue';
+                } else {
+                    dropdown.value = oldStatus;
+                }
             });
         });
     });

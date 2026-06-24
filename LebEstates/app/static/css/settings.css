@@ -53,7 +53,7 @@
 
 /* Base page main-content container */
 .main-content {
-  margin-left: 280px; /* Offset for left sidebar */
+  margin-left: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

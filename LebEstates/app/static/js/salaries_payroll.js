@@ -82,33 +82,89 @@ document.addEventListener('DOMContentLoaded', () => {
             const rows = document.querySelectorAll('.ledger-row');
             
             rows.forEach(row => {
-                const position = row.dataset.position || '';
-                const isBroker = position.toLowerCase().includes('broker') || position.toLowerCase().includes('agent');
+                const dept = (row.dataset.dept || '').toLowerCase();
                 
                 if (selectedVal === 'All') {
                     row.style.display = '';
-                } else if (selectedVal === 'Broker') {
-                    row.style.display = isBroker ? '' : 'none';
-                } else if (selectedVal === 'Admin') {
-                    row.style.display = !isBroker ? '' : 'none';
+                } else {
+                    row.style.display = (dept === selectedVal.toLowerCase()) ? '' : 'none';
                 }
             });
         });
     }
 
-    // 4. Export ledger button click
+    // 4. Export ledger button click (Generates and downloads CSV file)
     const btnExportLedger = document.getElementById('btnExportLedger');
     if (btnExportLedger) {
         btnExportLedger.addEventListener('click', () => {
-            showToast('Treasury ledger exported to CSV successfully!');
-        });
-    }
+            const table = document.querySelector('.ledger-table');
+            if (!table) return;
 
-    // 5. Generate batch button click
-    const btnGenerateBatch = document.getElementById('btnGenerateBatch');
-    if (btnGenerateBatch) {
-        btnGenerateBatch.addEventListener('click', () => {
-            showToast('Generation request sent. Salaries batch finalized!');
+            // Generate CSV string content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // Get headers
+            const headers = Array.from(table.querySelectorAll('thead th'))
+                .slice(0, -1) // omit the action buttons column
+                .map(th => `"${th.textContent.trim().replace(/"/g, '""')}"`)
+                .join(",");
+            csvContent += headers + "\r\n";
+
+            // Get visible rows
+            const rows = table.querySelectorAll('tbody tr.ledger-row');
+            rows.forEach(row => {
+                if (row.style.display === 'none') return;
+
+                const cols = [];
+                // 1. Stakeholder name & ID
+                const nameNode = row.querySelector('.stakeholder__name');
+                const idNode = row.querySelector('.stakeholder__id');
+                const name = nameNode ? nameNode.textContent.trim() : '';
+                const id = idNode ? idNode.textContent.trim() : '';
+                cols.push(`"${name} (${id})"`);
+
+                // 2. Designation & Dept
+                const titleNode = row.querySelector('.designation-title');
+                const deptNode = row.querySelector('.designation-dept');
+                const title = titleNode ? titleNode.textContent.trim() : '';
+                const dept = deptNode ? deptNode.textContent.trim() : '';
+                cols.push(`"${title} - ${dept}"`);
+
+                // 3. Base Salary
+                const baseSalNode = row.querySelector('td:nth-child(3) .monospaced-value');
+                const baseSal = baseSalNode ? baseSalNode.textContent.trim().replace(/[$,]/g, '') : '';
+                cols.push(`"${baseSal}"`);
+
+                // 4. Commission
+                const commNode = row.querySelector('.highlight-commissions');
+                const comm = commNode ? commNode.textContent.trim().replace(/[$,]/g, '') : '';
+                cols.push(`"${comm}"`);
+
+                // 5. Net Value
+                const netNode = row.querySelector('.net-payout-value');
+                const net = netNode ? netNode.textContent.trim().replace(/[$,]/g, '') : '';
+                cols.push(`"${net}"`);
+
+                // 6. Status
+                const statusNode = row.querySelector('.payment-status-badge');
+                const status = statusNode ? statusNode.textContent.trim() : '';
+                cols.push(`"${status}"`);
+
+                csvContent += cols.join(",") + "\r\n";
+            });
+
+            // Trigger local download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            
+            const cycleText = document.querySelector('.cycle-date') ? document.querySelector('.cycle-date').textContent.trim() : 'payroll';
+            link.setAttribute("download", `LebEstates_Payroll_${cycleText}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('Treasury ledger exported to CSV successfully!');
         });
     }
 

@@ -24,6 +24,11 @@ class SalaryService:
         total_count = 0
 
         for employee, user in employees:
+            # Check if employee was hired on or before the selected cycle month
+            if employee.hireDate:
+                hire_month = employee.hireDate.strftime("%Y-%m")
+                if hire_month > selected_month:
+                    continue
             # Get salary record for selected month
             salary_record = Salary.query.filter_by(employeeID=employee.employeeID, salaryMonth=selected_month).first()
             
@@ -73,6 +78,7 @@ class SalaryService:
                 'name': user.fullName,
                 'initials': initials,
                 'position': employee.position,
+                'role_name': user.role.roleName if user.role else 'Employee',
                 'base_salary': base_salary,
                 'commission': comm_sum,
                 'net_value': net_value,
@@ -116,6 +122,16 @@ class SalaryService:
             val = m.strftime("%Y-%m")
             label = m.strftime("%b %Y")
             months.append({'value': val, 'label': label})
+
+        # Dynamically append selected_month if it's not in the default last 3 months
+        existing_vals = [m['value'] for m in months]
+        if selected_month not in existing_vals:
+            try:
+                dt = datetime.strptime(selected_month, "%Y-%m")
+                label = dt.strftime("%b %Y")
+                months.append({'value': selected_month, 'label': label})
+            except Exception:
+                pass
 
         return {
             'ledger': ledger,

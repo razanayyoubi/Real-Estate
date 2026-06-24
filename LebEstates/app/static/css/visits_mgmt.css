@@ -521,6 +521,11 @@
   color: var(--on-primary);
 }
 
+.status-overdue {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .status-declined {
   background: #fee2e2;
   color: #b91c1c;
@@ -912,6 +917,12 @@
   background-color: #fee2e2;
   color: #b91c1c;
   border-color: #fecaca;
+}
+
+.status-dropdown.status-overdue {
+  background-color: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
 }
 
 /* Consultant Dropdown */

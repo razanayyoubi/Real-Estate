@@ -156,3 +156,34 @@ def api_search():
     return jsonify(results)
 
 
+@main_bp.route('/services/valuation')
+def valuation():
+    return render_template('valuation.html')
+
+
+@main_bp.route('/services/legal-support')
+def legal_support():
+    return render_template('legal_support.html')
+
+
+@main_bp.route('/services/investments')
+def investments():
+    return render_template('investments.html')
+
+
+@main_bp.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
+
+@main_bp.route('/terms-of-service')
+def terms_of_service():
+    return render_template('terms_of_service.html')
+
+
+@main_bp.route('/cookie-policy')
+def cookie_policy():
+    return render_template('cookie_policy.html')
+
+
+

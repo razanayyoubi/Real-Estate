@@ -62,7 +62,7 @@
 
     <div class="settings-grid" style="grid-template-columns: 1fr;">
         <!-- LEFT COLUMN: Identity & Info Form -->
-        <div class="settings-sidebar" style="max-width: 600px; margin: 0 auto; width: 100%;">
+        <div class="settings-sidebar" style="width: 100%;">
             <!-- Edit Profile Form -->
             <div class="settings-card">
                 <div class="card-title">
@@ -70,25 +70,30 @@
                     Personal Information
                 </div>
                 <form id="edit-profile-form" onsubmit="submitEditProfile(event)">
-                    <div class="form-group">
-                        <label class="form-label" for="full_name">Full Name</label>
-                        <input type="text" id="full_name" name="full_name" class="form-input"
-                            value="{{ user.fullName }}" required>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="full_name">Full Name</label>
+                            <input type="text" id="full_name" name="full_name" class="form-input"
+                                value="{{ user.fullName }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="phone_number">Phone Number</label>
+                            <input type="text" id="phone_number" name="phone_number" class="form-input"
+                                value="{{ user.phoneNumber or '' }}" placeholder="e.g. +961 70 123 456">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="phone_number">Phone Number</label>
-                        <input type="text" id="phone_number" name="phone_number" class="form-input"
-                            value="{{ user.phoneNumber or '' }}" placeholder="e.g. +961 70 123 456">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="email_read">Registered Email (Read-only)</label>
-                        <input type="email" id="email_read" class="form-input" value="{{ user.email }}" readonly>
-                    </div>
-                    <div style="text-align: right; margin-top: 24px;">
-                        <button type="submit" class="btn-submit" style="width: 100%;">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">save</span>
-                            Save Changes
-                        </button>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="email_read">Registered Email (Read-only)</label>
+                            <input type="email" id="email_read" class="form-input" value="{{ user.email }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn-submit" style="width: 100%; height: 48px;">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">save</span>
+                                Save Changes
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

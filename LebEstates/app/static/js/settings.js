@@ -25,6 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (verify2faBtn) {
         verify2faBtn.addEventListener('click', verifyAndEnableTwoFactor);
     }
+
+    // Download Security Report
+    const downloadReportBtn = document.getElementById('btnDownloadReport');
+    if (downloadReportBtn) {
+        downloadReportBtn.addEventListener('click', () => {
+            window.location.href = '/control-panel/settings/security-report';
+        });
+    }
 });
 
 // Toast Notification System

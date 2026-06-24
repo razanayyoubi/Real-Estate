@@ -106,9 +106,20 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(46, 125, 50, 0); }
-  100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+  0% {
+    transform: scale(0.85);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(46, 125, 50, 0);
+  }
+
+  100% {
+    transform: scale(0.85);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+  }
 }
 
 .btn-sync {
@@ -135,8 +146,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .date-range-badge {
@@ -190,10 +206,21 @@
   box-shadow: var(--shadow-hover);
 }
 
-.kpi-card.border-primary { border-left: 4px solid var(--primary-container); }
-.kpi-card.border-secondary { border-left: 4px solid var(--secondary); }
-.kpi-card.border-error { border-left: 4px solid var(--error); }
-.kpi-card.border-info { border-left: 4px solid var(--surface-tint); }
+.kpi-card.border-primary {
+  border-left: 4px solid var(--primary-container);
+}
+
+.kpi-card.border-secondary {
+  border-left: 4px solid var(--secondary);
+}
+
+.kpi-card.border-error {
+  border-left: 4px solid var(--error);
+}
+
+.kpi-card.border-info {
+  border-left: 4px solid var(--surface-tint);
+}
 
 .kpi-card-header {
   display: flex;
@@ -211,10 +238,25 @@
   justify-content: center;
 }
 
-.kpi-icon-wrapper.primary { background-color: rgba(10, 31, 68, 0.05); color: var(--primary-container); }
-.kpi-icon-wrapper.secondary { background-color: rgba(115, 92, 0, 0.08); color: var(--secondary); }
-.kpi-icon-wrapper.error { background-color: rgba(186, 26, 26, 0.08); color: var(--error); }
-.kpi-icon-wrapper.info { background-color: rgba(76, 94, 134, 0.08); color: var(--surface-tint); }
+.kpi-icon-wrapper.primary {
+  background-color: rgba(10, 31, 68, 0.05);
+  color: var(--primary-container);
+}
+
+.kpi-icon-wrapper.secondary {
+  background-color: rgba(115, 92, 0, 0.08);
+  color: var(--secondary);
+}
+
+.kpi-icon-wrapper.error {
+  background-color: rgba(186, 26, 26, 0.08);
+  color: var(--error);
+}
+
+.kpi-icon-wrapper.info {
+  background-color: rgba(76, 94, 134, 0.08);
+  color: var(--surface-tint);
+}
 
 .kpi-badge {
   font-size: 12px;
@@ -223,9 +265,20 @@
   border-radius: 6px;
 }
 
-.kpi-badge.up { background-color: #e8f5e9; color: #2e7d32; }
-.kpi-badge.down { background-color: #ffebee; color: #c62828; }
-.kpi-badge.neutral { background-color: var(--surface-container-high); color: var(--on-surface-variant); }
+.kpi-badge.up {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.kpi-badge.down {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.kpi-badge.neutral {
+  background-color: var(--surface-container-high);
+  color: var(--on-surface-variant);
+}
 
 .kpi-label {
   font-size: 11px;
@@ -298,8 +351,13 @@
   border-radius: 2px;
 }
 
-.legend-square.collected { background-color: var(--primary-container); }
-.legend-square.outstanding { background-color: var(--secondary-container); }
+.legend-square.collected {
+  background-color: var(--primary-container);
+}
+
+.legend-square.outstanding {
+  background-color: var(--secondary-container);
+}
 
 .chart-canvas-container {
   position: relative;
@@ -342,9 +400,17 @@
   border-radius: 50%;
 }
 
-.distribution-dot.paid { background-color: var(--primary-container); }
-.distribution-dot.partial { background-color: var(--secondary-container); }
-.distribution-dot.overdue { background-color: var(--error); }
+.distribution-dot.paid {
+  background-color: var(--primary-container);
+}
+
+.distribution-dot.partial {
+  background-color: var(--secondary-container);
+}
+
+.distribution-dot.overdue {
+  background-color: var(--error);
+}
 
 .distribution-val {
   font-weight: 700;
@@ -398,10 +464,20 @@
   font-weight: 500;
 }
 
-.aging-label { color: var(--on-surface-variant); }
-.aging-val { font-weight: 700; color: var(--primary); }
-.aging-label-row.overdue .aging-label, 
-.aging-label-row.overdue .aging-val { color: var(--error); font-weight: 600; }
+.aging-label {
+  color: var(--on-surface-variant);
+}
+
+.aging-val {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.aging-label-row.overdue .aging-label,
+.aging-label-row.overdue .aging-val {
+  color: var(--error);
+  font-weight: 600;
+}
 
 .aging-bar-outer {
   width: 100%;
@@ -417,10 +493,21 @@
   transition: width 0.5s ease-in-out;
 }
 
-.aging-bar-inner.current { background-color: var(--primary); }
-.aging-bar-inner.bracket2 { background-color: rgba(10, 31, 68, 0.6); }
-.aging-bar-inner.bracket3 { background-color: var(--secondary-container); }
-.aging-bar-inner.overdue { background-color: var(--error); }
+.aging-bar-inner.current {
+  background-color: var(--primary);
+}
+
+.aging-bar-inner.bracket2 {
+  background-color: rgba(10, 31, 68, 0.6);
+}
+
+.aging-bar-inner.bracket3 {
+  background-color: var(--secondary-container);
+}
+
+.aging-bar-inner.overdue {
+  background-color: var(--error);
+}
 
 /* Leaderboard (Critical Balances) */
 .leaderboard-card-premium {
@@ -542,8 +629,13 @@
   font-size: 15px;
 }
 
-.balance-value-text.overdue { color: #ff8a80; }
-.balance-value-text.pending { color: var(--secondary-fixed); }
+.balance-value-text.overdue {
+  color: #ff8a80;
+}
+
+.balance-value-text.pending {
+  color: var(--secondary-fixed);
+}
 
 .balance-days-sub {
   font-size: 9px;
@@ -693,10 +785,25 @@
   letter-spacing: 0.03em;
 }
 
-.payment-status-badge.paid { background-color: rgba(10, 31, 68, 0.05); color: var(--primary-container); }
-.payment-status-badge.partial { background-color: rgba(254, 214, 91, 0.15); color: #735c00; }
-.payment-status-badge.overdue { background-color: rgba(186, 26, 26, 0.08); color: var(--error); }
-.payment-status-badge.cancelled { background-color: var(--surface-container); color: var(--on-surface-variant); }
+.payment-status-badge.paid {
+  background-color: rgba(10, 31, 68, 0.05);
+  color: var(--primary-container);
+}
+
+.payment-status-badge.partial {
+  background-color: rgba(254, 214, 91, 0.15);
+  color: #735c00;
+}
+
+.payment-status-badge.overdue {
+  background-color: rgba(186, 26, 26, 0.08);
+  color: var(--error);
+}
+
+.payment-status-badge.cancelled {
+  background-color: var(--surface-container);
+  color: var(--on-surface-variant);
+}
 
 /* Table inline action buttons */
 .table-btn-actions {
@@ -742,8 +849,15 @@
 }
 
 @keyframes opacity-flash {
-  0% { opacity: 0.4; transform: scale(0.98); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ===== 6. MODALS ===== */
@@ -783,8 +897,15 @@
 }
 
 @keyframes modalSlideIn {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modal-header {
@@ -841,4 +962,3 @@
   justify-content: flex-end;
   gap: 12px;
 }
-

@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Legal Support | LebEstates - Prestige Lebanese Real Estate{% endblock %}
+
+{% block styles %}
+<style>
+    /* Premium Legal Page Styles */
+    .legal-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 24px;
+        position: relative;
+        z-index: 1;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .legal-hero {
+        background: radial-gradient(circle at 0% 0%, rgba(10, 31, 68, 0.08) 0%, transparent 60%),
+                    radial-gradient(circle at 100% 100%, rgba(115, 92, 0, 0.06) 0%, transparent 60%),
+                    #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.25);
+        border-radius: 24px;
+        padding: 60px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 8, 30, 0.03);
+    }
+
+    .legal-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0a1f44 0%, #D4AF37 100%);
+    }
+
+    .legal-tag {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-weight: 700;
+        color: #0a1f44;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .legal-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 42px;
+        font-weight: 800;
+        color: #00081e;
+        margin: 0 0 16px 0;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+
+    .legal-subtitle {
+        font-size: 16px;
+        color: #44464e;
+        margin: 0;
+        line-height: 1.6;
+        max-width: 800px;
+    }
+
+    .legal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: start;
+    }
+
+    @media (max-width: 991px) {
+        .legal-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+        .legal-hero {
+            padding: 40px 24px;
+        }
+        .legal-title {
+            font-size: 32px;
+        }
+    }
+
+    /* Cards */
+    .premium-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(10, 31, 68, 0.03);
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #0a1f44 0%, transparent 100%);
+    }
+
+    .premium-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 36px rgba(10, 31, 68, 0.06);
+        border-color: rgba(10, 31, 68, 0.25);
+    }
+
+    .card-header {
+        padding: 24px 30px;
+        background-color: #f8f9ff;
+        border-bottom: 1px solid rgba(180, 198, 244, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .card-icon {
+        width: 42px;
+        height: 42px;
+        background-color: rgba(10, 31, 68, 0.05);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0a1f44;
+    }
+
+    .card-title-text h3 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 0;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
+    /* Form Fields */
+    .legal-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #00081e;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        background-color: #f8f9ff;
+        border: 1px solid #c5c6cf;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #121c2a;
+        outline: none;
+        transition: all 0.25s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: #0a1f44;
+        box-shadow: 0 0 0 3px rgba(10, 31, 68, 0.15);
+        background-color: #ffffff;
+    }
+
+    .btn-legal-submit {
+        background: linear-gradient(135deg, #0a1f44 0%, #1e3a6c 100%);
+        color: #ffffff;
+        border: none;
+        padding: 14px 28px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(10, 31, 68, 0.15);
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .btn-legal-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(10, 31, 68, 0.3);
+        filter: brightness(1.1);
+    }
+
+    /* Legal Services List */
+    .services-accordion {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .service-row {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        gap: 20px;
+        box-shadow: 0 4px 12px rgba(10, 31, 68, 0.01);
+        transition: all 0.25s ease;
+    }
+
+    .service-row:hover {
+        transform: translateY(-2px);
+        border-color: rgba(10, 31, 68, 0.2);
+        box-shadow: 0 8px 20px rgba(10, 31, 68, 0.03);
+    }
+
+    .service-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background-color: rgba(10, 31, 68, 0.05);
+        color: #0a1f44;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .service-content h4 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 17px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 0 0 8px 0;
+    }
+
+    .service-content p {
+        font-size: 13.5px;
+        color: #44464e;
+        line-height: 1.5;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="legal-container">
+    
+    <!-- Hero Block -->
+    <div class="legal-hero">
+        <span class="legal-tag">LebEstates Concierge Advisory</span>
+        <h1 class="legal-title">Navigate Transactions with Absolute Legal Integrity.</h1>
+        <p class="legal-subtitle">
+            Lebanese property acquisition and ownership legislation require exact navigation. The LebEstates legal council is staffed by senior conveyancers, corporate lawyers, and fiscal advisors who audit details so your transaction is safe and compliant.
+        </p>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="legal-grid">
+        
+        <!-- Left: Legal Services Accordion -->
+        <div class="services-accordion">
+            
+            <div class="service-row">
+                <div class="service-icon-box">
+                    <span class="material-symbols-outlined">gavel</span>
+                </div>
+                <div class="service-content">
+                    <h4>Title Deed Conveyance & Transfer</h4>
+                    <p>Wiping clean liens, checking inheritance claims, and managing the transfer of real estate titles at local land registries in full compliance with Lebanese property laws.</p>
+                </div>
+            </div>
+
+            <div class="service-row">
+                <div class="service-icon-box">
+                    <span class="material-symbols-outlined">public</span>
+                </div>
+                <div class="service-content">
+                    <h4>Foreign Ownership Acquisition</h4>
+                    <p>Securing cabinet approvals and resolving requirements for non-Lebanese citizens seeking land and property investment within national limits.</p>
+                </div>
+            </div>
+
+            <div class="service-row">
+                <div class="service-icon-box">
+                    <span class="material-symbols-outlined">percent</span>
+                </div>
+                <div class="service-content">
+                    <h4>Fiscal & Real Estate Tax Advisory</h4>
+                    <p>Full auditing of capital gains taxes, municipal rates, deed registration fees, and corporate holdings to maximize asset yields legally.</p>
+                </div>
+            </div>
+
+            <div class="service-row">
+                <div class="service-icon-box">
+                    <span class="material-symbols-outlined">handshake</span>
+                </div>
+                <div class="service-content">
+                    <h4>Contract Verification & Mediation</h4>
+                    <p>Drafting ironclad lease agreements, escrow terms, joint venture contracts, and acting as independent legal mediators for real estate disputes.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right: Legal Intake Form -->
+        <div class="premium-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <span class="material-symbols-outlined">edit_note</span>
+                </div>
+                <div class="card-title-text">
+                    <h3>Request Legal Council</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="legal-request-form" class="legal-form" onsubmit="handleLegalSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="full_name">Full Name</label>
+                        <input type="text" id="full_name" class="form-input" placeholder="Enter your name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" class="form-input" placeholder="name@domain.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="category">Advisory Category</label>
+                        <select id="category" class="form-select" required>
+                            <option value="" disabled selected>Select legal department</option>
+                            <option value="Conveyance">Title Deed & Conveyance</option>
+                            <option value="Foreign Ownership">Foreign Ownership Approvals</option>
+                            <option value="Taxation">Taxation & Capital Gains</option>
+                            <option value="Litigation">Tenant-Landlord Dispute</option>
+                            <option value="Other">Other Corporate Advice</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="case_details">Case Details & Description</label>
+                        <textarea id="case_details" class="form-textarea" rows="5" placeholder="Detail your property location, transaction type, or legal concern..."></textarea>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn-legal-submit">
+                            <span>Request Legal Consultation</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function handleLegalSubmit(event) {
+        event.preventDefault();
+        
+        const name = document.getElementById('full_name').value;
+        const category = document.getElementById('category').value;
+        
+        // Show success alert/toast override
+        alert(`Request received, ${name}. Our legal advisors specializing in ${category} have been notified. A senior counsel member will reach out to you within 24 hours.`);
+        
+        document.getElementById('legal-request-form').reset();
+    }
+</script>
+{% endblock %}

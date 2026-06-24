@@ -267,6 +267,57 @@ def settings_page():
                            current_token=session.get('session_token'))
 
 
+@auth_bp.route('/control-panel/settings/security-report', methods=['GET'])
+def download_security_report():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login_page'))
+        
+    data = AuthService.get_profile_data(session['user_id'])
+    if not data:
+        return jsonify({'error': 'User not found'}), 404
+        
+    user = data['user']
+    sessions = data['sessions']
+    
+    # Fetch all login history for this user
+    from app.models.users import LoginLog
+    all_login_logs = LoginLog.query.filter_by(userID=user.userID).order_by(LoginLog.loginAt.desc()).all()
+    
+    import io
+    import csv
+    from datetime import datetime
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Section 1: User Security Profile Details
+    writer.writerow(["LEBESTATES SECURITY PROFILE REPORT"])
+    writer.writerow(["Generated At", datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") + " UTC"])
+    writer.writerow(["User ID", user.userID])
+    writer.writerow(["Name", user.fullName])
+    writer.writerow(["Email", user.email])
+    writer.writerow(["2FA Status", "Enabled" if user.twoFactorEnabled else "Disabled"])
+    writer.writerow([])
+    
+    # Section 2: Active Sessions
+    writer.writerow(["ACTIVE MANAGEMENT SESSIONS"])
+    writer.writerow(["Session ID", "IP Address", "User Agent", "Last Active"])
+    for s in sessions:
+        writer.writerow([s.sessionID, s.ipAddress, s.userAgent, s.lastActive.strftime("%Y-%m-%d %H:%M:%S") + " UTC"])
+    writer.writerow([])
+    
+    # Section 3: Security Event Log
+    writer.writerow(["SECURITY EVENT LOG (LOGIN ATTEMPTS)"])
+    writer.writerow(["Log ID", "IP Address", "User Agent", "Timestamp", "Status"])
+    for log in all_login_logs:
+        writer.writerow([log.logID, log.ipAddress, log.userAgent, log.loginAt.strftime("%Y-%m-%d %H:%M:%S") + " UTC", log.status])
+        
+    response = Response(output.getvalue(), mimetype="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=lebestates_security_report.csv"
+    return response
+
+
+
 @auth_bp.route('/profile/edit-details', methods=['POST'])
 def edit_profile_details():
     if 'user_id' not in session:

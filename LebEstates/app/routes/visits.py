@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify
 from app.services.auth_service import AuthService
 from app.services.visit_service import VisitService
@@ -25,7 +26,8 @@ def visits_list():
         confirmed_visits=data['confirmed_visits'],
         completion_rate=data['completion_rate'],
         employees=data['employees'],
-        recent_notes=data['recent_notes']
+        recent_notes=data['recent_notes'],
+        now=datetime.now()
     )
 
 @visits_bp.route('/control-panel/visits/<int:visit_id>/update_status', methods=['POST'])

@@ -127,7 +127,8 @@
 .kpi-metric-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
-  border-color: rgba(115, 92, 0, 0.3); /* gold hint color */
+  border-color: rgba(115, 92, 0, 0.3);
+  /* gold hint color */
 }
 
 .kpi-card-header {
@@ -294,7 +295,8 @@
   }
 }
 
-.sources-card, .leaderboard-card {
+.sources-card,
+.leaderboard-card {
   background-color: var(--surface-container-lowest);
   border-radius: 30px;
   padding: 32px;
@@ -367,8 +369,13 @@
   border-radius: 50%;
 }
 
-.legend-color-dot.sales { background-color: var(--primary-container); }
-.legend-color-dot.rentals { background-color: var(--secondary-container); }
+.legend-color-dot.sales {
+  background-color: var(--primary-container);
+}
+
+.legend-color-dot.rentals {
+  background-color: var(--secondary-container);
+}
 
 .legend-text {
   font-size: 14px;
@@ -744,9 +751,17 @@
   line-height: 1.2;
 }
 
-.profit-metric-value.sec { color: var(--secondary); }
-.profit-metric-value.err { color: var(--error); }
-.profit-metric-value.succ { color: #2e7d32; }
+.profit-metric-value.sec {
+  color: var(--secondary);
+}
+
+.profit-metric-value.err {
+  color: var(--error);
+}
+
+.profit-metric-value.succ {
+  color: #2e7d32;
+}
 
 .profit-bar-wrapper {
   height: 8px;
@@ -761,9 +776,17 @@
   border-radius: 50px;
 }
 
-.profit-bar-fill.pri { background-color: var(--primary-container); }
-.profit-bar-fill.sec { background-color: var(--secondary); }
-.profit-bar-fill.err { background-color: var(--error); }
+.profit-bar-fill.pri {
+  background-color: var(--primary-container);
+}
+
+.profit-bar-fill.sec {
+  background-color: var(--secondary);
+}
+
+.profit-bar-fill.err {
+  background-color: var(--error);
+}
 
 .profit-badge-margin {
   font-size: 13px;
@@ -826,8 +849,13 @@
   border-radius: 3px;
 }
 
-.legend-indicator-square.rev { background-color: rgba(255, 255, 255, 0.2); }
-.legend-indicator-square.prof { background-color: var(--secondary-fixed); }
+.legend-indicator-square.rev {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.legend-indicator-square.prof {
+  background-color: var(--secondary-fixed);
+}
 
 /* Background Trend Vector Decoration */
 .background-vector-decoration {
@@ -930,10 +958,12 @@
     transform: scale(0.95);
     opacity: 0.8;
   }
+
   50% {
     transform: scale(1.8);
     opacity: 0;
   }
+
   100% {
     transform: scale(0.95);
     opacity: 0;
@@ -944,6 +974,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -954,9 +985,9 @@
     opacity: 0.3;
     transform: translateY(2px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
   }
 }
-

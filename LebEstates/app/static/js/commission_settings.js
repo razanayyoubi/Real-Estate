@@ -60,18 +60,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Toggle calculator modes (Sale vs Rent)
     function setCalcMode(mode) {
         calcType = mode;
+        const cardBuyer = document.getElementById('card-buyer');
+        const cardSeller = document.getElementById('card-seller');
+        const cardRenter = document.getElementById('card-renter');
+
         if (mode === 'sale') {
             elements.optSale.classList.add('active');
             elements.optRent.classList.remove('active');
             elements.slider.style.transform = 'translateX(0)';
             elements.labelPrice.textContent = 'Listed Property Price ($)';
             elements.inputPrice.value = 500000;
+            if (cardBuyer) cardBuyer.style.display = 'flex';
+            if (cardSeller) cardSeller.style.display = 'flex';
+            if (cardRenter) cardRenter.style.display = 'none';
         } else {
             elements.optRent.classList.add('active');
             elements.optSale.classList.remove('active');
             elements.slider.style.transform = 'translateX(100%)';
             elements.labelPrice.textContent = 'Monthly Rent Price ($)';
             elements.inputPrice.value = 2500;
+            if (cardBuyer) cardBuyer.style.display = 'none';
+            if (cardSeller) cardSeller.style.display = 'none';
+            if (cardRenter) cardRenter.style.display = 'flex';
         }
         updateCalculation();
     }
@@ -82,27 +92,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const buyerRate = parseFloat(elements.inputBuyerRate.value) || 0;
         const sellerRate = parseFloat(elements.inputSellerRate.value) || 0;
         const agentShare = parseFloat(elements.inputAgentShare.value) || 0;
-        const rentRule = elements.inputRentRule.value;
         
         let buyerComm = 0;
         let sellerComm = 0;
+        let renterComm = 0;
+        let gross = 0;
 
         if (calcType === 'sale') {
             buyerComm = price * (buyerRate / 100);
             sellerComm = price * (sellerRate / 100);
+            gross = buyerComm + sellerComm;
         } else {
-            // "1 Month" rent. Split 50/50
-            buyerComm = price;
-            sellerComm = price * 0.5;
+            renterComm = price;
+            gross = renterComm;
         }
 
-        const gross = buyerComm + sellerComm;
         const agentPayout = gross * (agentShare / 100);
         const net = gross - agentPayout;
 
         // Render to UI
-        elements.resBuyer.textContent = formatCurrency(buyerComm);
-        elements.resSeller.textContent = formatCurrency(sellerComm);
+        if (elements.resBuyer) elements.resBuyer.textContent = formatCurrency(buyerComm);
+        if (elements.resSeller) elements.resSeller.textContent = formatCurrency(sellerComm);
+        const resRenter = document.getElementById('res-renter');
+        if (resRenter) resRenter.textContent = formatCurrency(renterComm);
+
         elements.resGross.textContent = formatCurrency(gross);
         elements.resAgentPerc.textContent = agentShare;
         elements.resAgentVal.textContent = '-' + formatCurrency(agentPayout);

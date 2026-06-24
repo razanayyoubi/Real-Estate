@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy | LebEstates - Prestige Real Estate{% endblock %}
+
+{% block styles %}
+<style>
+    /* Premium Privacy Page Styles */
+    .policy-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px;
+        position: relative;
+        z-index: 1;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .policy-hero {
+        background: radial-gradient(circle at 0% 0%, rgba(10, 31, 68, 0.05) 0%, transparent 60%),
+                    #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.25);
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 8, 30, 0.02);
+    }
+
+    .policy-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0a1f44 0%, #D4AF37 100%);
+    }
+
+    .policy-tag {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 700;
+        color: #0a1f44;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .policy-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 32px;
+        font-weight: 800;
+        color: #00081e;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    .policy-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(180, 198, 244, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(10, 31, 68, 0.03);
+        padding: 40px;
+        line-height: 1.7;
+        color: #44464e;
+    }
+
+    .policy-card h2 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #00081e;
+        margin: 30px 0 12px 0;
+    }
+
+    .policy-card h2:first-of-type {
+        margin-top: 0;
+    }
+
+    .policy-card p {
+        font-size: 14.5px;
+        margin-bottom: 16px;
+    }
+
+    .policy-card ul {
+        margin-left: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .policy-card li {
+        font-size: 14px;
+    }
+
+    .policy-card strong {
+        color: #00081e;
+    }
+
+    .last-updated {
+        font-size: 12px;
+        color: #c5c6cf;
+        border-bottom: 1px solid rgba(180, 198, 244, 0.15);
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="policy-container">
+    
+    <!-- Hero Block -->
+    <div class="policy-hero">
+        <span class="policy-tag">LebEstates Legal & Disclosures</span>
+        <h1 class="policy-title">Privacy Policy</h1>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="policy-card">
+        <div class="last-updated">Last Updated: June 25, 2026</div>
+
+        <h2>1. Information We Collect</h2>
+        <p>At LebEstates, we respect your privacy and are committed to protecting the personal information you share with us. We collect information through several channels:</p>
+        <ul>
+            <li><strong>Personal Details:</strong> Name, email address, phone number, and preferences provided during registration, consultation scheduling, or when requesting valuations and legal services.</li>
+            <li><strong>Property Details:</strong> Any property data, locations, pricing, and photos you upload when proposing assets for sale or rent.</li>
+            <li><strong>Usage Logs:</strong> Information regarding how you navigate our platform, searches performed, and favorited properties to continuously improve UI layout and performance.</li>
+        </ul>
+
+        <h2>2. How We Use Your Information</h2>
+        <p>The information we collect is utilized strictly for premium real estate service delivery, including:</p>
+        <ul>
+            <li>Providing real-time matches for purchase, sale, or rental inquiries.</li>
+            <li>Fulfilling legal audits, comparative market analyses, and scheduling valuation visits.</li>
+            <li>Maintaining account security, including secure multi-factor authentication (2FA) logs.</li>
+            <li>Improving system interfaces and validating transactions.</li>
+        </ul>
+
+        <h2>3. Information Protection</h2>
+        <p>LebEstates employs state-of-the-art administrative, technical, and physical security measures to shield your records. Personal information and transactional data are stored behind encrypted protocols and accessible only by authorized employees under strict authentication checks.</p>
+
+        <h2>4. Data Sharing & Third Parties</h2>
+        <p>We do not sell, rent, or lease your personal information to third parties. We share details only with verified legal associates or internal appraisal specialists explicitly chosen by you to handle legal or valuation services, or as required by Lebanese national regulations.</p>
+
+        <h2>5. Your Rights</h2>
+        <p>You have the right to access, edit, or request the deletion of your registered accounts and associated logs. For any questions regarding data removal or privacy policy inquiries, please contact our support desk at <strong>privacy@lebestates.com</strong>.</p>
+    </div>
+</div>
+{% endblock %}
