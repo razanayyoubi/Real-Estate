@@ -1,14 +1,12 @@
 from app.models.base import db
 from app.models.notification import Notification
 from app.models.users import Users
-from app.services.email_service import EmailService
 
 class NotificationService:
     @staticmethod
     def create_notification(user_id, message, action_url=None):
         """
-        Creates a new notification record in the database for the given user,
-        and triggers a parallel email notification to their email address.
+        Creates a new notification record in the database for the given user.
         """
         user = Users.query.get(user_id)
         if not user:
@@ -24,29 +22,6 @@ class NotificationService:
             )
             db.session.add(new_notif)
             db.session.commit()
-
-            # Format email body
-            email_body = f"""
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dddddd; border-radius: 8px;">
-                        <h2 style="color: #0d1b2a;">LebEstates Notification</h2>
-                        <p>Hello {user.fullName},</p>
-                        <p>{message}</p>
-                        {f'<p><a href="http://localhost:5000{action_url}" style="display: inline-block; background-color: #ffd65b; color: #0d1b2a; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px;">View Action</a></p>' if action_url else ''}
-                        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;">
-                        <p style="font-size: 12px; color: #777777;">This is an automated email from LebEstates. Please do not reply directly to this message.</p>
-                    </div>
-                </body>
-            </html>
-            """
-            
-            # Send Email
-            EmailService.send_email(
-                to_email=user.email,
-                subject="New Notification | LebEstates",
-                body_html=email_body
-            )
 
             return {'success': True, 'notification_id': new_notif.notificationID}
         except Exception as e:
