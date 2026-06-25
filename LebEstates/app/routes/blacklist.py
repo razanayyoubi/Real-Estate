@@ -13,20 +13,20 @@ from app.services.blacklist_service import (
 
 blacklist_bp = Blueprint('blacklist', __name__, url_prefix='/blacklist')
 
-def admin_or_employee_required(f):
+def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('user_id'):
             return redirect(url_for('auth.login_page'))
         role = session.get('role_name', '').lower()
-        if role not in ['admin', 'employee']:
+        if role != 'admin':
             flash("You do not have permission to access this page.", "error")
             return redirect(url_for('main.homepage'))
         return f(*args, **kwargs)
     return decorated_function
 
 @blacklist_bp.route('/')
-@admin_or_employee_required
+@admin_required
 def index():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -54,7 +54,7 @@ def index():
     )
 
 @blacklist_bp.route('/search-users')
-@admin_or_employee_required
+@admin_required
 def search_users():
     q = request.args.get('q', '').strip()
     if not q or len(q) < 2:
@@ -64,7 +64,7 @@ def search_users():
     return jsonify(result)
 
 @blacklist_bp.route('/add', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def add_blacklist_route():
     data = request.get_json() if request.is_json else request.form
     
@@ -96,7 +96,7 @@ def add_blacklist_route():
         return jsonify({'error': result.get('error', 'Operation failed')}), result.get('code', 400)
 
 @blacklist_bp.route('/edit/<int:blacklist_id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def edit_blacklist_route(blacklist_id):
     data = request.get_json() if request.is_json else request.form
     
@@ -115,7 +115,7 @@ def edit_blacklist_route(blacklist_id):
         return jsonify({'error': result.get('error', 'Update failed')}), result.get('code', 400)
 
 @blacklist_bp.route('/resolve/<int:blacklist_id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def resolve_blacklist_route(blacklist_id):
     result = resolve_blacklist_entry(blacklist_id)
     if result["success"]:
@@ -124,7 +124,7 @@ def resolve_blacklist_route(blacklist_id):
         return jsonify({'error': result.get('error', 'Operation failed')}), result.get('code', 400)
 
 @blacklist_bp.route('/delete/<int:blacklist_id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def delete_blacklist_route(blacklist_id):
     result = delete_blacklist_entry(blacklist_id)
     if result["success"]:

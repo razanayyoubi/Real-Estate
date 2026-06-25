@@ -203,7 +203,7 @@
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
-                {% else %}
+                {% elif role == 'admin' %}
                 <!-- Transactions -->
                 <div class="module-card" data-icon="payments"
                     data-href="{{ url_for('transactions.transactions_list') }}" style="cursor: pointer;">
@@ -271,6 +271,7 @@
         <div class="modules-section">
             <h3 class="modules-section__title">System Security & Audit</h3>
             <div class="modules-grid">
+                {% if role == 'admin' %}
                 <!-- Blacklists -->
                 <div class="module-card" data-icon="block" data-href="{{ url_for('blacklist.index') }}"
                     style="cursor: pointer;">
@@ -297,6 +298,7 @@
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Security Settings -->
                 <div class="module-card" data-icon="settings" data-href="/control-panel/settings"

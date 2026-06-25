@@ -755,61 +755,12 @@
                         <span class="donut-legend__text">Sales Deals ({{ accountant_stats.sales_pct }}%)</span>
                     </div>
                     <div class="donut-legend__item">
-                        <div class="donut-legend__indicator" style="background-color: #d4af37;"></div>
-                        <span class="donut-legend__text">Rental Deals ({{ accountant_stats.rental_pct }}%)</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Secondary Details Row -->
-        <section class="secondary-row">
-            <!-- Recent Transactions Ledger -->
-            <div class="details-card details-card--large" style="grid-column: span 2;">
-                <div class="details-card__header">
-                    <div class="details-card__title-area">
-                        <span class="material-symbols-outlined text-primary">receipt_long</span>
-                        <h3 class="details-card__title">Recent Audit Log</h3>
-                    </div>
-                    <span class="badge badge--success-light">{{ accountant_stats.recent_audits|length }} Audited Payments</span>
-                </div>
-
-                <div class="table-container">
-                    <table class="schedule-table">
-                        <thead>
-                            <tr>
-                                <th>Ref ID</th>
-                                <th>Property Description</th>
-                                <th>Gross Commission</th>
-                                <th>Net Revenue</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for trans in accountant_stats.recent_audits %}
-                            {% set net_rev = (trans.commissionAmount | float) - (trans.commissionAmount | float) * (trans.agentCommissionRate | float / 100.0) %}
-                            <tr>
-                                <td class="schedule-table__time">#TX-{{ trans.transactionID }}</td>
-                                <td>{{ trans.property_obj.title }}</td>
-                                <td>${{ "{:,.0f}".format(trans.commissionAmount) }}</td>
-                                <td>${{ "{:,.0f}".format(net_rev) }}</td>
-                                <td>
-                                    <span class="status-badge {% if trans.paymentStatus.lower() == 'closed' %}status-badge--confirmed{% else %}status-badge--pending{% endif %}">
-                                        {{ 'Audited' if trans.paymentStatus.lower() == 'closed' else trans.paymentStatus }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% if not accountant_stats.recent_audits %}
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No transaction records audited yet.</td>
-                            </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+                                        <span class="donut-legend__indicator" style="background-color: #d4af37;"></span>
+                                        <span class="donut-legend__text">Rental Deals ({{ accountant_stats.rental_pct }}%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
         {% else %}
         <!-- Page Header -->
@@ -895,6 +846,7 @@
             </div>
 
             <!-- KPI Card 5 -->
+            {% if session.get('role_name', '').lower() != 'employee' %}
             <div class="kpi-card">
                 <div class="kpi-card__background-decorator"></div>
                 <div class="kpi-card__top">
@@ -908,6 +860,7 @@
                     <h3 class="kpi-card__value">{{ admin_stats.total_transactions }}</h3>
                 </div>
             </div>
+            {% endif %}
 
             <!-- KPI Card 6 (Urgent/Error) -->
             <div class="kpi-card {% if admin_stats.pending_requests > 0 %}kpi-card--urgent{% endif %}">
@@ -930,8 +883,9 @@
         </section>
 
         <!-- Main Visualization Row -->
-        <section class="visual-row">
+        <section class="visual-row" {% if session.get('role_name', '').lower() == 'employee' %}style="grid-template-columns: 1fr;"{% endif %}>
             <!-- Revenue & Growth Card -->
+            {% if session.get('role_name', '').lower() != 'employee' %}
             <div class="visual-card visual-card--large">
                 <div class="visual-card__header">
                     <div class="visual-card__title-area">
@@ -960,6 +914,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- Distribution Card -->
             <div class="visual-card">
@@ -1121,8 +1076,9 @@
         </section>
 
         <!-- Activity & Health Row -->
-        <section class="activity-health-row">
+        <section class="activity-health-row" {% if session.get('role_name', '').lower() == 'employee' %}style="grid-template-columns: 1fr;"{% endif %}>
             <!-- Recent Activity Timeline Card -->
+            {% if session.get('role_name', '').lower() != 'employee' %}
             <div class="details-card">
                 <div class="details-card__header">
                     <div class="details-card__title-area">
@@ -1168,6 +1124,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
             <!-- System Health & Action Cards -->
             <div class="health-actions-card">

@@ -77,11 +77,13 @@
                 <span class="sidebar__nav-label">Visits</span>
             </a>
             {% endif %}
+            {% if session.get('role_name', '').lower() != 'employee' %}
             <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/transactions') or request.blueprint == 'transactions' %}sidebar__nav-item--active{% endif %}"
                 href="{{ url_for('transactions.transactions_list') }}">
                 <span class="material-symbols-outlined">payments</span>
                 <span class="sidebar__nav-label">Transactions</span>
             </a>
+            {% endif %}
             <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/commissions') or request.blueprint == 'commissions' %}sidebar__nav-item--active{% endif %}"
                 href="{{ url_for('commissions.commissions_dashboard') }}">
                 <span class="material-symbols-outlined">percent</span>

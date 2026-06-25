@@ -4,20 +4,20 @@ from app.services.audit_log_service import get_audit_logs_paginated_and_stats
 
 audit_logs_bp = Blueprint('audit_logs', __name__, url_prefix='/control-panel/audit-logs')
 
-def admin_or_employee_required(f):
+def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('user_id'):
             return redirect(url_for('auth.login_page'))
         role = session.get('role_name', '').lower()
-        if role not in ['admin', 'employee']:
+        if role != 'admin':
             flash("You do not have permission to access this page.", "error")
             return redirect(url_for('main.homepage'))
         return f(*args, **kwargs)
     return decorated_function
 
 @audit_logs_bp.route('/')
-@admin_or_employee_required
+@admin_required
 def index():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
