@@ -121,3 +121,47 @@ class LoginLog(db.Model):
 
     user = db.relationship('Users', backref=db.backref('login_logs', lazy=True), foreign_keys=[userID])
 
+
+class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_tokens'
+    tokenID = db.Column(db.Integer, primary_key=True)
+    userID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    token = db.Column(db.String(100), unique=True, nullable=False)
+    expiresAt = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    createdAt = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('Users', foreign_keys=[userID])
+
+
+class SupportSession(db.Model):
+    __tablename__ = 'support_sessions'
+    sessionID = db.Column(db.Integer, primary_key=True)
+    customerID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    employeeID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=True)
+    subject = db.Column(db.String(150), nullable=False)
+    status = db.Column(db.Enum('Open', 'Active', 'Closed', name='support_session_status'), default='Open')
+    rating = db.Column(db.Integer, nullable=True)
+    ratingFeedback = db.Column(db.Text, nullable=True)
+    createdAt = db.Column(db.DateTime, default=datetime.now)
+    closedAt = db.Column(db.DateTime, nullable=True)
+    closedByUserID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=True)
+
+    customer = db.relationship('Users', foreign_keys=[customerID], backref=db.backref('customer_support_sessions', lazy=True))
+    employee = db.relationship('Users', foreign_keys=[employeeID], backref=db.backref('employee_support_sessions', lazy=True))
+    closedBy = db.relationship('Users', foreign_keys=[closedByUserID])
+
+
+class SupportMessage(db.Model):
+    __tablename__ = 'support_messages'
+    messageID = db.Column(db.Integer, primary_key=True)
+    sessionID = db.Column(db.Integer, db.ForeignKey('support_sessions.sessionID'), nullable=False)
+    senderID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    messageText = db.Column(db.Text, nullable=False)
+    createdAt = db.Column(db.DateTime, default=datetime.now)
+
+    session = db.relationship('SupportSession', backref=db.backref('messages', lazy=True, cascade="all, delete-orphan"), foreign_keys=[sessionID])
+    sender = db.relationship('Users', foreign_keys=[senderID])
+
+
+

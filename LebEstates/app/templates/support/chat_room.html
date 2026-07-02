@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Support Chat Room | LebEstates{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+<link href="/static/css/support.css" rel="stylesheet">
+<style>
+/* Active star symbols filling override */
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    font-variation-settings: 'FILL' 1 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="support-container">
+    <!-- Header -->
+    <div class="hub-header" style="margin-bottom: 16px;">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Live Conversation</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title" style="font-size: 24px;">Support Room: #{{ chat_session.sessionID }}</h2>
+                <p class="hub-subtitle">Subject: <strong>{{ chat_session.subject }}</strong></p>
+            </div>
+            <a href="{% if is_employee %}/support/control-panel{% else %}/support{% endif %}" class="btn btn-outline">
+                <span class="material-symbols-outlined">arrow_back</span> Exit Room
+            </a>
+        </div>
+    </div>
+
+    <!-- Chat Box Wrapper -->
+    <div class="chat-wrapper">
+        <div class="chat-box">
+            
+            <!-- Chat Box Header -->
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <span class="chat-header-title">
+                        {% if is_employee %}
+                        Client: {{ chat_session.customer.fullName }}
+                        {% else %}
+                        Agent: <span id="agent-name-label">{{ chat_session.employee.fullName if chat_session.employee else 'Waiting for representative...' }}</span>
+                        {% endif %}
+                    </span>
+                    <span class="chat-header-subtitle" id="chat-status-label">Status: {{ chat_session.status }}</span>
+                </div>
+                
+                <!-- Close Chat Action -->
+                <div id="close-chat-btn-container">
+                    {% if chat_session.status != 'Closed' %}
+                    <button type="button" class="btn btn-danger" style="padding: 6px 14px; font-size: 12px;" onclick="closeChatSession()">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">cancel</span> End Session
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Messages Window -->
+            <div class="chat-messages" id="chat-messages-container">
+                <!-- System Seeding Message -->
+                <div class="system-alert-bubble">
+                    Conversation initiated on {{ chat_session.createdAt.strftime('%b %d at %H:%M') }}
+                </div>
+                
+                <!-- Messages will load dynamically here -->
+            </div>
+
+            <!-- Message Input Form -->
+            <div class="chat-input-bar" id="chat-input-bar-container" style="{% if chat_session.status == 'Closed' %}display:none;{% endif %}">
+                <input type="text" id="chat-message-input" class="chat-input-field" placeholder="Type your message here..." autocomplete="off">
+                <button type="button" class="btn btn-secondary" onclick="sendMessage()">
+                    <span class="material-symbols-outlined">send</span> Send
+                </button>
+            </div>
+            
+            <!-- Rating Overlay for Customers -->
+            {% if not is_employee %}
+            <div class="rating-modal-overlay" id="ratingOverlay" style="{% if chat_session.status == 'Closed' and not chat_session.rating and chat_session.employeeID %}display: flex;{% endif %}">
+                <div class="rating-modal">
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: #ffb300;">grade</span>
+                    <h3 class="hub-title" style="font-size: 20px; margin-top: 12px; margin-bottom: 8px;">Rate Support Service</h3>
+                    <p class="hub-subtitle">Please rate your live chat experience with representative <strong id="agent-name-rating">{{ chat_session.employee.fullName if chat_session.employee else 'Agent' }}</strong>.</p>
+                    
+                    <form id="rating-form" onsubmit="submitCustomerRating(event)">
+                        <div class="star-rating">
+                            <input type="radio" id="star5" name="rating" value="5"><label for="star5" class="material-symbols-outlined">star</label>
+                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" class="material-symbols-outlined">star</label>
+                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" class="material-symbols-outlined">star</label>
+                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" class="material-symbols-outlined">star</label>
+                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" class="material-symbols-outlined">star</label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <textarea id="rating-feedback" class="form-control" placeholder="Share your experience and thoughts (optional)..." style="min-height: 80px;"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 16px;">
+                            Submit Review
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script>
+const sessionId = {{ chat_session.sessionID }};
+const currentUserId = {{ session.user_id }};
+const isEmployee = {% if is_employee %}true{% else %}false{% endif %};
+
+let lastMessageId = 0;
+let pollingInterval = null;
+
+function appendMessage(msg) {
+    const messagesContainer = document.getElementById('chat-messages-container');
+    
+    // Check if message ID already rendered
+    if (document.getElementById(`msg-${msg.messageID}`)) return;
+
+    // Create row
+    const row = document.createElement('div');
+    row.id = `msg-${msg.messageID}`;
+    row.className = 'message-row';
+    
+    // Check sender
+    if (msg.senderID === currentUserId) {
+        row.classList.add('sent');
+    } else {
+        row.classList.add('received');
+    }
+
+    // Determine role label display
+    let labelHTML = '';
+    if (msg.senderID !== currentUserId) {
+        labelHTML = `<span style="font-weight:700; font-size:11px; display:block; margin-bottom: 2px;">${msg.senderName} (${msg.senderRole})</span>`;
+    }
+
+    row.innerHTML = `
+        <div class="message-bubble">
+            ${labelHTML}
+            <span>${escapeHTML(msg.messageText)}</span>
+            <div class="message-meta">${msg.createdAt}</div>
+        </div>
+    `;
+
+    messagesContainer.appendChild(row);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    if (msg.messageID > lastMessageId) {
+        lastMessageId = msg.messageID;
+    }
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+
+function pollMessages() {
+    fetch(`/support/api/messages/${sessionId}?since_id=${lastMessageId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Render new messages
+                data.messages.forEach(msg => appendMessage(msg));
+
+                // Update dynamic status UI
+                document.getElementById('chat-status-label').innerText = `Status: ${data.status}`;
+                
+                // Update Agent Info for Customers
+                if (!isEmployee && data.employee_name) {
+                    const label = document.getElementById('agent-name-label');
+                    if (label) label.innerText = data.employee_name;
+                    const ratingLabel = document.getElementById('agent-name-rating');
+                    if (ratingLabel) ratingLabel.innerText = data.employee_name;
+                }
+
+                // Handle closed state UI changes
+                if (data.status === 'Closed') {
+                    // Hide inputs
+                    document.getElementById('chat-input-bar-container').style.display = 'none';
+                    document.getElementById('close-chat-btn-container').innerHTML = '';
+                    
+                    // Trigger rating modal for customer if unrated and agent was assigned
+                    if (!isEmployee) {
+                        const overlay = document.getElementById('ratingOverlay');
+                        if (overlay && !data.rating && data.employee_name) {
+                            overlay.style.display = 'flex';
+                        }
+                    }
+                    
+                    // Stop polling if closed
+                    clearInterval(pollingInterval);
+                }
+            }
+        })
+        .catch(err => console.error("Polling error:", err));
+}
+
+function sendMessage() {
+    const input = document.getElementById('chat-message-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    
+    fetch(`/support/api/send/${sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageText: text })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            appendMessage(data.message);
+        } else {
+            alert('Failed to send: ' + data.error);
+        }
+    })
+    .catch(err => alert('Connection error.'));
+}
+
+function closeChatSession() {
+    if (confirm('Are you sure you want to end this live chat session?')) {
+        fetch(`/support/api/close/${sessionId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Refresh view
+                    pollMessages();
+                } else {
+                    alert('Error closing session: ' + data.error);
+                }
+            });
+    }
+}
+
+function submitCustomerRating(event) {
+    event.preventDefault();
+    const ratingInputs = document.getElementsByName('rating');
+    let ratingValue = null;
+    for (const input of ratingInputs) {
+        if (input.checked) {
+            ratingValue = input.value;
+            break;
+        }
+    }
+
+    if (!ratingValue) {
+        alert('Please select a star rating (1 to 5 stars) before submitting.');
+        return;
+    }
+
+    const feedback = document.getElementById('rating-feedback').value.trim();
+
+    fetch(`/support/api/rate/${sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: parseInt(ratingValue), feedback: feedback })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Thank you for your rating!');
+            const overlay = document.getElementById('ratingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+// Bind Enter key inside message input
+document.getElementById('chat-message-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// Init polling
+pollMessages();
+pollingInterval = setInterval(pollMessages, 3000);
+</script>
+{% endblock %}

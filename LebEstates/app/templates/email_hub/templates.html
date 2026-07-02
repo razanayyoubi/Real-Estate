@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Email Templates | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="email-hub-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Communications</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Email Templates</h2>
+                <p class="hub-subtitle">Manage HTML layout templates, custom styles, and verify dynamic placeholders.</p>
+            </div>
+            <a href="/control-panel/email-hub/templates/create" class="btn btn-secondary">
+                <span class="material-symbols-outlined">add_circle</span>
+                New Email Template
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="hub-nav-tabs">
+        <a href="/control-panel/email-hub" class="hub-nav-tab">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="/control-panel/email-hub/compose" class="hub-nav-tab">
+            <span class="material-symbols-outlined">edit_note</span> Compose
+        </a>
+        <a href="/control-panel/email-hub/config" class="hub-nav-tab">
+            <span class="material-symbols-outlined">settings_suggest</span> Configurations
+        </a>
+        <a href="/control-panel/email-hub/templates" class="hub-nav-tab active">
+            <span class="material-symbols-outlined">html</span> Templates
+        </a>
+        <a href="/control-panel/email-hub/distribution-lists" class="hub-nav-tab">
+            <span class="material-symbols-outlined">contact_mail</span> Distribution Lists
+        </a>
+    </div>
+
+    <!-- Template Cards Grid -->
+    <div class="templates-grid">
+        {% for template in templates %}
+        <div class="template-card">
+            <div>
+                <div class="template-card-header">
+                    <span class="template-card-key">{{ template.templateKey }}</span>
+                    {% if template.isActive %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </div>
+                <h4 class="template-card-title">{{ template.name }}</h4>
+                <p class="template-card-subj"><strong>Subject:</strong> {{ template.subject }}</p>
+                <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 8px;">
+                    Last Updated: {{ template.updatedAt.strftime('%Y-%m-%d') if template.updatedAt else 'N/A' }}
+                </div>
+            </div>
+            <div class="template-card-actions">
+                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="previewTemplate('{{ template.templateKey }}')">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span> Preview
+                </button>
+                <a href="/control-panel/email-hub/templates/edit/{{ template.templateKey }}" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">edit</span> Edit
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px; border: 1px dashed var(--outline); border-radius: 12px; color: var(--on-surface-variant);">
+            <span class="material-symbols-outlined" style="font-size: 48px; margin-bottom: 12px;">drafts</span>
+            <p>No email templates found in the database. Please create one to begin mapping automations.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal" id="previewModal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="previewTitle">Template Preview</h4>
+            <span class="modal-close" onclick="closePreviewModal()">&times;</span>
+        </div>
+        <div style="margin-bottom: 12px; font-size: 14px; color: var(--on-surface);">
+            <strong>Subject:</strong> <span id="previewSubj"></span>
+        </div>
+        <strong>HTML Render:</strong>
+        <div id="previewBody" style="border: 1px solid var(--outline-variant); border-radius: 8px; padding: 20px; margin-top: 8px; background: #ffffff; min-height: 250px; overflow-y: auto;">
+            <!-- Render HTML -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closePreviewModal()">Close Preview</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// JSON storage parsed from Python models for JS preview lookup
+const templateData = {
+    {% for template in templates %}
+    "{{ template.templateKey }}": {
+        "name": "{{ template.name|escape }}",
+        "subject": "{{ template.subject|escape }}",
+        "body": `{{ template.body|safe }}`
+    },
+    {% endfor %}
+};
+
+function previewTemplate(key) {
+    const data = templateData[key];
+    if (data) {
+        document.getElementById('previewTitle').innerText = `Preview: ${data.name}`;
+        document.getElementById('previewSubj').innerText = data.subject;
+        document.getElementById('previewBody').innerHTML = data.body;
+        document.getElementById('previewModal').classList.add('show');
+    }
+}
+
+function closePreviewModal() {
+    document.getElementById('previewModal').classList.remove('show');
+}
+</script>
+{% endblock %}

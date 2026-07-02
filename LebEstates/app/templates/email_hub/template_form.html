@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}{% if template %}Edit Email Template | {{ template.templateKey }}{% else %}New Email Template{% endif %} | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+<style>
+/* Responsive layout adjustments */
+.editor-metadata-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+@media (min-width: 576px) {
+    .editor-metadata-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Ace Editor sizing and style */
+#editor-container {
+    border: 1px solid var(--outline-variant);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+#editor {
+    width: 100%;
+    height: 380px;
+    font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+}
+
+/* Action button spacing on mobile */
+.editor-actions-row {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 12px;
+    border-top: 1px solid var(--outline-variant);
+    padding-top: 24px;
+    margin-top: 24px;
+}
+.editor-buttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+@media (min-width: 576px) {
+    .editor-actions-row {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .editor-buttons-group {
+        flex-direction: row;
+        width: auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="email-hub-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Communications</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">{% if template %}Edit Template{% else %}Create Template{% endif %}</h2>
+                <p class="hub-subtitle">Use double curly braces (e.g. <code>{{ '{{' }}CustomerName{{ '}}' }}</code>) to output dynamic variables.</p>
+            </div>
+            <a href="/control-panel/email-hub/templates" class="btn btn-outline" style="align-self: flex-start;">
+                <span class="material-symbols-outlined">arrow_back</span> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Form layout -->
+    <form method="POST" action="{% if template %}/control-panel/email-hub/templates/edit/{{ template.templateKey }}{% else %}/control-panel/email-hub/templates/create{% endif %}">
+        <div class="compose-layout">
+            <!-- Left Pane: Editor IDE -->
+            <div class="compose-pane">
+                <div class="editor-metadata-grid">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" for="templateKey">Template Unique Key</label>
+                        <input type="text" id="templateKey" name="templateKey" class="form-control" 
+                               required {% if template %}disabled{% endif %} 
+                               value="{{ template.templateKey if template else '' }}" 
+                               placeholder="e.g. AUTH-RESET-V2">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" for="name">Template Name</label>
+                        <input type="text" id="name" name="name" class="form-control" required 
+                               value="{{ template.name if template else '' }}" 
+                               placeholder="e.g. Password Reset Request">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="category">Category</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="Auth" {% if template and template.category == 'Auth' %}selected{% endif %}>Authentication / Security</option>
+                        <option value="Operations" {% if template and template.category == 'Operations' %}selected{% endif %}>Operations (Visits/Tours)</option>
+                        <option value="Customer" {% if template and template.category == 'Customer' %}selected{% endif %}>Customer Support</option>
+                        <option value="System" {% if template and template.category == 'System' %}selected{% endif %}>System / Backend Notifications</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="subject">Email Subject</label>
+                    <input type="text" id="subject" name="subject" class="form-control" required 
+                           value="{{ template.subject if template else '' }}" 
+                           placeholder="e.g. Reset your password"
+                           oninput="updatePreview()">
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">HTML Editor IDE</label>
+                        <span style="font-size: 11px; color: var(--secondary); font-family: monospace; font-weight: bold;">Syntax Highlighting On</span>
+                    </div>
+                    
+                    <!-- Hidden textarea to store data for standard POST request -->
+                    <textarea id="body" name="body" style="display:none;">{{ template.body if template else '' }}</textarea>
+                    
+                    <!-- Ace Editor container -->
+                    <div id="editor-container">
+                        <div id="editor"></div>
+                    </div>
+                </div>
+
+                {% if template %}
+                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 24px;">
+                    <input type="checkbox" id="isActive" name="isActive" {% if template.isActive %}checked{% endif %} style="transform: scale(1.2);">
+                    <label class="form-label" for="isActive" style="margin-bottom: 0;">Template Active (enabled for triggers)</label>
+                </div>
+                {% endif %}
+
+                <div class="editor-actions-row">
+                    <div>
+                        {% if template %}
+                        <button type="submit" name="delete" class="btn btn-danger" style="width: 100%; justify-content: center;"
+                                formaction="/control-panel/email-hub/templates/delete/{{ template.templateKey }}" 
+                                onclick="return confirm('Are you sure you want to delete this template entirely?');">
+                            <span class="material-symbols-outlined">delete</span> Delete
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="editor-buttons-group">
+                        <button type="submit" class="btn btn-secondary" style="justify-content: center; width: 100%;">
+                            <span class="material-symbols-outlined">save</span> {% if template %}Save Changes{% else %}Create Template{% endif %}
+                        </button>
+                        <a href="/control-panel/email-hub/templates" class="btn btn-outline" style="justify-content: center; width: 100%;">Cancel</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Pane: Live HTML Preview -->
+            <div class="preview-pane">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="form-label" style="margin-bottom: 0;">Template Live Preview</span>
+                    <span class="badge badge-success">Renderer Online</span>
+                </div>
+                
+                <div style="margin-top: 16px; font-size: 13px; color: var(--on-surface-variant); display: flex; flex-direction: column; gap: 4px;">
+                    <div><strong>Subject:</strong> <span id="preview_subject" style="color: var(--on-surface);">--</span></div>
+                </div>
+                
+                <div class="preview-window" id="preview_body" style="margin-top: 16px; background: #ffffff; min-height: 380px;">
+                    <em style="color: #999;">Type template HTML to preview...</em>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Ace Editor Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ext-language_tools.js"></script>
+
+<script>
+var editor;
+var bodyTextarea = document.getElementById("body");
+
+function initAceEditor() {
+    editor = ace.edit("editor");
+    editor.setTheme("ace/theme/tomorrow_night"); // Dark theme IDE
+    editor.session.setMode("ace/mode/html");     // HTML Syntax highlighting
+    
+    // Load initial data
+    editor.setValue(bodyTextarea.value, -1);
+    
+    // Sync editor data to hidden textarea & trigger preview on input
+    editor.getSession().on('change', function() {
+        bodyTextarea.value = editor.getValue();
+        updatePreview();
+    });
+    
+    editor.setOptions({
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: true,
+        showPrintMargin: false,
+        useSoftTabs: true,
+        tabSize: 4
+    });
+}
+
+function updatePreview() {
+    const subject = document.getElementById('subject').value || '(No Subject)';
+    const body = bodyTextarea.value || '<em style="color: #999;">Type template HTML to preview...</em>';
+    
+    document.getElementById('preview_subject').innerText = subject;
+    document.getElementById('preview_body').innerHTML = body;
+}
+
+// Initialize on load
+initAceEditor();
+updatePreview();
+</script>
+{% endblock %}

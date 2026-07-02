@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Email Hub Dashboard | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="email-hub-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Communications</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Email Hub</h2>
+                <p class="hub-subtitle">Manage system automations, templates, custom lists, and monitor deliverability rates.</p>
+            </div>
+            <a href="/control-panel/email-hub/compose" class="btn btn-secondary">
+                <span class="material-symbols-outlined">send</span>
+                Compose Email
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="hub-nav-tabs">
+        <a href="/control-panel/email-hub" class="hub-nav-tab active">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="/control-panel/email-hub/compose" class="hub-nav-tab">
+            <span class="material-symbols-outlined">edit_note</span> Compose
+        </a>
+        <a href="/control-panel/email-hub/config" class="hub-nav-tab">
+            <span class="material-symbols-outlined">settings_suggest</span> Configurations
+        </a>
+        <a href="/control-panel/email-hub/templates" class="hub-nav-tab">
+            <span class="material-symbols-outlined">html</span> Templates
+        </a>
+        <a href="/control-panel/email-hub/distribution-lists" class="hub-nav-tab">
+            <span class="material-symbols-outlined">contact_mail</span> Distribution Lists
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Sent Today</p>
+                <h3 class="headline-md text-primary" style="font-size: 24px; font-weight: 800;">{{ sent_today }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span class="material-symbols-outlined stat-icon primary">mail_outline</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Delivery Rate</p>
+                <h3 class="headline-md text-primary" style="font-size: 24px; font-weight: 800; color: var(--secondary);">{{ delivery_rate }}%</h3>
+            </div>
+            <div class="stat-card-header">
+                <span class="material-symbols-outlined stat-icon secondary">task_alt</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Active Features</p>
+                <h3 class="headline-md text-primary" style="font-size: 24px; font-weight: 800;">{{ active_features }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span class="material-symbols-outlined stat-icon">toggle_on</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div>
+                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Failed (24h)</p>
+                <h3 class="headline-md text-primary" style="font-size: 24px; font-weight: 800; color: var(--error);">{{ pending_errors }}</h3>
+            </div>
+            <div class="stat-card-header">
+                <span class="material-symbols-outlined stat-icon error">warning</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Logs Section -->
+    <div class="hub-header" style="margin-bottom: 16px;">
+        <h3 class="hub-title" style="font-size: 20px;">Recent Sending Logs</h3>
+        <p class="hub-subtitle">Review status details and error messaging for the latest outgoing transmissions.</p>
+    </div>
+
+    <div class="table-container unified-table-container">
+        <table class="unified-table">
+            <thead>
+                <tr class="table-header-row">
+                    <th>ID</th>
+                    <th>Recipient</th>
+                    <th>Subject</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Sent At / Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td>#{{ log.emailLogID }}</td>
+                    <td>{{ log.recipientsRaw }}</td>
+                    <td>{{ log.subject }}</td>
+                    <td><span class="badge badge-primary">{{ log.emailType }}</span></td>
+                    <td>
+                        {% if log.status == 'Sent' %}
+                        <span class="badge badge-success">Sent</span>
+                        {% elif log.status == 'Failed' %}
+                        <span class="badge badge-danger" title="{{ log.lastError }}">Failed</span>
+                        {% else %}
+                        <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.sentAt %}
+                        {{ log.sentAt.strftime('%b %d, %H:%M') }}
+                        {% else %}
+                        {{ log.createdAt.strftime('%b %d, %H:%M') }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="viewLogDetails({{ log.emailLogID }})">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span> View
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">No recent email log records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- View Log Modal -->
+<div class="modal" id="logModal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h4 class="modal-title">Email Transmission Details</h4>
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+        </div>
+        <div id="modalBody">
+            <!-- Populated via JS -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewLogDetails(logId) {
+    fetch(`/control-panel/email-hub/logs/view/${logId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const modalBody = document.getElementById('modalBody');
+                let statusBadge = '';
+                if (data.status === 'Sent') {
+                    statusBadge = '<span class="badge badge-success">Sent</span>';
+                } else if (data.status === 'Failed') {
+                    statusBadge = `<span class="badge badge-danger">Failed</span><p style="color: var(--error); margin-top: 8px;"><strong>Error:</strong> ${data.lastError || 'Unknown error'}</p>`;
+                } else {
+                    statusBadge = '<span class="badge badge-warning">Pending</span>';
+                }
+
+                modalBody.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 12px; font-size: 14px;">
+                        <strong>Log ID:</strong> <span>#${data.emailLogID}</span>
+                        <strong>Recipient:</strong> <span>${data.recipients}</span>
+                        <strong>Subject:</strong> <span>${data.subject}</span>
+                        <strong>Type:</strong> <span>${data.emailType}</span>
+                        <strong>Template:</strong> <span>${data.templateKey || 'None'}</span>
+                        <strong>Date:</strong> <span>${data.sentAt || data.createdAt}</span>
+                        <strong>Attempts:</strong> <span>${data.attempts}</span>
+                        <strong>Status:</strong> <div>${statusBadge}</div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <strong>Email Body:</strong>
+                        <div style="border: 1px solid var(--outline-variant); border-radius: 6px; padding: 12px; margin-top: 8px; background: #ffffff; color: #333333; max-height: 300px; overflow-y: auto;">
+                            ${data.body}
+                        </div>
+                    </div>
+                `;
+                document.getElementById('logModal').classList.add('show');
+            }
+        });
+}
+
+function closeModal() {
+    document.getElementById('logModal').classList.remove('show');
+}
+</script>
+{% endblock %}

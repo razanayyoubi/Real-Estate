@@ -89,6 +89,16 @@
                 <span class="material-symbols-outlined">percent</span>
                 <span class="sidebar__nav-label">Commissions</span>
             </a>
+            <a class="sidebar__nav-item {% if request.path.startswith('/control-panel/email-hub') or request.blueprint == 'email_hub' %}sidebar__nav-item--active{% endif %}"
+                href="/control-panel/email-hub">
+                <span class="material-symbols-outlined">mail</span>
+                <span class="sidebar__nav-label">Email Hub</span>
+            </a>
+            <a class="sidebar__nav-item {% if request.path.startswith('/support/control-panel') %}sidebar__nav-item--active{% endif %}"
+                href="/support/control-panel">
+                <span class="material-symbols-outlined">support_agent</span>
+                <span class="sidebar__nav-label">Support Hub</span>
+            </a>
             <a class="sidebar__nav-item {% if request.path == '/control-panel/settings' %}sidebar__nav-item--active{% endif %}"
                 href="/control-panel/settings">
                 <span class="material-symbols-outlined">settings</span>
@@ -153,6 +163,13 @@
                 <span class="material-symbols-outlined">contact_support</span>
                 <span class="sidebar__nav-label">Contact</span>
             </a>
+            {% if session.get('user_id') %}
+            <a class="sidebar__nav-item {% if request.path.startswith('/support') and not request.path.startswith('/support/control-panel') %}sidebar__nav-item--active{% endif %}"
+                href="/support">
+                <span class="material-symbols-outlined">live_help</span>
+                <span class="sidebar__nav-label">Live Support</span>
+            </a>
+            {% endif %}
         </nav>
 
         <div class="sidebar__footer">

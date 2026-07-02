@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Distribution Lists | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="email-hub-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Communications</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Distribution Lists</h2>
+                <p class="hub-subtitle">Manage static recipient lists and dynamic rules for marketing or notification batches.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="openCreateModal()">
+                <span class="material-symbols-outlined">add_circle</span>
+                New Distribution List
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="hub-nav-tabs">
+        <a href="/control-panel/email-hub" class="hub-nav-tab">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="/control-panel/email-hub/compose" class="hub-nav-tab">
+            <span class="material-symbols-outlined">edit_note</span> Compose
+        </a>
+        <a href="/control-panel/email-hub/config" class="hub-nav-tab">
+            <span class="material-symbols-outlined">settings_suggest</span> Configurations
+        </a>
+        <a href="/control-panel/email-hub/templates" class="hub-nav-tab">
+            <span class="material-symbols-outlined">html</span> Templates
+        </a>
+        <a href="/control-panel/email-hub/distribution-lists" class="hub-nav-tab active">
+            <span class="material-symbols-outlined">contact_mail</span> Distribution Lists
+        </a>
+    </div>
+
+    <!-- Lists Grid/Table -->
+    <div class="table-container unified-table-container">
+        <table class="unified-table">
+            <thead>
+                <tr class="table-header-row">
+                    <th>List Name</th>
+                    <th>Description</th>
+                    <th>Rule Settings</th>
+                    <th>Direct Members</th>
+                    <th>Resolved Count</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for list in lists %}
+                {% set rule = list.rules[0] if list.rules else None %}
+                <tr>
+                    <td><strong>{{ list.name }}</strong></td>
+                    <td>{{ list.description or 'No description' }}</td>
+                    <td>
+                        <div style="font-size: 12px; line-height: 1.6;">
+                            {% if rule %}
+                                {% if rule.includeCustomers %}<span class="badge badge-primary" style="margin-right: 4px;">Customers</span>{% endif %}
+                                {% if rule.includeEmployees %}<span class="badge badge-primary" style="margin-right: 4px;">Employees</span>{% endif %}
+                                {% if rule.includeAdmins %}<span class="badge badge-primary" style="margin-right: 4px;">Admins</span>{% endif %}
+                                {% if not rule.includeCustomers and not rule.includeEmployees and not rule.includeAdmins %}
+                                    <span class="badge badge-outline" style="color: var(--on-surface-variant);">Static Only</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-outline">Static Only</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ list.members|length }} direct</td>
+                    <td id="count-{{ list.distributionListID }}">
+                        <button class="btn btn-outline" style="padding: 4px 8px; font-size: 11px; font-weight: 500;" onclick="testResolve({{ list.distributionListID }})">
+                            Resolve Emails
+                        </button>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="openRulesModal({{ list.distributionListID }}, '{{ list.name|escape }}', '{{ list.description|escape }}', {{ 'true' if rule and rule.includeCustomers else 'false' }}, {{ 'true' if rule and rule.includeEmployees else 'false' }}, {{ 'true' if rule and rule.includeAdmins else 'false' }}, {{ 'true' if rule and rule.onlyActiveUsers else 'false' }}, {{ 'true' if rule and rule.excludeBlacklistedCustomers else 'false' }}, `{{ rule.manualEmailsRaw|escape if rule and rule.manualEmailsRaw else '' }}`)">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">rule_settings</span> Rules
+                            </button>
+                            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="openMembersModal({{ list.distributionListID }}, '{{ list.name|escape }}', {{ list.members|tojson if list.members else '[]' }})">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">group</span> Members
+                            </button>
+                            <form action="/control-panel/email-hub/distribution-lists/delete/{{ list.distributionListID }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this distribution list?');">
+                                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">delete</span> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">No distribution lists registered. Create one to send emails in bulk.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal" id="createModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title">Create Distribution List</h4>
+            <span class="modal-close" onclick="closeModal('createModal')">&times;</span>
+        </div>
+        <form action="/control-panel/email-hub/distribution-lists/create" method="POST">
+            <div class="form-group">
+                <label class="form-label" for="name">List Name</label>
+                <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. VIP Newsletter Recipients">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" placeholder="Describe who is on this list and what notifications they receive..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('createModal')">Cancel</button>
+                <button type="submit" class="btn btn-secondary">Create List</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Rules Modal -->
+<div class="modal" id="rulesModal">
+    <div class="modal-content" style="max-width: 650px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="rulesTitle">Manage List Filters & Rules</h4>
+            <span class="modal-close" onclick="closeModal('rulesModal')">&times;</span>
+        </div>
+        <form id="rulesForm" method="POST" action="">
+            <div class="form-group">
+                <label class="form-label" for="rulesDesc">Description</label>
+                <input type="text" id="rulesDesc" name="description" class="form-control">
+            </div>
+            
+            <div class="form-label" style="margin-top: 24px; margin-bottom: 12px;">Dynamic Roles Resolution</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <input type="checkbox" id="ruleCustomers" name="include_customers" style="transform: scale(1.2);">
+                    Include Customer Profiles
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <input type="checkbox" id="ruleEmployees" name="include_employees" style="transform: scale(1.2);">
+                    Include Employees / Accountants
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <input type="checkbox" id="ruleAdmins" name="include_admins" style="transform: scale(1.2);">
+                    Include System Administrators
+                </label>
+            </div>
+
+            <div class="form-label" style="margin-top: 24px; margin-bottom: 12px;">Account Filters</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <input type="checkbox" id="ruleActiveOnly" name="only_active" style="transform: scale(1.2);">
+                    Only Active Accounts
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <input type="checkbox" id="ruleExcludeBlacklisted" name="exclude_blacklisted" style="transform: scale(1.2);">
+                    Exclude Blacklisted Users
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="ruleManual">Static Manual Emails List</label>
+                <textarea id="ruleManual" name="manual_emails" class="form-control" placeholder="Enter emails separated by commas, semicolons, or newlines..." style="min-height: 100px;"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('rulesModal')">Cancel</button>
+                <button type="submit" class="btn btn-secondary">Save Rules</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Members Modal -->
+<div class="modal" id="membersModal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="membersTitle">Direct Mailing Members</h4>
+            <span class="modal-close" onclick="closeModal('membersModal')">&times;</span>
+        </div>
+
+        <!-- Add Manual Member Form -->
+        <form id="addMemberForm" method="POST" action="" style="display: flex; gap: 12px; align-items: flex-end; margin-bottom: 24px; background-color: var(--surface-container-low); padding: 16px; border-radius: 8px; border: 1px solid var(--outline-variant);">
+            <div style="flex-grow: 1;">
+                <label class="form-label" for="memberEmail" style="font-size: 12px;">Email Address</label>
+                <input type="email" id="memberEmail" name="email" class="form-control" required style="padding: 8px 12px;" placeholder="e.g. agent@gmail.com">
+            </div>
+            <div style="width: 150px;">
+                <label class="form-label" for="memberLabel" style="font-size: 12px;">Label / Name</label>
+                <input type="text" id="memberLabel" name="label" class="form-control" style="padding: 8px 12px;" placeholder="e.g. John Doe">
+            </div>
+            <div style="width: 130px;">
+                <label class="form-label" for="memberType" style="font-size: 12px;">Role/Type</label>
+                <select id="memberType" name="member_type" class="form-control" style="padding: 8px 12px;">
+                    <option value="Customer">Customer</option>
+                    <option value="Employee">Employee</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Other" selected>Other</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary" style="padding: 8px 16px; height: 38px;">
+                Add
+            </button>
+        </form>
+
+        <!-- Members Table -->
+        <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--outline-variant); border-radius: 8px;">
+            <table class="unified-table" style="font-size: 13px;">
+                <thead>
+                    <tr class="table-header-row" style="background-color: var(--surface-container);">
+                        <th style="padding: 10px 16px;">Email</th>
+                        <th style="padding: 10px 16px;">Label</th>
+                        <th style="padding: 10px 16px;">Type</th>
+                        <th style="padding: 10px 16px; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="membersTableBody">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('membersModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCreateModal() {
+    document.getElementById('createModal').classList.add('show');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+function openRulesModal(id, name, desc, cust, emp, adm, active, exclBlock, manual) {
+    document.getElementById('rulesTitle').innerText = `Rules: ${name}`;
+    document.getElementById('rulesForm').action = `/control-panel/email-hub/distribution-lists/edit-rules/${id}`;
+    document.getElementById('rulesDesc').value = desc;
+    document.getElementById('ruleCustomers').checked = cust;
+    document.getElementById('ruleEmployees').checked = emp;
+    document.getElementById('ruleAdmins').checked = adm;
+    document.getElementById('ruleActiveOnly').checked = active;
+    document.getElementById('ruleExcludeBlacklisted').checked = exclBlock;
+    document.getElementById('ruleManual').value = manual;
+    document.getElementById('rulesModal').classList.add('show');
+}
+
+function openMembersModal(listId, name, members) {
+    document.getElementById('membersTitle').innerText = `Direct Members: ${name}`;
+    document.getElementById('addMemberForm').action = `/control-panel/email-hub/distribution-lists/member/add/${listId}`;
+    
+    const tbody = document.getElementById('membersTableBody');
+    tbody.innerHTML = '';
+    
+    if (members && members.length > 0) {
+        members.forEach(member => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 10px 16px;">${member.email}</td>
+                <td style="padding: 10px 16px;">${member.label || '-'}</td>
+                <td style="padding: 10px 16px;"><span class="badge badge-primary">${member.memberType}</span></td>
+                <td style="padding: 10px 16px; text-align: right;">
+                    <form action="/control-panel/email-hub/distribution-lists/member/delete/${member.memberID}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="return confirm('Remove this member?');">
+                            Remove
+                        </button>
+                    </form>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--on-surface-variant);">No direct static members on this list.</td></tr>`;
+    }
+    
+    document.getElementById('membersModal').classList.add('show');
+}
+
+function testResolve(listId) {
+    const cell = document.getElementById(`count-${listId}`);
+    cell.innerHTML = '<em>Resolving...</em>';
+    fetch(`/control-panel/email-hub/distribution-lists/resolve/${listId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                cell.innerHTML = `<span class="badge badge-success" style="cursor:pointer;" title="${data.emails.join(', ')}">${data.count} Resolved Emails</span>`;
+            } else {
+                cell.innerHTML = '<span class="badge badge-danger">Failed</span>';
+            }
+        });
+}
+</script>
+{% endblock %}

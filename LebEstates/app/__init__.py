@@ -9,7 +9,7 @@ def create_app(config_class=Config):
     db.init_app(app)
 
     # Import models to ensure they are known to SQLAlchemy
-    from app.models.users import Role, Users, Blacklist, AuditLog, UserSession, LoginLog
+    from app.models.users import Role, Users, Blacklist, AuditLog, UserSession, LoginLog, PasswordResetToken, SupportSession, SupportMessage
     from app.models.property import Property, PropertyImage, Favorite
     from app.models.hr import Employee, Salary, CommissionSetting
     from app.models.customer import Customer, CustomerDocument
@@ -55,6 +55,12 @@ def create_app(config_class=Config):
     from app.routes.notifications import notifications_bp
     app.register_blueprint(notifications_bp)
 
+    from app.routes.email_hub import email_hub_bp
+    app.register_blueprint(email_hub_bp)
+
+    from app.routes.support import support_bp
+    app.register_blueprint(support_bp)
+
     # Global session checker middleware
     from flask import session, redirect, url_for, request
     from datetime import datetime
@@ -99,8 +105,12 @@ def create_app(config_class=Config):
                 pass
         return dict(current_user=None)
 
-    # Auto-migration for 2FA backup codes column
+    # Import email hub models to ensure they are registered with SQLAlchemy
+    from app.models.email_hub import EmailTemplate, SenderIdentity, EmailFeatureConfig, DistributionList, DistributionListMember, DistributionListRule, EmailLog, EmailDraft
+
+    # Auto-migration & Database seeding
     with app.app_context():
+        # Auto-migration for 2FA backup codes column
         try:
             db.session.execute(db.text("SELECT twoFactorBackupCodes FROM users LIMIT 1"))
         except Exception:
@@ -113,4 +123,60 @@ def create_app(config_class=Config):
                 db.session.rollback()
                 app.logger.error(f"Database migration failed: {migrate_err}")
 
+        # Ensure all tables are created (including new Email Hub tables)
+        try:
+            db.create_all()
+            
+            # Seed default Sender Identity
+            if not SenderIdentity.query.first():
+                default_sender = SenderIdentity(
+                    displayName=app.config.get('MAILJET_SENDER_NAME', 'LebEstates'),
+                    fromEmail=app.config.get('MAILJET_SENDER_EMAIL', 'no-reply@lebestates.com'),
+                    isDefault=True,
+                    isActive=True
+                )
+                db.session.add(default_sender)
+                db.session.commit()
+            
+            # Seed default feature configs
+            features_to_seed = [
+                ("ForgotPassword", "Forgot Password Link", "Auth", "AUTH-RESET-V1"),
+                ("Otp2FA", "2FA Verification Code", "Auth", "AUTH-OTP-SECURE"),
+                ("VisitStatusChanged", "Property Visit Update", "Operations", "CUST-VISIT-UPDATE")
+            ]
+            for fkey, fname, fcat, tkey in features_to_seed:
+                if not EmailFeatureConfig.query.filter_by(featureKey=fkey).first():
+                    db.session.add(EmailFeatureConfig(
+                        featureKey=fkey,
+                        featureName=fname,
+                        category=fcat,
+                        templateKey=tkey,
+                        enabled=True
+                    ))
+            
+            # Seed default templates
+            templates_to_seed = [
+                ("AUTH-RESET-V1", "Forgot Password Email Template", "Auth", "Reset your LebEstates password", 
+                 "<h2>Reset Password</h2><p>Hello {{CustomerName}},</p><p>Please reset your password by clicking the link below:</p><p><a href='{{ActionUrl}}'>Reset Password</a></p><p>Thank you!</p>"),
+                ("AUTH-OTP-SECURE", "2FA Verification Code Template", "Auth", "Your LebEstates verification code",
+                 "<h2>2FA Security Code</h2><p>Hello {{CustomerName}},</p><p>Your secure verification code is: <strong>{{OtpCode}}</strong></p><p>If you didn't request this, contact support.</p>"),
+                ("CUST-VISIT-UPDATE", "Visit Request Status Template", "Operations", "Property visit update",
+                 "<h2>Visit Update</h2><p>Hello {{CustomerName}},</p><p>The status of your visit request for property {{PropertyTitle}} has been updated to: <strong>{{VisitStatus}}</strong>.</p><p>Scheduled Date: {{VisitDate}} at {{VisitTime}}</p>")
+            ]
+            for tkey, tname, tcat, tsubj, tbody in templates_to_seed:
+                if not EmailTemplate.query.filter_by(templateKey=tkey).first():
+                    db.session.add(EmailTemplate(
+                        templateKey=tkey,
+                        name=tname,
+                        category=tcat,
+                        subject=tsubj,
+                        body=tbody,
+                        isActive=True
+                    ))
+            db.session.commit()
+        except Exception as seed_err:
+            db.session.rollback()
+            app.logger.error(f"Email Hub db setup/seeding failed: {seed_err}")
+
     return app
+

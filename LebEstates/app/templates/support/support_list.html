@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Live Support | LebEstates{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+<link href="/static/css/support.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="support-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Customer Care</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Live Chat Support</h2>
+                <p class="hub-subtitle">Engage in direct real-time communication with our licensed real estate experts and representatives.</p>
+            </div>
+            <!-- Open Modal Button -->
+            <button type="button" class="btn btn-secondary" onclick="openRequestModal()">
+                <span class="material-symbols-outlined">add_comment</span> New Request
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Support Requests -->
+    <div class="hub-header" style="margin-top: 32px; margin-bottom: 16px;">
+        <h3 class="hub-title" style="font-size: 20px;">My Support History</h3>
+    </div>
+
+    <div class="table-container unified-table-container">
+        <table class="unified-table">
+            <thead>
+                <tr class="table-header-row">
+                    <th>Subject</th>
+                    <th>Created At</th>
+                    <th>Agent</th>
+                    <th>Status</th>
+                    <th>Service Rating</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                <tr>
+                    <td><strong>{{ session.subject }}</strong></td>
+                    <td>{{ session.createdAt.strftime('%b %d, %Y at %H:%M') }}</td>
+                    <td>
+                        {% if session.employee %}
+                        {{ session.employee.fullName }}
+                        {% else %}
+                        <em style="color: var(--outline);">Waiting for agent...</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if session.status == 'Open' %}
+                        <span class="badge" style="background-color: var(--primary-container); color: var(--on-primary-container);">Waiting</span>
+                        {% elif session.status == 'Active' %}
+                        <span class="badge badge-success">Active Chat</span>
+                        {% else %}
+                        <span class="badge badge-primary">Closed</span>
+                        {% if session.closedBy %}
+                        <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 4px;">
+                            By: {{ 'You' if session.closedByUserID == session.customerID else 'Agent' }}
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if session.status == 'Closed' %}
+                            {% if session.rating %}
+                            <div style="color: #ffb300; display: flex; align-items: center; gap: 4px;">
+                                {% for i in range(session.rating) %}
+                                <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' 1;">star</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <a href="/support/chat/{{ session.sessionID }}" style="font-size: 12px; color: var(--secondary); font-weight: bold; text-decoration: underline;">Submit Rating</a>
+                            {% endif %}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/support/chat/{{ session.sessionID }}" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">forum</span> 
+                            {% if session.status == 'Closed' %}View Log{% else %}Enter Chat{% endif %}
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">You have no previous support requests. Click "New Request" above to initiate a chat.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Form for Requesting Support -->
+<div class="modal" id="newRequestModal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1100;">
+    <div style="background-color: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 16px; padding: 32px; max-width: 450px; width: 90%; box-shadow: 0 12px 48px rgba(0,0,0,0.15);">
+        <h3 class="hub-title" style="font-size: 20px; margin-bottom: 8px;">Request Live Agent</h3>
+        <p class="hub-subtitle" style="margin-bottom: 24px;">Please describe the issue or the property query you need assistance with.</p>
+        
+        <form method="POST" action="/support/create">
+            <div class="form-group">
+                <label class="form-label" for="subject">Request Subject</label>
+                <input type="text" id="subject" name="subject" class="form-input form-control" required placeholder="e.g. Inquiry on listing #14352 or refund problem" autocomplete="off">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="btn btn-outline" onclick="closeRequestModal()">Cancel</button>
+                <button type="submit" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">chat_bubble</span> Start Chat
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openRequestModal() {
+    document.getElementById('newRequestModal').style.display = 'flex';
+}
+function closeRequestModal() {
+    document.getElementById('newRequestModal').style.display = 'none';
+}
+</script>
+{% endblock %}

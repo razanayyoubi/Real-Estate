@@ -16,3 +16,9 @@ venv/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Environment variables configuration
+.env
+.env.local
+.env.*.local
+

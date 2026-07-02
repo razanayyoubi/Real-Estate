@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Support Control Hub | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+<link href="/static/css/support.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="support-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Support Center</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Support Control Hub</h2>
+                <p class="hub-subtitle">
+                    {% if is_admin %}
+                    Administrator control dashboard to view, claim, and audit all live customer chat sessions.
+                    {% else %}
+                    Claim incoming support tickets and manage your active customer conversations.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="hub-grid" style="margin-top: 32px;">
+        <!-- Left Panel: Unassigned Chats -->
+        <div class="hub-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 class="hub-title" style="font-size: 18px; margin: 0;">Unassigned Requests</h3>
+                <span class="badge" style="background-color: var(--primary-container); color: var(--on-primary-container);">{{ unassigned_chats|length }} Waiting</span>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px; max-height: 480px; overflow-y: auto; padding-right: 4px;">
+                {% for chat in unassigned_chats %}
+                <div style="border: 1px solid var(--outline-variant); border-radius: 10px; padding: 16px; background-color: var(--surface-container-lowest); display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--secondary); letter-spacing: 0.5px;">Subject</span>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--on-surface);">{{ chat.subject }}</div>
+                        <div style="font-size: 12px; color: var(--on-surface-variant); margin-top: 4px;">
+                            By <strong>{{ chat.customer.fullName }}</strong> ({{ chat.customer.email }})
+                        </div>
+                        <div style="font-size: 11px; color: var(--outline); margin-top: 4px;">
+                            Received: {{ chat.createdAt.strftime('%b %d, %H:%M') }}
+                        </div>
+                    </div>
+                    
+                    <form action="/support/control-panel/assign/{{ chat.sessionID }}" method="POST">
+                        <button type="submit" class="btn btn-secondary" style="width: 100%; justify-content: center; padding: 8px 16px; font-size: 13px;">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">assignment_ind</span> Claim Session
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <em style="font-size: 13px; color: var(--on-surface-variant); padding: 12px 0;">No unassigned requests. All clients have been served!</em>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Panel: My Active Conversations -->
+        <div class="hub-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 class="hub-title" style="font-size: 18px; margin: 0;">
+                    {% if is_admin %}All Active Audits{% else %}My Active Conversations{% endif %}
+                </h3>
+                <span class="badge badge-success">{{ my_chats|length }} Active</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 16px; max-height: 480px; overflow-y: auto; padding-right: 4px;">
+                {% for chat in my_chats %}
+                <div style="border: 1px solid var(--outline-variant); border-radius: 10px; padding: 16px; background-color: var(--surface-container-low); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--on-surface);">{{ chat.subject }}</div>
+                        <div style="font-size: 12px; color: var(--on-surface-variant); margin-top: 4px;">
+                            Client: <strong>{{ chat.customer.fullName }}</strong>
+                        </div>
+                        {% if is_admin %}
+                        <div style="font-size: 12px; color: var(--secondary); margin-top: 2px;">
+                            Assigned to: <strong>{{ chat.employee.fullName if chat.employee else 'Unassigned' }}</strong>
+                        </div>
+                        {% endif %}
+                        <div style="font-size: 11px; color: var(--outline); margin-top: 4px;">
+                            Started: {{ chat.createdAt.strftime('%b %d, %H:%M') }}
+                        </div>
+                    </div>
+
+                    <a href="/support/control-panel/chat/{{ chat.sessionID }}" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">forum</span> Open Chat
+                    </a>
+                </div>
+                {% else %}
+                <em style="font-size: 13px; color: var(--on-surface-variant); padding: 12px 0;">No active chat sessions at the moment.</em>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Closed Chat Logs -->
+    <div class="hub-header" style="margin-top: 48px; margin-bottom: 16px;">
+        <h3 class="hub-title" style="font-size: 20px;">History Logs (Closed Support Sessions)</h3>
+    </div>
+
+    <div class="table-container unified-table-container">
+        <table class="unified-table">
+            <thead>
+                <tr class="table-header-row">
+                    <th>Subject</th>
+                    <th>Client</th>
+                    <th>Agent</th>
+                    <th>Closed At</th>
+                    <th>Rating</th>
+                    <th>Feedback Comments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chat in closed_chats %}
+                <tr>
+                    <td><strong>{{ chat.subject }}</strong></td>
+                    <td>{{ chat.customer.fullName }}</td>
+                    <td>{{ chat.employee.fullName if chat.employee else '--' }}</td>
+                    <td>
+                        {{ chat.closedAt.strftime('%b %d, %Y - %H:%M') if chat.closedAt else '--' }}
+                        {% if chat.closedBy %}
+                        <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 4px;">
+                            By: <strong>{{ chat.closedBy.fullName }}</strong>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if chat.rating %}
+                        <div style="color: #ffb300; display: flex; align-items: center; gap: 4px;">
+                            {% for i in range(chat.rating) %}
+                            <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' 1;">star</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span style="font-size: 11px; color: var(--outline);">Not Rated</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-size: 13px; color: var(--on-surface-variant);">
+                            {{ chat.ratingFeedback or '(No feedback submitted)' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/support/control-panel/chat/{{ chat.sessionID }}" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">history</span> Audit Log
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No closed support logs in this account.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

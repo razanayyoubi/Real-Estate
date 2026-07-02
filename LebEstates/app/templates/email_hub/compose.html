@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Compose Email | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="email-hub-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Communications</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Email Composer</h2>
+                <p class="hub-subtitle">Draft ad-hoc emails or broadcast styled template campaigns to mailing distribution lists.</p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn btn-outline" onclick="saveDraft()">
+                    <span class="material-symbols-outlined">draft</span>
+                    Save Draft
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="sendEmailBatch()">
+                    <span class="material-symbols-outlined">send</span>
+                    Send Broadcast
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="hub-nav-tabs">
+        <a href="/control-panel/email-hub" class="hub-nav-tab">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="/control-panel/email-hub/compose" class="hub-nav-tab active">
+            <span class="material-symbols-outlined">edit_note</span> Compose
+        </a>
+        <a href="/control-panel/email-hub/config" class="hub-nav-tab">
+            <span class="material-symbols-outlined">settings_suggest</span> Configurations
+        </a>
+        <a href="/control-panel/email-hub/templates" class="hub-nav-tab">
+            <span class="material-symbols-outlined">html</span> Templates
+        </a>
+        <a href="/control-panel/email-hub/distribution-lists" class="hub-nav-tab">
+            <span class="material-symbols-outlined">contact_mail</span> Distribution Lists
+        </a>
+    </div>
+
+    <!-- Compose Layout -->
+    <div class="compose-layout">
+        <!-- Composer Panel (Left) -->
+        <div class="compose-pane">
+            <input type="hidden" id="draft_id" value="">
+            
+            <div class="form-group">
+                <label class="form-label" for="template_select">Load HTML Template</label>
+                <select id="template_select" class="form-control" onchange="loadTemplate(this.value)">
+                    <option value="">-- Start from scratch --</option>
+                    {% for template in templates %}
+                    <option value="{{ template.templateKey }}">{{ template.name }} ({{ template.templateKey }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" style="margin-bottom: 4px;">Target Distribution Lists</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 1px solid var(--outline-variant); border-radius: 8px; padding: 12px; background: var(--surface-container-low); max-height: 120px; overflow-y: auto;">
+                    {% for dl in dist_lists %}
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                        <input type="checkbox" name="dist_list" value="{{ dl.distributionListID }}" style="transform: scale(1.1);" onchange="updatePreview()">
+                        {{ dl.name }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="recipients_raw">Manual Email Recipients</label>
+                <textarea id="recipients_raw" class="form-control" placeholder="agent1@gmail.com, client2@outlook.com (separated by commas or space)" style="min-height: 60px;" oninput="updatePreview()"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="subject">Subject Line</label>
+                <input type="text" id="subject" class="form-control" placeholder="Email subject heading..." oninput="updatePreview()">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="body">HTML Content Body</label>
+                <textarea id="body" class="form-control" placeholder="Type raw text or insert HTML here..." style="min-height: 220px;" oninput="updatePreview()"></textarea>
+            </div>
+        </div>
+
+        <!-- Live Preview Panel (Right) -->
+        <div class="preview-pane">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="form-label" style="margin-bottom: 0;">Outbound Live Preview</span>
+                <span class="badge badge-primary" id="preview_count">0 Recipients Resolved</span>
+            </div>
+            
+            <div style="margin-top: 16px; font-size: 13px; color: var(--on-surface-variant); display: flex; flex-direction: column; gap: 4px;">
+                <div><strong>Subject:</strong> <span id="preview_subject" style="color: var(--on-surface);">--</span></div>
+            </div>
+            
+            <div class="preview-window" id="preview_body">
+                <!-- Outgoing Email Body Preview -->
+                <em style="color: #999;">Email body preview will render here...</em>
+            </div>
+
+            <!-- Drafts Sidebar Inside Compose Page -->
+            <div style="margin-top: 24px; border-top: 1px solid var(--outline-variant); padding-top: 16px;">
+                <div class="form-label" style="font-size: 13px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Saved Drafts</span>
+                    <span class="material-symbols-outlined" style="font-size: 18px; color: var(--outline);">drafts</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; padding-right: 4px;">
+                    {% for draft in drafts %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid var(--outline-variant); border-radius: 6px; background-color: var(--surface-container-lowest); font-size: 13px;">
+                        <span style="font-weight: 600; cursor: pointer; color: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;" onclick="loadDraft({{ draft.draftID }})">
+                            {{ draft.subject or '(No Subject)' }}
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 11px; color: var(--on-surface-variant);">{{ draft.lastUpdated.strftime('%b %d') }}</span>
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--error); cursor: pointer;" onclick="deleteDraft({{ draft.draftID }}, this.parentElement.parentElement)">delete</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <em style="font-size: 12px; color: var(--on-surface-variant);">No saved drafts.</em>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load templates map
+const templatesMap = {
+    {% for template in templates %}
+    "{{ template.templateKey }}": {
+        "subject": "{{ template.subject|escape }}",
+        "body": `{{ template.body|safe }}`
+    },
+    {% endfor %}
+};
+
+function loadTemplate(key) {
+    if (key && templatesMap[key]) {
+        document.getElementById('subject').value = templatesMap[key].subject;
+        document.getElementById('body').value = templatesMap[key].body;
+    } else {
+        document.getElementById('subject').value = '';
+        document.getElementById('body').value = '';
+    }
+    updatePreview();
+}
+
+function updatePreview() {
+    const subject = document.getElementById('subject').value || '(No Subject)';
+    const body = document.getElementById('body').value || '<em style="color: #999;">Email body preview will render here...</em>';
+    
+    document.getElementById('preview_subject').innerText = subject;
+    document.getElementById('preview_body').innerHTML = body;
+    
+    // Calculate recipients count dynamically
+    const manualRecips = document.getElementById('recipients_raw').value;
+    let manualCount = 0;
+    if (manualRecips) {
+        manualCount = manualRecips.split(/[,\s;\n\r]+/).filter(x => x.includes('@')).length;
+    }
+    
+    // Handle checked list counts (mock summary until resolve)
+    const listCheckboxes = document.querySelectorAll('input[name="dist_list"]:checked');
+    document.getElementById('preview_count').innerText = `${manualCount} manual + ${listCheckboxes.length} lists selected`;
+}
+
+function saveDraft() {
+    const draftId = document.getElementById('draft_id').value;
+    const subject = document.getElementById('subject').value;
+    const body = document.getElementById('body').value;
+    const recipientsRaw = document.getElementById('recipients_raw').value;
+    
+    const checkboxes = document.querySelectorAll('input[name="dist_list"]:checked');
+    const lists = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+    fetch('/control-panel/email-hub/drafts/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            draft_id: draftId ? parseInt(draftId) : null,
+            subject: subject,
+            body: body,
+            recipients_raw: recipientsRaw,
+            distribution_lists: lists
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('draft_id').value = data.draft_id;
+            alert('Draft saved successfully! Refresh page to update sidebar.');
+        } else {
+            alert('Error saving draft: ' + data.error);
+        }
+    });
+}
+
+function loadDraft(id) {
+    fetch(`/control-panel/email-hub/drafts/get/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('draft_id').value = data.draft_id;
+                document.getElementById('subject').value = data.subject || '';
+                document.getElementById('body').value = data.body || '';
+                document.getElementById('recipients_raw').value = data.recipients_raw || '';
+                
+                // Clear and select checkboxes
+                document.querySelectorAll('input[name="dist_list"]').forEach(cb => {
+                    cb.checked = data.distribution_lists.includes(parseInt(cb.value));
+                });
+                
+                document.getElementById('template_select').value = '';
+                updatePreview();
+                alert('Draft loaded.');
+            }
+        });
+}
+
+function deleteDraft(id, element) {
+    if (confirm('Delete this draft?')) {
+        fetch(`/control-panel/email-hub/drafts/delete/${id}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    element.remove();
+                    if (document.getElementById('draft_id').value == id) {
+                        document.getElementById('draft_id').value = '';
+                    }
+                }
+            });
+    }
+}
+
+function sendEmailBatch() {
+    const subject = document.getElementById('subject').value;
+    const body = document.getElementById('body').value;
+    const recipientsRaw = document.getElementById('recipients_raw').value;
+    
+    const checkboxes = document.querySelectorAll('input[name="dist_list"]:checked');
+    const lists = Array.from(checkboxes).map(cb => cb.value);
+
+    if (!subject || !body) {
+        alert('Subject and Body are required to send.');
+        return;
+    }
+    
+    if (lists.length === 0 && !recipientsRaw) {
+        alert('Please enter manual recipients or select a distribution list.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('subject', subject);
+    formData.append('body', body);
+    formData.append('recipients_raw', recipientsRaw);
+    lists.forEach(lid => formData.append('distribution_lists', lid));
+
+    const previewCount = document.getElementById('preview_count');
+    previewCount.innerText = 'Sending batch...';
+
+    fetch('/control-panel/email-hub/send', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Emails successfully queued! Resolved: ${data.recipientsCount}. Successfully Sent: ${data.deliveredCount}.`);
+            // Clear inputs
+            document.getElementById('subject').value = '';
+            document.getElementById('body').value = '';
+            document.getElementById('recipients_raw').value = '';
+            document.querySelectorAll('input[name="dist_list"]').forEach(cb => cb.checked = false);
+            document.getElementById('draft_id').value = '';
+            updatePreview();
+        } else {
+            alert('Send failed: ' + data.error);
+            updatePreview();
+        }
+    })
+    .catch(err => {
+        alert('Network or server error during sending.');
+        updatePreview();
+    });
+}
+
+// Init view
+updatePreview();
+</script>
+{% endblock %}

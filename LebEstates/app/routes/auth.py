@@ -158,24 +158,48 @@ def forgot_password_submit():
         data = request.form
 
     email = data.get('email', '').strip()
-    recovery_method = data.get('method', '2fa')
+    recovery_method = data.get('method', '2fa') # '2fa' (backup code/totp) or 'email' (reset link)
     totp_code = data.get('code', '').strip()
 
     if not email:
         return jsonify({'error': 'Email address is required.'}), 400
 
-    if recovery_method != '2fa':
-        return jsonify({'error': 'Invalid recovery method.'}), 400
+    if recovery_method == '2fa':
+        result = AuthService.verify_forgot_password_totp(email, totp_code)
+        if result["success"]:
+            session['reset_password_user_id'] = result['user_id']
+            return jsonify({
+                'message': 'Code verified successfully.',
+                'redirect_url': '/reset-password'
+            }), 200
+        else:
+            return jsonify({'error': result['error']}), result.get('code', 400)
+    elif recovery_method == 'email':
+        result = AuthService.create_password_reset_token(email)
+        if result["success"]:
+            return jsonify({
+                'message': result['message']
+            }), 200
+        else:
+            return jsonify({'error': result['error']}), result.get('code', 400)
+    else:
+        return jsonify({'error': 'Invalid recovery method selected.'}), 400
 
-    result = AuthService.verify_forgot_password_totp(email, totp_code)
+@auth_bp.route('/reset-password-by-link', methods=['GET'])
+def reset_password_by_link():
+    token = request.args.get('token', '').strip()
+    if not token:
+        flash('Invalid password reset token.', 'danger')
+        return redirect(url_for('auth.login_page'))
+
+    result = AuthService.verify_password_reset_token(token)
     if result["success"]:
         session['reset_password_user_id'] = result['user_id']
-        return jsonify({
-            'message': 'Code verified successfully.',
-            'redirect_url': '/reset-password'
-        }), 200
+        flash('Verification successful. Please set a new password.', 'success')
+        return redirect(url_for('auth.reset_password_page'))
     else:
-        return jsonify({'error': result['error']}), result['code']
+        flash(result['error'], 'danger')
+        return redirect(url_for('auth.login_page'))
 
 @auth_bp.route('/reset-password', methods=['GET'])
 def reset_password_page():

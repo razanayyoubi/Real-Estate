@@ -500,3 +500,83 @@ class AuthService:
             'transactions_count': len(transactions),
             'active_deal': active_deal
         }
+
+    @staticmethod
+    def create_password_reset_token(email):
+        """Create a secure password reset token and send it via email."""
+        from app.models.users import Users, PasswordResetToken
+        from app.services.email_service import EmailService
+        import secrets
+        from datetime import datetime, timedelta
+        from flask import url_for
+
+        user = Users.query.filter_by(email=email).first()
+        if not user:
+            return {"success": False, "error": "Account not found.", "code": 404}
+        if user.status != 'Active':
+            return {"success": False, "error": "Account is inactive or blacklisted.", "code": 400}
+
+        # Expire any previous unused tokens
+        PasswordResetToken.query.filter_by(userID=user.userID, used=False).update({PasswordResetToken.used: True})
+
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+
+        reset_token = PasswordResetToken(
+            userID=user.userID,
+            token=token,
+            expiresAt=expires_at
+        )
+        db.session.add(reset_token)
+        db.session.commit()
+
+        from flask import has_request_context
+        if has_request_context():
+            reset_link = url_for('auth.reset_password_by_link', token=token, _external=True)
+        else:
+            # Fallback for CLI, background tasks, or testing suites
+            reset_link = f"http://127.0.0.1:5000/reset-password-by-link?token={token}"
+
+        sent = EmailService.send_templated_email(
+            recipient=user.email,
+            feature_key='ForgotPassword',
+            default_template_key='AUTH-RESET-V1',
+            placeholders={
+                'CustomerName': user.fullName,
+                'user_name': user.fullName,
+                'ActionUrl': reset_link,
+                'reset_link': reset_link,
+                'expiry': '1 hour'
+            },
+            fallback_subject="Reset your LebEstates password",
+            fallback_body=f"Click here to reset your password: {reset_link}",
+            email_type="ForgotPassword",
+            user_id=user.userID
+        )
+
+        if sent:
+            return {"success": True, "message": "Password reset link sent to your email address."}
+        else:
+            return {"success": False, "error": "Failed to send reset email. Contact administrator.", "code": 500}
+
+    @staticmethod
+    def verify_password_reset_token(token):
+        """Verify the password reset token and return the associated user ID."""
+        from app.models.users import PasswordResetToken
+        from datetime import datetime
+
+        token_record = PasswordResetToken.query.filter_by(token=token, used=False).first()
+        if not token_record:
+            return {"success": False, "error": "Invalid or already used password reset link."}
+
+        if token_record.expiresAt < datetime.utcnow():
+            token_record.used = True
+            db.session.commit()
+            return {"success": False, "error": "The password reset link has expired."}
+
+        # Mark token as used
+        token_record.used = True
+        db.session.commit()
+
+        return {"success": True, "user_id": token_record.userID}
+

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Email Configurations | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<link href="/static/css/email_hub.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="email-hub-container">
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Communications</span>
+        </div>
+        <div class="hub-header-main-flex">
+            <div class="hub-header-details">
+                <h2 class="hub-title">Email Configurations</h2>
+                <p class="hub-subtitle">Map system notifications to specific templates, customize sender emails, and edit overrides.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="openSenderModal()">
+                <span class="material-symbols-outlined">add_circle</span>
+                Add Sender Profile
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="hub-nav-tabs">
+        <a href="/control-panel/email-hub" class="hub-nav-tab">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="/control-panel/email-hub/compose" class="hub-nav-tab">
+            <span class="material-symbols-outlined">edit_note</span> Compose
+        </a>
+        <a href="/control-panel/email-hub/config" class="hub-nav-tab active">
+            <span class="material-symbols-outlined">settings_suggest</span> Configurations
+        </a>
+        <a href="/control-panel/email-hub/templates" class="hub-nav-tab">
+            <span class="material-symbols-outlined">html</span> Templates
+        </a>
+        <a href="/control-panel/email-hub/distribution-lists" class="hub-nav-tab">
+            <span class="material-symbols-outlined">contact_mail</span> Distribution Lists
+        </a>
+    </div>
+
+    <!-- Main Config Form -->
+    <form action="/control-panel/email-hub/config/save" method="POST">
+        <div class="hub-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 class="hub-title" style="font-size: 20px;">Feature Automation Mappings</h3>
+                <p class="hub-subtitle">Configure template routing for triggers generated automatically by application actions.</p>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span class="material-symbols-outlined">save</span> Save Mappings
+            </button>
+        </div>
+
+        <div class="table-container unified-table-container">
+            <table class="unified-table">
+                <thead>
+                    <tr class="table-header-row">
+                        <th>Enabled</th>
+                        <th>Feature Key</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Active Template</th>
+                        <th>Sender Identity</th>
+                        <th>ReplyTo Override</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feature in features %}
+                    <input type="hidden" name="feature_ids" value="{{ feature.featureConfigID }}">
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.2);">
+                        </td>
+                        <td><strong>{{ feature.featureKey }}</strong></td>
+                        <td>{{ feature.featureName }}</td>
+                        <td><span class="badge badge-primary">{{ feature.category }}</span></td>
+                        <td>
+                            <select name="template_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
+                                <option value="">-- Use Default / Fallback --</option>
+                                {% for template in templates %}
+                                <option value="{{ template.templateKey }}" {% if feature.templateKey == template.templateKey %}selected{% endif %}>
+                                    {{ template.name }} ({{ template.templateKey }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="sender_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
+                                <option value="">-- System default sender --</option>
+                                {% for sender in senders %}
+                                <option value="{{ sender.senderIdentityID }}" {% if feature.senderIdentityID == sender.senderIdentityID %}selected{% endif %}>
+                                    {{ sender.displayName }} &lt;{{ sender.fromEmail }}&gt;
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="email" name="replyto_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;" value="{{ feature.replyToOverride or '' }}" placeholder="Optional reply-to">
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No automated features registered.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    <!-- Senders Section -->
+    <div class="hub-header" style="margin-bottom: 16px; margin-top: 48px;">
+        <h3 class="hub-title" style="font-size: 20px;">Sender Identities</h3>
+        <p class="hub-subtitle">Manage sender profiles for outbound emails. Mailjet must verify these emails or domains.</p>
+    </div>
+
+    <div class="table-container unified-table-container">
+        <table class="unified-table">
+            <thead>
+                <tr class="table-header-row">
+                    <th>Display Name</th>
+                    <th>From Email</th>
+                    <th>Reply-To Email</th>
+                    <th>Status</th>
+                    <th>System Default</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sender in senders %}
+                <tr>
+                    <td><strong>{{ sender.displayName }}</strong></td>
+                    <td>{{ sender.fromEmail }}</td>
+                    <td>{{ sender.replyToEmail or 'None' }}</td>
+                    <td>
+                        <span class="badge badge-success">{{ sender.verifiedStatus }}</span>
+                    </td>
+                    <td>
+                        {% if sender.isDefault %}
+                        <span class="badge badge-success">Default</span>
+                        {% else %}
+                        <span class="badge badge-primary">No</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <input type="checkbox" {% if sender.isActive %}checked{% endif %} onchange="toggleSenderActive({{ sender.senderIdentityID }})" style="transform: scale(1.2);">
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            {% if not sender.isDefault %}
+                            <form action="/control-panel/email-hub/sender/default/{{ sender.senderIdentityID }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">star</span> Make Default
+                                </button>
+                            </form>
+                            {% endif %}
+                            <form action="/control-panel/email-hub/sender/delete/{{ sender.senderIdentityID }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this sender identity?');">
+                                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">delete</span> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No sender profiles registered. Outbound emails will use app configurations.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Sender Modal -->
+<div class="modal" id="senderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title">Create Sender Identity Profile</h4>
+            <span class="modal-close" onclick="closeSenderModal()">&times;</span>
+        </div>
+        <form action="/control-panel/email-hub/sender/create" method="POST">
+            <div class="form-group">
+                <label class="form-label" for="display_name">Display Name</label>
+                <input type="text" id="display_name" name="display_name" class="form-control" required placeholder="e.g. LebEstates Tours Support">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="from_email">From Email Address</label>
+                <input type="email" id="from_email" name="from_email" class="form-control" required placeholder="e.g. support@lebestates.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="reply_to_email">Reply-To Email Address</label>
+                <input type="email" id="reply_to_email" name="reply_to_email" class="form-control" placeholder="e.g. contact@lebestates.com (Optional)">
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="is_default" name="is_default" style="transform: scale(1.2);">
+                <label class="form-label" for="is_default" style="margin-bottom: 0;">Set as System default sender</label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeSenderModal()">Cancel</button>
+                <button type="submit" class="btn btn-secondary">Create Sender</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openSenderModal() {
+    document.getElementById('senderModal').classList.add('show');
+}
+function closeSenderModal() {
+    document.getElementById('senderModal').classList.remove('show');
+}
+function toggleSenderActive(senderId) {
+    fetch(`/control-panel/email-hub/sender/toggle/${senderId}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Sender status updated successfully!');
+            }
+        });
+}
+</script>
+{% endblock %}
