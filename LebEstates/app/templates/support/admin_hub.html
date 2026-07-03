@@ -5,6 +5,18 @@
 {% block styles %}
 <link href="/static/css/email_hub.css" rel="stylesheet">
 <link href="/static/css/support.css" rel="stylesheet">
+<style>
+.unified-table-container {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+.unified-table {
+    min-width: 800px !important;
+    width: 100% !important;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -20,7 +32,7 @@
                 <h2 class="hub-title">Support Control Hub</h2>
                 <p class="hub-subtitle">
                     {% if is_admin %}
-                    Administrator control dashboard to view, claim, and audit all live customer chat sessions.
+                    Administrator control dashboard to view, claim, and monitor all live customer chat sessions.
                     {% else %}
                     Claim incoming support tickets and manage your active customer conversations.
                     {% endif %}
@@ -34,10 +46,10 @@
         <div class="hub-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 class="hub-title" style="font-size: 18px; margin: 0;">Unassigned Requests</h3>
-                <span class="badge" style="background-color: var(--primary-container); color: var(--on-primary-container);">{{ unassigned_chats|length }} Waiting</span>
+                <span id="unassigned-badge" class="badge" style="background-color: var(--primary-container); color: var(--on-primary-container);">{{ unassigned_chats|length }} Waiting</span>
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 16px; max-height: 480px; overflow-y: auto; padding-right: 4px;">
+            <div id="unassigned-container" style="display: flex; flex-direction: column; gap: 16px; max-height: 480px; overflow-y: auto; padding-right: 4px;">
                 {% for chat in unassigned_chats %}
                 <div style="border: 1px solid var(--outline-variant); border-radius: 10px; padding: 16px; background-color: var(--surface-container-lowest); display: flex; flex-direction: column; gap: 12px;">
                     <div>
@@ -67,14 +79,14 @@
         <div class="hub-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 class="hub-title" style="font-size: 18px; margin: 0;">
-                    {% if is_admin %}All Active Audits{% else %}My Active Conversations{% endif %}
+                    {% if is_admin %}All Active Chats{% else %}My Active Conversations{% endif %}
                 </h3>
-                <span class="badge badge-success">{{ my_chats|length }} Active</span>
+                <span id="active-badge" class="badge badge-success">{{ my_chats|length }} Active</span>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 16px; max-height: 480px; overflow-y: auto; padding-right: 4px;">
+            <div id="active-container" style="display: flex; flex-direction: column; gap: 16px; max-height: 480px; overflow-y: auto; padding-right: 4px;">
                 {% for chat in my_chats %}
-                <div style="border: 1px solid var(--outline-variant); border-radius: 10px; padding: 16px; background-color: var(--surface-container-low); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                <div class="chat-hub-card">
                     <div>
                         <div style="font-weight: 700; font-size: 14px; color: var(--on-surface);">{{ chat.subject }}</div>
                         <div style="font-size: 12px; color: var(--on-surface-variant); margin-top: 4px;">
@@ -103,7 +115,7 @@
 
     <!-- Closed Chat Logs -->
     <div class="hub-header" style="margin-top: 48px; margin-bottom: 16px;">
-        <h3 class="hub-title" style="font-size: 20px;">History Logs (Closed Support Sessions)</h3>
+        <h3 class="hub-title" style="font-size: 20px;">History Chats</h3>
     </div>
 
     <div class="table-container unified-table-container">
@@ -119,7 +131,7 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="closed-container">
                 {% for chat in closed_chats %}
                 <tr>
                     <td><strong>{{ chat.subject }}</strong></td>
@@ -151,7 +163,7 @@
                     </td>
                     <td>
                         <a href="/support/control-panel/chat/{{ chat.sessionID }}" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">
-                            <span class="material-symbols-outlined" style="font-size: 16px;">history</span> Audit Log
+                            <span class="material-symbols-outlined" style="font-size: 16px;">history</span> Chat Log
                         </a>
                     </td>
                 </tr>
@@ -164,4 +176,171 @@
         </table>
     </div>
 </div>
+
+<script>
+const isAdmin = {% if is_admin %}true{% else %}false{% endif %};
+let pollingInterval = null;
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+
+function renderUnassignedChat(chat) {
+    return `
+    <div style="border: 1px solid var(--outline-variant); border-radius: 10px; padding: 16px; background-color: var(--surface-container-lowest); display: flex; flex-direction: column; gap: 12px;">
+        <div>
+            <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--secondary); letter-spacing: 0.5px;">Subject</span>
+            <div style="font-weight: 700; font-size: 14px; color: var(--on-surface);">${escapeHTML(chat.subject)}</div>
+            <div style="font-size: 12px; color: var(--on-surface-variant); margin-top: 4px;">
+                By <strong>${escapeHTML(chat.customerName)}</strong> (${escapeHTML(chat.customerEmail)})
+            </div>
+            <div style="font-size: 11px; color: var(--outline); margin-top: 4px;">
+                Received: ${chat.createdAt}
+            </div>
+        </div>
+        
+        <form action="/support/control-panel/assign/${chat.sessionID}" method="POST">
+            <button type="submit" class="btn btn-secondary" style="width: 100%; justify-content: center; padding: 8px 16px; font-size: 13px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">assignment_ind</span> Claim Session
+            </button>
+        </form>
+    </div>
+    `;
+}
+
+function renderActiveChat(chat) {
+    let assignedToHTML = '';
+    if (isAdmin) {
+        assignedToHTML = `
+        <div style="font-size: 12px; color: var(--secondary); margin-top: 2px;">
+            Assigned to: <strong>${escapeHTML(chat.employeeName)}</strong>
+        </div>
+        `;
+    }
+    return `
+    <div class="chat-hub-card">
+        <div>
+            <div style="font-weight: 700; font-size: 14px; color: var(--on-surface);">${escapeHTML(chat.subject)}</div>
+            <div style="font-size: 12px; color: var(--on-surface-variant); margin-top: 4px;">
+                Client: <strong>${escapeHTML(chat.customerName)}</strong>
+            </div>
+            ${assignedToHTML}
+            <div style="font-size: 11px; color: var(--outline); margin-top: 4px;">
+                Started: ${chat.createdAt}
+            </div>
+        </div>
+
+        <a href="/support/control-panel/chat/${chat.sessionID}" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">forum</span> Open Chat
+        </a>
+    </div>
+    `;
+}
+
+function renderClosedChat(chat) {
+    let closedByHTML = '';
+    if (chat.closedBy) {
+        closedByHTML = `
+        <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 4px;">
+            By: <strong>${escapeHTML(chat.closedBy)}</strong>
+        </div>
+        `;
+    }
+    
+    let ratingHTML = '<span style="font-size: 11px; color: var(--outline);">Not Rated</span>';
+    if (chat.rating) {
+        let stars = '';
+        for (let i = 0; i < chat.rating; i++) {
+            stars += `<span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' 1;">star</span>`;
+        }
+        ratingHTML = `
+        <div style="color: #ffb300; display: flex; align-items: center; gap: 4px;">
+            ${stars}
+        </div>
+        `;
+    }
+
+    return `
+    <tr>
+        <td><strong>${escapeHTML(chat.subject)}</strong></td>
+        <td>${escapeHTML(chat.customerName)}</td>
+        <td>${escapeHTML(chat.employeeName)}</td>
+        <td>
+            ${chat.closedAt}
+            ${closedByHTML}
+        </td>
+        <td>
+            ${ratingHTML}
+        </td>
+        <td>
+            <span style="font-size: 13px; color: var(--on-surface-variant);">
+                ${escapeHTML(chat.ratingFeedback)}
+            </span>
+        </td>
+        <td>
+            <a href="/support/control-panel/chat/${chat.sessionID}" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">history</span> Chat Log
+            </a>
+        </td>
+    </tr>
+    `;
+}
+
+function pollControlPanelUpdates() {
+    fetch('/support/api/control-panel/updates')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // 1. Unassigned
+                const unassignedBadge = document.getElementById('unassigned-badge');
+                const unassignedContainer = document.getElementById('unassigned-container');
+                if (unassignedBadge) {
+                    unassignedBadge.innerText = `${data.unassigned_chats.length} Waiting`;
+                }
+                if (unassignedContainer) {
+                    if (data.unassigned_chats.length === 0) {
+                        unassignedContainer.innerHTML = `<em style="font-size: 13px; color: var(--on-surface-variant); padding: 12px 0;">No unassigned requests. All clients have been served!</em>`;
+                    } else {
+                        unassignedContainer.innerHTML = data.unassigned_chats.map(renderUnassignedChat).join('');
+                    }
+                }
+
+                // 2. Active
+                const activeBadge = document.getElementById('active-badge');
+                const activeContainer = document.getElementById('active-container');
+                if (activeBadge) {
+                    activeBadge.innerText = `${data.my_chats.length} Active`;
+                }
+                if (activeContainer) {
+                    if (data.my_chats.length === 0) {
+                        activeContainer.innerHTML = `<em style="font-size: 13px; color: var(--on-surface-variant); padding: 12px 0;">No active chat sessions at the moment.</em>`;
+                    } else {
+                        activeContainer.innerHTML = data.my_chats.map(renderActiveChat).join('');
+                    }
+                }
+
+                // 3. Closed
+                const closedContainer = document.getElementById('closed-container');
+                if (closedContainer) {
+                    if (data.closed_chats.length === 0) {
+                        closedContainer.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No closed support logs in this account.</td>
+                        </tr>
+                        `;
+                    } else {
+                        closedContainer.innerHTML = data.closed_chats.map(renderClosedChat).join('');
+                    }
+                }
+            }
+        })
+        .catch(err => console.error("Control panel updates polling error:", err));
+}
+
+// Poll every 3 seconds
+pollingInterval = setInterval(pollControlPanelUpdates, 3000);
+</script>
 {% endblock %}

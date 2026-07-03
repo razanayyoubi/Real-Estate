@@ -150,6 +150,62 @@ def employee_chat(session_id):
     return render_template('support/chat_room.html', chat_session=chat_session, is_employee=True)
 
 
+@support_bp.route('/api/control-panel/updates', methods=['GET'])
+@employee_or_admin_required
+def control_panel_updates():
+    user_id = session['user_id']
+    role = session.get('role_name', '').lower()
+
+    if role == 'admin':
+        unassigned_chats = SupportSession.query.filter_by(employeeID=None, status='Open').order_by(SupportSession.createdAt.asc()).all()
+        my_chats = SupportSession.query.filter(SupportSession.employeeID != None, SupportSession.status != 'Closed').order_by(SupportSession.createdAt.desc()).all()
+        closed_chats = SupportSession.query.filter_by(status='Closed').order_by(SupportSession.closedAt.desc()).all()
+    else:
+        unassigned_chats = SupportSession.query.filter_by(employeeID=None, status='Open').order_by(SupportSession.createdAt.asc()).all()
+        my_chats = SupportSession.query.filter_by(employeeID=user_id, status='Active').order_by(SupportSession.createdAt.desc()).all()
+        closed_chats = SupportSession.query.filter_by(employeeID=user_id, status='Closed').order_by(SupportSession.closedAt.desc()).all()
+
+    unassigned_data = []
+    for chat in unassigned_chats:
+        unassigned_data.append({
+            'sessionID': chat.sessionID,
+            'subject': chat.subject,
+            'customerName': chat.customer.fullName,
+            'customerEmail': chat.customer.email,
+            'createdAt': chat.createdAt.strftime('%b %d, %H:%M')
+        })
+
+    my_chats_data = []
+    for chat in my_chats:
+        my_chats_data.append({
+            'sessionID': chat.sessionID,
+            'subject': chat.subject,
+            'customerName': chat.customer.fullName,
+            'employeeName': chat.employee.fullName if chat.employee else 'Unassigned',
+            'createdAt': chat.createdAt.strftime('%b %d, %H:%M')
+        })
+
+    closed_chats_data = []
+    for chat in closed_chats:
+        closed_chats_data.append({
+            'sessionID': chat.sessionID,
+            'subject': chat.subject,
+            'customerName': chat.customer.fullName,
+            'employeeName': chat.employee.fullName if chat.employee else '--',
+            'closedAt': chat.closedAt.strftime('%b %d, %Y - %H:%M') if chat.closedAt else '--',
+            'closedBy': chat.closedBy.fullName if chat.closedBy else '',
+            'rating': chat.rating,
+            'ratingFeedback': chat.ratingFeedback or '(No feedback submitted)'
+        })
+
+    return jsonify({
+        'success': True,
+        'unassigned_chats': unassigned_data,
+        'my_chats': my_chats_data,
+        'closed_chats': closed_chats_data
+    })
+
+
 # --- SHARED CHAT REST API ENDPOINTS ---
 
 @support_bp.route('/api/messages/<int:session_id>', methods=['GET'])
