@@ -292,6 +292,102 @@ def send_message(session_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@support_bp.route('/api/chatbot/chat', methods=['POST'])
+@login_required
+def chatbot_chat():
+    user_id = session['user_id']
+    role = session.get('role_name', '').lower()
+    
+    if role in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Only customers can chat with the AI chatbot.'}), 403
+        
+    data = request.json or {}
+    message_text = data.get('message', '').strip()
+    history = data.get('history', [])
+    
+    if not message_text:
+        return jsonify({'success': False, 'error': 'Message text is required.'}), 400
+        
+    try:
+        from app.services.chatbot_service import GeminiChatbotService
+        from app.models.customer import Customer
+        customer = Customer.query.filter_by(userID=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'error': 'Customer profile not found.'}), 404
+            
+        ai_reply = GeminiChatbotService.generate_chatbot_response(message_text, history, customer.customerID)
+        
+        escalate = False
+        # If the reply contains transfer patterns or is requesting escalation, signal escalate: true
+        if "escalate_to_human" in ai_reply or "I am transferring this chat" in ai_reply:
+            escalate = True
+            
+        return jsonify({
+            'success': True,
+            'response': ai_reply,
+            'escalate': escalate
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@support_bp.route('/api/chatbot/escalate', methods=['POST'])
+@login_required
+def chatbot_escalate():
+    user_id = session['user_id']
+    role = session.get('role_name', '').lower()
+    
+    if role in ['admin', 'employee']:
+        return jsonify({'success': False, 'error': 'Only customers can escalate chats.'}), 403
+        
+    data = request.json or {}
+    subject = data.get('subject', 'AI Chatbot Escalation').strip()
+    transcript = data.get('transcript', [])
+    
+    try:
+        # Create a new support session directly in the human agent unassigned queue
+        new_session = SupportSession(
+            customerID=user_id,
+            subject=subject,
+            status='Open',
+            employeeID=None
+        )
+        db.session.add(new_session)
+        db.session.commit()
+        
+        from app.services.chatbot_service import GeminiChatbotService
+        ai_user = GeminiChatbotService.get_ai_user()
+        ai_user_id = ai_user.userID if ai_user else 1
+        
+        # Populate session with the AI chat transcript for context
+        for item in transcript:
+            sender_id = user_id if item.get('sender') == 'Client' else ai_user_id
+            msg = SupportMessage(
+                sessionID=new_session.sessionID,
+                senderID=sender_id,
+                messageText=item.get('text', '')
+            )
+            db.session.add(msg)
+            
+        if ai_user:
+            transfer_msg = SupportMessage(
+                sessionID=new_session.sessionID,
+                senderID=ai_user_id,
+                messageText="[System Notice: This chat was escalated from the AI Chatbot. The human agent has been provided the previous conversation context.]"
+            )
+            db.session.add(transfer_msg)
+            
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'session_id': new_session.sessionID
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @support_bp.route('/api/close/<int:session_id>', methods=['POST'])
 @login_required
 def close_session(session_id):

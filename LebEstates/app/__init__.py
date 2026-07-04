@@ -126,6 +126,27 @@ def create_app(config_class=Config):
         # Ensure all tables are created (including new Email Hub tables)
         try:
             db.create_all()
+
+            # Seed AI Assistant User
+            from app.models.users import Users, Role
+            ai_user = Users.query.filter_by(email='ai@lebestates.com').first()
+            if not ai_user:
+                employee_role = Role.query.filter_by(roleName='Employee').first()
+                role_id = employee_role.roleID if employee_role else 1
+                
+                import bcrypt
+                import secrets
+                dummy_hash = bcrypt.hashpw(secrets.token_hex(16).encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                
+                ai_user = Users(
+                    fullName='AI Assistant',
+                    email='ai@lebestates.com',
+                    passwordHash=dummy_hash,
+                    roleID=role_id,
+                    status='Active'
+                )
+                db.session.add(ai_user)
+                db.session.commit()
             
             # Seed default Sender Identity
             if not SenderIdentity.query.first():
