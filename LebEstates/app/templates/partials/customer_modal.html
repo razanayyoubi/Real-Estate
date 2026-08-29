@@ -1,0 +1,100 @@
+<!-- Global Customer Information Modal (Luxury Redesign) -->
+<div class="modal-overlay" id="global-customer-modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+    <div class="modal-card" style="background: var(--surface-container-lowest, #ffffff); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); border: 1px solid var(--outline-variant, #c5c6cf); width: 100%; max-width: 560px; padding: 28px; box-sizing: border-box;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--outline-variant, rgba(0,0,0,0.1)); padding-bottom: 16px; margin-bottom: 24px;">
+            <h4 class="modal-title" style="margin: 0; font-family: var(--font-headline, sans-serif); font-size: 20px; font-weight: 700; color: var(--primary, #00081e); display: flex; align-items: center; gap: 10px;">
+                <span class="material-symbols-outlined" style="color: var(--primary, #00081e);">person</span>
+                Customer Profile Information
+            </h4>
+            <button type="button" class="btn-close" id="close-global-customer-modal" style="background: none; border: none; cursor: pointer; color: var(--on-surface-variant, #666); padding: 4px; display: flex; align-items: center;">
+                <span class="material-symbols-outlined" style="font-size: 22px;">close</span>
+            </button>
+        </div>
+        <div id="global-customer-modal-body">
+            <div style="text-align: center; padding: 32px;">
+                <span class="material-symbols-outlined spin" style="font-size: 36px; color: var(--primary, #00081e); animation: spin 1s linear infinite;">sync</span>
+                <p style="margin-top: 12px; color: var(--on-surface-variant, #666); font-size: 14px;">Loading customer profile...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCustomerModal(customerId) {
+    const modal = document.getElementById('global-customer-modal');
+    const body = document.getElementById('global-customer-modal-body');
+    if (!modal || !body) return;
+
+    modal.style.display = 'flex';
+    body.innerHTML = `
+        <div style="text-align: center; padding: 32px;">
+            <span class="material-symbols-outlined spin" style="font-size: 36px; color: var(--primary, #00081e); animation: spin 1s linear infinite;">sync</span>
+            <p style="margin-top: 12px; color: var(--on-surface-variant, #666); font-size: 14px;">Loading customer profile...</p>
+        </div>
+    `;
+
+    fetch(`/customers/${customerId}/details`)
+        .then(r => r.json())
+        .then(res => {
+            if (!res.success) {
+                body.innerHTML = `<p style="color: var(--error, #ba1a1a); text-align: center; padding: 24px;">${res.error || 'Failed to load details'}</p>`;
+                return;
+            }
+            const c = res.customer;
+            const docBadge = c.documents.length > 0 ? 
+                `<span style="background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; display: inline-block;">Verified (${c.documents.length} Docs)</span>` : 
+                `<span style="background: #fff8e1; color: #f57f17; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; display: inline-block;">Pending Verification</span>`;
+
+            const avatarSrc = c.avatar || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(c.fullName) + '&background=00081e&color=fff');
+
+            body.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--outline-variant, rgba(0,0,0,0.08));">
+                    <img src="${avatarSrc}" alt="${c.fullName}" style="width: 68px; height: 68px; border-radius: 50%; object-fit: cover; border: 2px solid var(--secondary, #735c00); flex-shrink: 0;" />
+                    <div>
+                        <h3 style="margin: 0; font-family: var(--font-headline, sans-serif); font-size: 22px; font-weight: 800; color: var(--primary, #00081e);">${c.fullName}</h3>
+                        <p style="margin: 4px 0 8px 0; font-size: 13px; color: var(--on-surface-variant, #666);">ID: #CUST-${c.customerID} • Joined ${c.createdAt}</p>
+                        ${docBadge}
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px;">
+                    <div style="background: var(--surface-container-low, #f8f9ff); border: 1px solid var(--outline-variant, #e0e6ed); padding: 12px 16px; border-radius: 12px;">
+                        <span style="font-size: 11px; font-weight: 700; color: var(--on-surface-variant, #666); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">Email</span>
+                        <strong style="color: var(--primary, #00081e); word-break: break-all;">${c.email}</strong>
+                    </div>
+                    <div style="background: var(--surface-container-low, #f8f9ff); border: 1px solid var(--outline-variant, #e0e6ed); padding: 12px 16px; border-radius: 12px;">
+                        <span style="font-size: 11px; font-weight: 700; color: var(--on-surface-variant, #666); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">Phone Number</span>
+                        <strong style="color: var(--primary, #00081e);">${c.phoneNumber}</strong>
+                    </div>
+                    <div style="background: var(--surface-container-low, #f8f9ff); border: 1px solid var(--outline-variant, #e0e6ed); padding: 12px 16px; border-radius: 12px;">
+                        <span style="font-size: 11px; font-weight: 700; color: var(--on-surface-variant, #666); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">National ID</span>
+                        <strong style="color: var(--primary, #00081e);">${c.nationalID}</strong>
+                    </div>
+                    <div style="background: var(--surface-container-low, #f8f9ff); border: 1px solid var(--outline-variant, #e0e6ed); padding: 12px 16px; border-radius: 12px;">
+                        <span style="font-size: 11px; font-weight: 700; color: var(--on-surface-variant, #666); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">Status</span>
+                        <strong style="color: #2e7d32;">${c.status}</strong>
+                    </div>
+                </div>
+                <div style="margin-top: 14px; background: var(--surface-container-low, #f8f9ff); border: 1px solid var(--outline-variant, #e0e6ed); padding: 14px 16px; border-radius: 12px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--on-surface-variant, #666); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 4px;">Primary Address</span>
+                    <span style="color: var(--primary, #00081e); font-weight: 600;">${c.address}</span>
+                </div>
+                <div style="margin-top: 24px; display: flex; justify-content: flex-end; border-top: 1px solid var(--outline-variant, rgba(0,0,0,0.08)); padding-top: 16px;">
+                    <button type="button" onclick="document.getElementById('global-customer-modal').style.display='none';" style="padding: 8px 24px; border-radius: 8px; border: 1px solid var(--outline-variant, #c5c6cf); background: transparent; color: var(--on-surface-variant, #44464e); font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s ease;">Close</button>
+                </div>
+            `;
+        })
+        .catch(err => {
+            body.innerHTML = `<p style="color: var(--error, #ba1a1a); text-align: center; padding: 24px;">Error loading customer profile.</p>`;
+        });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('close-global-customer-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            const modal = document.getElementById('global-customer-modal');
+            if (modal) modal.style.display = 'none';
+        });
+    }
+});
+</script>

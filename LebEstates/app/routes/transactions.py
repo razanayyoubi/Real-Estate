@@ -11,12 +11,27 @@ def transactions_list():
     user = AuthService.get_user_by_id(session['user_id'])
     return render_template('transactions.html', user=user)
 
+@transactions_bp.route('/control-panel/transactions/<int:trans_id>/receipt')
+def transaction_receipt(trans_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
+        return redirect(url_for('auth.login_page'))
+
+    from app.models.operations import Transaction
+    transaction = Transaction.query.get_or_404(trans_id)
+    return render_template('transaction_receipt.html', transaction=transaction)
+
 @transactions_bp.route('/control-panel/transactions/ledger')
 def transactions_ledger():
     if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
         return redirect(url_for('auth.login_page'))
 
-    data = TransactionService.get_ledger_data()
+    filters = {
+        'server_q': request.args.get('server_q', ''),
+        'type': request.args.get('type', 'All'),
+        'status': request.args.get('status', 'All')
+    }
+
+    data = TransactionService.get_ledger_data(filters)
     user = AuthService.get_user_by_id(session['user_id'])
     
     from app.services.commission_service import CommissionService
@@ -30,7 +45,8 @@ def transactions_ledger():
         properties=data['properties'],
         customers=data['customers'],
         employees=data['employees'],
-        expenses=expenses
+        expenses=expenses,
+        filters=filters
     )
 
 @transactions_bp.route('/control-panel/transactions/revenue-dashboard')

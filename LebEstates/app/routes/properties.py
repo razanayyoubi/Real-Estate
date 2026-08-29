@@ -23,10 +23,27 @@ def sell_rent_page():
         customers_data = get_all_customers()
         active_customers = [c for c in customers_data if c['status'].lower() == 'active']
         
+    user_draft = PropertyService.get_user_draft(user.userID)
+
     return render_template('property_add.html', 
                            user=user, 
                            is_employee=is_employee, 
-                           active_customers=active_customers)
+                           active_customers=active_customers,
+                           user_draft=user_draft)
+
+@properties_bp.route('/properties/api/check-draft', methods=['GET'])
+def check_user_draft():
+    if 'user_id' not in session:
+        return jsonify({'has_draft': False}), 401
+    draft = PropertyService.get_user_draft(session['user_id'])
+    return jsonify({'has_draft': bool(draft), 'draft': draft})
+
+@properties_bp.route('/properties/api/discard-draft', methods=['POST'])
+def discard_user_draft_route():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    res = PropertyService.discard_user_draft(session['user_id'])
+    return jsonify(res)
 
 @properties_bp.route('/sell-rent', methods=['POST'])
 def sell_rent_submit():
@@ -102,7 +119,15 @@ def properties_list():
         session.clear()
         return redirect(url_for('auth.login_page'))
 
-    data = PropertyService.get_all_properties_and_stats()
+    filters = {
+        'server_q': request.args.get('server_q', ''),
+        'status': request.args.get('status', 'All'),
+        'listing_type': request.args.get('listing_type', 'All'),
+        'property_type': request.args.get('property_type', 'All'),
+        'location': request.args.get('location', 'All')
+    }
+
+    data = PropertyService.get_all_properties_and_stats(filters)
 
     return render_template(
         'properties_mgmt.html',
@@ -114,7 +139,8 @@ def properties_list():
         portfolio_valuation=data['portfolio_valuation'],
         pending_queue=data['pending_queue'],
         image_count=data['image_count'],
-        type_counts=data['type_counts']
+        type_counts=data['type_counts'],
+        filters=filters
     )
 
 @properties_bp.route('/properties/<int:prop_id>/approve', methods=['POST'])

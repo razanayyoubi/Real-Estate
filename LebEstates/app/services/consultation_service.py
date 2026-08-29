@@ -66,16 +66,43 @@ def request_consultation(user_id, data):
 
 class ConsultationService:
     @staticmethod
-    def get_consultations_list_data():
+    def get_consultations_list_data(filters=None):
         """
-        Fetch all consultations, stats, active employees, and recent notes.
+        Fetch consultations with optional server-side filtering, stats, active employees, and recent notes.
         """
-        consultations = Consultation.query.order_by(Consultation.createdAt.desc()).all()
+        query = Consultation.query
 
-        total_requests = len(consultations)
+        if filters:
+            q = filters.get('server_q', '').strip()
+            if q:
+                from sqlalchemy import or_
+                query = query.outerjoin(Customer, Consultation.customerID == Customer.customerID).outerjoin(Users, Customer.userID == Users.userID).filter(or_(
+                    Consultation.consultationType.ilike(f'%{q}%'),
+                    Consultation.contactMethod.ilike(f'%{q}%'),
+                    Users.fullName.ilike(f'%{q}%'),
+                    Consultation.notes.ilike(f'%{q}%')
+                ))
+
+            status = filters.get('status', 'All').strip()
+            if status and status.lower() != 'all':
+                query = query.filter(Consultation.status.ilike(status))
+
+            consultant_id = filters.get('consultant_id')
+            if consultant_id:
+                if str(consultant_id).lower() == 'unassigned':
+                    query = query.filter(Consultation.employeeID == None)
+                elif str(consultant_id).lower() != 'all':
+                    query = query.filter(Consultation.employeeID == int(consultant_id))
+
+            method = filters.get('method', 'All').strip()
+            if method and method.lower() != 'all':
+                query = query.filter(Consultation.contactMethod.ilike(method))
+
+        consultations = query.order_by(Consultation.createdAt.desc()).all()
+
+        total_requests = Consultation.query.count()
         today_date = datetime.now().date()
         
-        # Pending today: scheduled for today and status in ['Pending', 'Scheduled']
         pending_today = Consultation.query.filter(
             Consultation.scheduledDate == today_date,
             Consultation.status.in_(['Pending', 'Scheduled'])

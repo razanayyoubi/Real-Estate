@@ -17,64 +17,60 @@
         <p class="hub-subtitle">Elevate user privilege levels or adjust administrative staff permissions dynamically.</p>
     </div>
 
-    <!-- Stats Row -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper primary">
-                    <span class="material-symbols-outlined text-primary">groups</span>
-                </div>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Total Staff</h4>
-            <p class="headline-md text-primary">{{ stats.total }}</p>
+    <!-- Standardized Responsive Stats Grid (2 per row on mobile) -->
+    <section class="mgmt-stats-grid">
+        <div class="stat-card border-primary">
+            <p class="stat-label">Total Staff</p>
+            <h3 class="stat-value text-primary">{{ stats.total }}</h3>
         </div>
         
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper secondary">
-                    <span class="material-symbols-outlined text-secondary">admin_panel_settings</span>
-                </div>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Administrators</h4>
-            <p class="headline-md text-primary">{{ stats.admins }}</p>
+        <div class="stat-card border-secondary">
+            <p class="stat-label">Administrators</p>
+            <h3 class="stat-value" style="color: var(--secondary);">{{ stats.admins }}</h3>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon-wrapper primary" style="background-color: rgba(10, 31, 68, 0.05); padding: 8px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-bottom: 16px;">
-                <span class="material-symbols-outlined text-primary">badge</span>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Employees</h4>
-            <p class="headline-md text-primary">{{ stats.employees }}</p>
-        </div>
-    </div>
-
-    <!-- Filter Section -->
-    <section class="filter-section">
-        <div class="filter-row">
-            <div class="search-wrapper">
-                <span class="material-symbols-outlined search-icon">search</span>
-                <input class="search-input" id="filterSearch" placeholder="Search by name, email, or position..." type="text" onkeyup="applyFilters()">
-            </div>
-            <div class="filter-actions">
-                <select class="filter-select" id="filterRole" onchange="applyFilters()">
-                    <option>All Roles</option>
-                    {% for role in roles %}
-                    <option>{{ role.roleName }}</option>
-                    {% endfor %}
-                </select>
-                <select class="filter-select" id="perPageSelect" onchange="changePerPage(this.value)">
-                    <option value="3" {% if per_page == 3 %}selected{% endif %}>3 Per Page</option>
-                    <option value="6" {% if per_page == 6 or not per_page %}selected{% endif %}>6 Per Page</option>
-                    <option value="12" {% if per_page == 12 %}selected{% endif %}>12 Per Page</option>
-                    <option value="24" {% if per_page == 24 %}selected{% endif %}>24 Per Page</option>
-                </select>
-                <button class="btn btn-secondary" style="height: 48px; border-radius: 8px;" onclick="applyFilters()">
-                    <span class="material-symbols-outlined" style="margin-right: 8px;">filter_list</span>
-                    Filter
-                </button>
-            </div>
+        <div class="stat-card border-primary">
+            <p class="stat-label">Employees</p>
+            <h3 class="stat-value text-primary">{{ stats.employees }}</h3>
         </div>
     </section>
+
+    <!-- Standardized Responsive Filter Bar -->
+    <form method="GET" action="/roles/" class="mgmt-filter-bar" style="margin-bottom: 24px;">
+        <!-- Top Search Inputs -->
+        <div class="filter-search-grid">
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="filter-client-search" placeholder="Client-Side Live Search (Instant)..." class="filter-input-text" />
+            </div>
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon text-primary">database</span>
+                <input type="text" name="server_q" id="filter-server-search" value="{{ request.args.get('server_q', '') }}" placeholder="Server Database Search (SQL Query)..." class="filter-input-text" />
+            </div>
+        </div>
+
+        <!-- Dropdowns Grid (2 per row on mobile) -->
+        <div class="filter-dropdowns-grid">
+            <select name="role" class="filter-select">
+                <option value="All">All Roles</option>
+                {% for role in roles %}
+                <option value="{{ role.roleName }}" {% if request.args.get('role') == role.roleName %}selected{% endif %}>{{ role.roleName }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="filter-actions-bar">
+            <button type="submit" id="btn-server-filter" class="btn-filter-submit">
+                <span class="material-symbols-outlined">filter_alt</span>
+                Filter Roles
+            </button>
+            <a href="/roles/" class="btn-filter-reset">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Reset
+            </a>
+        </div>
+    </form>
 
     <!-- Card Directory Layout -->
     <section class="staff-grid">

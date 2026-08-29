@@ -24,18 +24,13 @@ class VisitService:
             return {'success': False, 'message': 'Property, date, and time are required.', 'code': 400}
 
         try:
-            # Assign to first available employee for now
-            employee = Employee.query.first()
-            if not employee:
-                return {'success': False, 'message': 'No agents available to assign.', 'code': 500}
-
             new_visit = Visit(
                 propertyID=property_id,
                 customerID=customer.customerID,
-                employeeID=employee.employeeID,
+                employeeID=None,
                 visitDate=visit_date,
                 visitTime=visit_time,
-                status='Scheduled',
+                status='Pending',
                 notes=notes
             )
             db.session.add(new_visit)
@@ -72,13 +67,35 @@ class VisitService:
             return {'success': False, 'message': f'An error occurred while saving your visit: {str(e)}', 'code': 500}
 
     @staticmethod
-    def get_visits_list_data():
+    def get_visits_list_data(filters=None):
         """
-        Fetch all visits, stats, active employees, and recent notes.
+        Fetch visits with optional server-side filtering, stats, active employees, and recent notes.
         """
-        visits = Visit.query.order_by(Visit.visitDate.desc(), Visit.visitTime.desc()).all()
+        query = Visit.query
 
-        total_requests = len(visits)
+        if filters:
+            q = filters.get('server_q', '').strip()
+            if q:
+                from sqlalchemy import or_
+                from app.models.property import Property
+                query = query.outerjoin(Property).outerjoin(Customer, Visit.customerID == Customer.customerID).outerjoin(Users, Customer.userID == Users.userID).filter(or_(
+                    Property.title.ilike(f'%{q}%'),
+                    Property.location.ilike(f'%{q}%'),
+                    Users.fullName.ilike(f'%{q}%'),
+                    Visit.notes.ilike(f'%{q}%')
+                ))
+
+            status = filters.get('status', 'All').strip()
+            if status and status.lower() != 'all':
+                query = query.filter(Visit.status.ilike(status))
+
+            consultant_id = filters.get('consultant_id')
+            if consultant_id and str(consultant_id).lower() != 'all':
+                query = query.filter(Visit.employeeID == int(consultant_id))
+
+        visits = query.order_by(Visit.visitDate.desc(), Visit.visitTime.desc()).all()
+
+        total_requests = Visit.query.count()
         today_date = datetime.now().date()
         pending_today = Visit.query.filter(Visit.visitDate == today_date, Visit.status == 'Scheduled').count()
         confirmed_visits = Visit.query.filter_by(status='Scheduled').count()

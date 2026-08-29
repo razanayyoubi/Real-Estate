@@ -137,11 +137,26 @@ document.addEventListener('DOMContentLoaded', () => {
     clearErrorOnInput('phone', 'err-phone');
     clearErrorOnInput('consult-type', 'err-consult-type');
 
-    // Clear contact method error when any radio is chosen
+    // Toggle In Person schedule fields
+    const inPersonWrapper = document.getElementById('in-person-schedule-wrapper');
+    const prefDateInput = document.getElementById('pref-date');
+    if (prefDateInput) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        prefDateInput.min = todayStr;
+    }
+
     document.querySelectorAll('input[name="contact_method"]').forEach((radio) => {
         radio.addEventListener('change', () => {
             const group = document.getElementById('err-contact-method');
             if (group) group.classList.remove('visible');
+            
+            if (inPersonWrapper) {
+                if (radio.value === 'In Person') {
+                    inPersonWrapper.style.display = 'flex';
+                } else {
+                    inPersonWrapper.style.display = 'none';
+                }
+            }
         });
     });
 
@@ -215,12 +230,15 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerHTML = '<span class="material-symbols-outlined spin" style="animation: spin 1s linear infinite;">sync</span> Submitting...';
         submitBtn.disabled = true;
 
+        const timeSlotSelect = document.getElementById('pref-time-slot');
+        const timeVal = (contactMethodChosen && contactMethodChosen.value === 'In Person' && timeSlotSelect) ? timeSlotSelect.value : (document.getElementById('pref-time') ? document.getElementById('pref-time').value : '');
+
         const payload = {
             consult_type: consultType.value,
             contact_method: contactMethodChosen.value,
             message: document.getElementById('message').value,
-            pref_date: document.getElementById('pref-date').value,
-            pref_time: document.getElementById('pref-time').value
+            pref_date: document.getElementById('pref-date') ? document.getElementById('pref-date').value : '',
+            pref_time: timeVal
         };
 
         fetch('/consultation', {

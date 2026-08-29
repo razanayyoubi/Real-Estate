@@ -243,7 +243,7 @@
 
                         <div class="card-image-wrapper">
                             {% if prop.images %}
-                            <img class="card-img" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" />
+                            <img class="card-img" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" loading="lazy" />
                             {% else %}
                             <div class="card-img-placeholder">
                                 <span class="material-symbols-outlined">image</span>

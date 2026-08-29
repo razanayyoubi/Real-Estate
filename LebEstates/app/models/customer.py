@@ -20,7 +20,7 @@ class CustomerDocument(db.Model):
     documentSide = db.Column(db.String(50)) # e.g., Front, Back
     fileName = db.Column(db.String(255), nullable=False)
     fileType = db.Column(db.String(50))
-    fileData = db.Column(db.LargeBinary) # BLOB
+    fileData = db.Column(db.LargeBinary(length=2**24)) # MEDIUMBLOB
     status = db.Column(db.Enum('Pending', 'Verified', 'Rejected', name='doc_status'), default='Pending')
     rejectionReason = db.Column(db.Text)
     uploadedAt = db.Column(db.DateTime, default=datetime.now)

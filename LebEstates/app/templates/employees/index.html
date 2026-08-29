@@ -25,76 +25,65 @@
         </div>
     </div>
 
-    <!-- Stats Row -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper primary">
-                    <span class="material-symbols-outlined text-primary">groups</span>
-                </div>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Total Staff</h4>
-            <p class="headline-md text-primary">{{ stats.total }}</p>
+    <!-- Standardized Responsive Stats Grid (2 per row on mobile) -->
+    <section class="mgmt-stats-grid">
+        <div class="stat-card border-primary">
+            <p class="stat-label">Total Staff</p>
+            <h3 class="stat-value text-primary">{{ stats.total }}</h3>
         </div>
         
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper secondary">
-                    <span class="material-symbols-outlined text-secondary">person_check</span>
-                </div>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Active Staff</h4>
-            <p class="headline-md text-primary">{{ stats.active }}</p>
+        <div class="stat-card border-secondary">
+            <p class="stat-label">Active Staff</p>
+            <h3 class="stat-value" style="color: #2e7d32;">{{ stats.active }}</h3>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper warning">
-                    <span class="material-symbols-outlined text-secondary" style="color: #a16207 !important;">flight_takeoff</span>
-                </div>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">On Leave</h4>
-            <p class="headline-md text-primary">{{ stats.on_leave }}</p>
+        <div class="stat-card border-primary">
+            <p class="stat-label">On Leave</p>
+            <h3 class="stat-value" style="color: #a16207;">{{ stats.on_leave }}</h3>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper error">
-                    <span class="material-symbols-outlined text-error">person_off</span>
-                </div>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Terminated</h4>
-            <p class="headline-md text-primary">{{ stats.terminated }}</p>
-        </div>
-    </div>
-
-    <!-- Filter Section -->
-    <section class="filter-section">
-        <div class="filter-row">
-            <div class="search-wrapper">
-                <span class="material-symbols-outlined search-icon">search</span>
-                <input class="search-input" id="filterSearch" placeholder="Search by name, email, or position..." type="text" onkeyup="applyFilters()">
-            </div>
-            <div class="filter-actions">
-                <select class="filter-select" id="filterStatus" onchange="applyFilters()">
-                    <option>All Status</option>
-                    <option selected>Active</option>
-                    <option>OnLeave</option>
-                    <option>Terminated</option>
-                </select>
-                <select class="filter-select" id="filterDate" onchange="applyFilters()">
-                    <option>Date Hired</option>
-                    <option>Last 30 Days</option>
-                    <option>Last 6 Months</option>
-                    <option>Last Year</option>
-                </select>
-                <button class="btn btn-secondary" style="height: 48px; border-radius: 8px;" onclick="applyFilters()">
-                    <span class="material-symbols-outlined" style="margin-right: 8px;">filter_list</span>
-                    Filter
-                </button>
-            </div>
+        <div class="stat-card border-error">
+            <p class="stat-label">Terminated</p>
+            <h3 class="stat-value" style="color: #c62828;">{{ stats.terminated }}</h3>
         </div>
     </section>
+
+    <!-- Standardized Responsive Filter Bar -->
+    <form method="GET" action="/employees/" class="mgmt-filter-bar" style="margin-bottom: 24px;">
+        <!-- Top Search Inputs -->
+        <div class="filter-search-grid">
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="filter-client-search" placeholder="Client-Side Live Search (Instant)..." class="filter-input-text" />
+            </div>
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon text-primary">database</span>
+                <input type="text" name="server_q" id="filter-server-search" value="{{ request.args.get('server_q', '') }}" placeholder="Server Database Search (SQL Query)..." class="filter-input-text" />
+            </div>
+        </div>
+
+        <!-- Dropdowns Grid (2 per row on mobile) -->
+        <div class="filter-dropdowns-grid">
+            <select name="status" class="filter-select">
+                <option value="All" {% if not request.args.get('status') or request.args.get('status') == 'All' %}selected{% endif %}>Status: All</option>
+                <option value="Active" {% if request.args.get('status') == 'Active' %}selected{% endif %}>Active</option>
+                <option value="OnLeave" {% if request.args.get('status') == 'OnLeave' %}selected{% endif %}>On Leave</option>
+                <option value="Terminated" {% if request.args.get('status') == 'Terminated' %}selected{% endif %}>Terminated</option>
+            </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="filter-actions-bar">
+            <button type="submit" id="btn-server-filter" class="btn-filter-submit">
+                <span class="material-symbols-outlined">filter_alt</span>
+                Filter Staff
+            </button>
+            <a href="/employees/" class="btn-filter-reset">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Reset
+            </a>
+        </div>
+    </form>
 
     <!-- Data Table -->
     <section class="table-container unified-table-container">

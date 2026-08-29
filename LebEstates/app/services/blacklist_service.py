@@ -13,7 +13,7 @@ def get_all_blacklist_entries():
     entries = (
         db.session.query(Blacklist, TargetUser, AdminUser, Customer, Employee)
         .join(TargetUser, Blacklist.userID == TargetUser.userID)
-        .join(AdminUser, Blacklist.blacklistedBy == AdminUser.userID)
+        .outerjoin(AdminUser, Blacklist.blacklistedBy == AdminUser.userID)
         .outerjoin(Customer, TargetUser.userID == Customer.userID)
         .outerjoin(Employee, AdminUser.userID == Employee.userID)
         .order_by(Blacklist.blacklistedAt.desc())
@@ -22,6 +22,11 @@ def get_all_blacklist_entries():
 
     result = []
     for entry, target, admin_u, customer, employee in entries:
+        admin_name = admin_u.fullName if admin_u else "System Administrator"
+        admin_email = admin_u.email if admin_u else "admin@lebestates.com"
+        admin_phone = (admin_u.phoneNumber if admin_u else None) or "N/A"
+        admin_id = admin_u.userID if admin_u else 0
+
         result.append({
             'blacklist_id': f"#BL-{entry.blacklistID}",
             'raw_id': entry.blacklistID,
@@ -44,10 +49,10 @@ def get_all_blacklist_entries():
             
             # Admin who blacklisted
             'admin': {
-                'user_id': admin_u.userID,
-                'full_name': admin_u.fullName,
-                'email': admin_u.email,
-                'phone': admin_u.phoneNumber or 'N/A',
+                'user_id': admin_id,
+                'full_name': admin_name,
+                'email': admin_email,
+                'phone': admin_phone,
                 'hire_date': employee.hireDate.strftime("%b %d, %Y") if (employee and employee.hireDate) else 'N/A',
                 'position': employee.position if employee else 'Administrator',
                 'status': employee.status if employee else 'Active'

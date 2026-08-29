@@ -19,7 +19,7 @@ class Property(db.Model):
     bathrooms = db.Column(db.Integer)
     floorNumber = db.Column(db.Integer)
     parkingAvailable = db.Column(db.Boolean, default=False)
-    status = db.Column(db.Enum('Pending', 'Published', 'Sold', 'Rented', 'Rejected', name='prop_status'), default='Pending')
+    status = db.Column(db.String(50), default='Pending') # Draft, Pending, Published, Sold, Rejected, Cancelled, Refused
     latitude = db.Column(db.Numeric(10, 8), nullable=True)
     longitude = db.Column(db.Numeric(11, 8), nullable=True)
     createdAt = db.Column(db.DateTime, default=datetime.now)
@@ -35,7 +35,7 @@ class PropertyImage(db.Model):
     imageID = db.Column(db.Integer, primary_key=True)
     propertyID = db.Column(db.Integer, db.ForeignKey('property.propertyID'), nullable=False)
     imageURL = db.Column(db.String(255), nullable=True)
-    fileData = db.Column(db.LargeBinary)
+    fileData = db.Column(db.LargeBinary(length=2**24))
     fileType = db.Column(db.String(50))
     isMainImage = db.Column(db.Boolean, default=False)
     uploadedAt = db.Column(db.DateTime, default=datetime.now)

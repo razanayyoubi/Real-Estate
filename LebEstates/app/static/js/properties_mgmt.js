@@ -342,33 +342,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. CLIENT-SIDE DROPDOWN SELECT FILTERS
-    const filterStatus = document.getElementById('filter-status');
-    const filterType = document.getElementById('filter-type');
-    const filterLocation = document.getElementById('filter-location');
+    // 4. CLIENT-SIDE LIVE SEARCH FILTER
+    const filterClientSearch = document.getElementById('filter-client-search');
     const mainRows = document.querySelectorAll('.mgmt-row-main');
     const showingCountSpan = document.getElementById('showing-count');
 
-    const applyFilters = () => {
-        const selectedStatus = filterStatus.value.toLowerCase();
-        const selectedType = filterType.value.toLowerCase();
-        const selectedLocation = filterLocation.value.toLowerCase();
-
+    const applyClientFilter = () => {
+        const query = filterClientSearch ? filterClientSearch.value.trim().toLowerCase() : '';
         let visibleCount = 0;
 
         mainRows.forEach(row => {
-            const propStatus = row.dataset.status.toLowerCase();
-            const propType = row.dataset.type.toLowerCase();
-            const propLocation = row.dataset.location.toLowerCase();
+            const textContent = row.textContent.toLowerCase();
+            const d = row.dataset;
+            const combinedData = `${d.title || ''} ${d.id || ''} ${d.location || ''} ${d.type || ''} ${d.status || ''} ${d.listingType || ''} ${d.price || ''}`.toLowerCase();
 
-            const statusMatch = (selectedStatus === 'all') || (propStatus === selectedStatus) || 
-                                (selectedStatus === 'published' && propStatus === 'published') ||
-                                (selectedStatus === 'pending' && propStatus === 'pending');
-            const typeMatch = (selectedType === 'all') || (propType === selectedType);
-            const locationMatch = (selectedLocation === 'all') || (propLocation === selectedLocation);
-
-            if (statusMatch && typeMatch && locationMatch) {
-                row.style.display = 'table-row';
+            if (!query || textContent.includes(query) || combinedData.includes(query)) {
+                row.style.display = '';
                 visibleCount++;
             } else {
                 row.style.display = 'none';
@@ -386,10 +375,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 emptyRow = document.createElement('tr');
                 emptyRow.className = 'table-empty-row';
                 emptyRow.innerHTML = `
-                    <td colspan="7" style="text-align: center;">
+                    <td colspan="8" style="text-align: center;">
                         <div class="table-empty-state" style="padding: 60px; color: var(--on-surface-variant); display: flex; flex-direction: column; align-items: center; gap: 12px;">
                             <span class="material-symbols-outlined" style="font-size: 48px; color: var(--outline-variant);">inventory_2</span>
-                            <p style="margin: 0; font-size: 14px;">No matching listings found for the selected filters.</p>
+                            <p style="margin: 0; font-size: 14px;">No matching listings found for your search query.</p>
                         </div>
                     </td>
                 `;
@@ -402,9 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    if (filterStatus) filterStatus.addEventListener('change', applyFilters);
-    if (filterType) filterType.addEventListener('change', applyFilters);
-    if (filterLocation) filterLocation.addEventListener('change', applyFilters);
+    if (filterClientSearch) {
+        filterClientSearch.addEventListener('input', applyClientFilter);
+    }
 
 
     // 5. APPROVE PROPERTY ACTION (AJAX)
@@ -535,46 +524,51 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const id = btn.dataset.id;
             
-            if (confirm('Are you sure you want to permanently delete this property listing? This action is irreversible.')) {
-                fetch(`/properties/${id}/delete`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        
-                        const mainRow = document.getElementById(`row-main-${id}`);
-                        const queueItem = document.getElementById(`queue-item-${id}`);
+            showConfirmModal({
+                title: 'Delete Property Listing?',
+                message: 'Are you sure you want to permanently delete this property listing? This action is irreversible.',
+                confirmText: 'Delete Property',
+                confirmBg: '#ba1a1a',
+                icon: 'delete_forever',
+                iconBg: '#ffebee',
+                iconColor: '#c62828',
+                onConfirm: () => {
+                    fetch(`/properties/${id}/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const mainRow = document.getElementById(`row-main-${id}`);
+                            const queueItem = document.getElementById(`queue-item-${id}`);
 
-                        let wasPending = false;
-                        let wasPublished = false;
-                        if (mainRow) {
-                            wasPending = mainRow.dataset.status.toLowerCase() === 'pending';
-                            wasPublished = mainRow.dataset.status.toLowerCase() === 'published';
-                            mainRow.remove();
+                            let wasPending = false;
+                            let wasPublished = false;
+                            if (mainRow) {
+                                wasPending = mainRow.dataset.status.toLowerCase() === 'pending';
+                                wasPublished = mainRow.dataset.status.toLowerCase() === 'published';
+                                mainRow.remove();
+                            }
+                            if (queueItem) queueItem.remove();
+
+                            updateStatsCounter(0, -1);
+                            if (wasPending) updateStatsCounter(2, -1);
+                            if (wasPublished) updateStatsCounter(1, -1);
+
+                            checkQueueEmpty();
+                            recalculateValuation();
+                            applyFilters();
+                        } else {
+                            if (window.showToast) showToast(data.error || 'Failed to delete property listing.', 'error');
                         }
-                        if (queueItem) queueItem.remove();
-
-                        updateStatsCounter(0, -1);
-                        if (wasPending) updateStatsCounter(2, -1);
-                        if (wasPublished) updateStatsCounter(1, -1);
-
-                        checkQueueEmpty();
-                        recalculateValuation();
-                        applyFilters();
-                    } else {
-                        alert(data.error || 'Failed to delete property listing.');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Network error occurred.');
-                });
-            }
+                    })
+                    .catch(err => console.error(err));
+                }
+            });
         });
     });
+
     // 8. UPDATE PROPERTY STATUS FROM DROPDOWN
     document.querySelectorAll('.status-dropdown').forEach(dropdown => {
         dropdown.dataset.originalStatus = dropdown.value;
@@ -584,53 +578,60 @@ document.addEventListener('DOMContentLoaded', () => {
             const newStatus = dropdown.value;
             const oldStatus = dropdown.dataset.originalStatus;
             
-            if (!confirm(`Are you sure you want to change the status to ${newStatus}?`)) {
-                dropdown.value = oldStatus;
-                return;
-            }
+            if (newStatus === oldStatus) return;
 
-            fetch(`/properties/${id}/update_status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    dropdown.className = `status-dropdown status-${newStatus.toLowerCase()}`;
-                    dropdown.dataset.originalStatus = newStatus;
-                    
-                    const mainRow = document.getElementById(`row-main-${id}`);
-                    if (mainRow) {
-                        mainRow.dataset.status = newStatus;
-                    }
+            showConfirmModal({
+                title: 'Change Property Status?',
+                message: `Are you sure you want to change the status of property #${id} to ${newStatus}?`,
+                confirmText: 'Update Status',
+                confirmBg: 'var(--primary, #00081e)',
+                icon: 'published_with_changes',
+                iconBg: '#e3f2fd',
+                iconColor: '#1976d2',
+                onConfirm: () => {
+                    fetch(`/properties/${id}/update_status`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            dropdown.className = `status-dropdown status-${newStatus.toLowerCase()}`;
+                            dropdown.dataset.originalStatus = newStatus;
+                            
+                            const mainRow = document.getElementById(`row-main-${id}`);
+                            if (mainRow) {
+                                mainRow.dataset.status = newStatus;
+                            }
 
-                    if (oldStatus.toLowerCase() === 'published') updateStatsCounter(1, -1);
-                    if (oldStatus.toLowerCase() === 'pending') updateStatsCounter(2, -1);
-                    
-                    if (newStatus.toLowerCase() === 'published') updateStatsCounter(1, 1);
-                    if (newStatus.toLowerCase() === 'pending') updateStatsCounter(2, 1);
+                            if (oldStatus.toLowerCase() === 'published') updateStatsCounter(1, -1);
+                            if (oldStatus.toLowerCase() === 'pending') updateStatsCounter(2, -1);
+                            
+                            if (newStatus.toLowerCase() === 'published') updateStatsCounter(1, 1);
+                            if (newStatus.toLowerCase() === 'pending') updateStatsCounter(2, 1);
 
-                    const queueItem = document.getElementById(`queue-item-${id}`);
-                    if (queueItem && newStatus.toLowerCase() !== 'pending') {
-                        queueItem.remove();
-                        checkQueueEmpty();
-                    }
-                    
-                    recalculateValuation();
-                    applyFilters();
-                    if (data.message) {
-                        alert(data.message);
-                    }
-                } else {
-                    alert(data.error || 'Failed to update property status.');
+                            const queueItem = document.getElementById(`queue-item-${id}`);
+                            if (queueItem && newStatus.toLowerCase() !== 'pending') {
+                                queueItem.remove();
+                                checkQueueEmpty();
+                            }
+                            
+                            recalculateValuation();
+                            applyFilters();
+                        } else {
+                            if (window.showToast) showToast(data.error || 'Failed to update property status.', 'error');
+                            dropdown.value = oldStatus;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        dropdown.value = oldStatus;
+                    });
+                },
+                onCancel: () => {
                     dropdown.value = oldStatus;
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Network error occurred.');
-                dropdown.value = oldStatus;
             });
         });
     });

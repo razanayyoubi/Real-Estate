@@ -28,30 +28,48 @@ class PropertyService:
         latitude = form_data.get('latitude', '').strip()
         longitude = form_data.get('longitude', '').strip()
 
+        is_draft = form_data.get('is_draft') in ['true', '1', True]
+
         # Required validation
         if not title:
-            return {'success': False, 'error': 'Title is required.', 'code': 400}
+            return {'success': False, 'error': 'Title is required to save property.', 'code': 400}
+
+        if not is_draft:
+            if not listing_type:
+                return {'success': False, 'error': 'Listing type is required.', 'code': 400}
+            if not price:
+                return {'success': False, 'error': 'Price is required.', 'code': 400}
+            if not property_type:
+                return {'success': False, 'error': 'Property type is required.', 'code': 400}
+            if not area:
+                return {'success': False, 'error': 'Area is required.', 'code': 400}
+            if not region:
+                return {'success': False, 'error': 'Region is required.', 'code': 400}
+            if not address:
+                return {'success': False, 'error': 'Address is required.', 'code': 400}
+
         if not listing_type:
-            return {'success': False, 'error': 'Listing type is required.', 'code': 400}
-        if not price:
-            return {'success': False, 'error': 'Price is required.', 'code': 400}
+            listing_type = 'Sell'
         if not property_type:
-            return {'success': False, 'error': 'Property type is required.', 'code': 400}
-        if not area:
-            return {'success': False, 'error': 'Area is required.', 'code': 400}
+            property_type = 'Apartment'
         if not region:
-            return {'success': False, 'error': 'Region is required.', 'code': 400}
+            region = 'Beirut'
         if not address:
-            return {'success': False, 'error': 'Address is required.', 'code': 400}
+            address = 'Draft Address'
 
         # Determine Owner ID
         if is_employee:
             owner_id = form_data.get('owner_id')
-            if not owner_id:
+            if not owner_id and not is_draft:
                 return {'success': False, 'error': 'Please select a property owner.', 'code': 400}
-            cust = Customer.query.get(owner_id)
+            cust = Customer.query.get(owner_id) if owner_id else None
             if not cust:
-                return {'success': False, 'error': 'Selected owner customer profile does not exist.', 'code': 404}
+                cust = Customer.query.filter_by(userID=user.userID).first()
+                if not cust:
+                    cust = Customer(userID=user.userID, address=address)
+                    db.session.add(cust)
+                    db.session.commit()
+            owner_id = cust.customerID
         else:
             cust = Customer.query.filter_by(userID=user.userID).first()
             if not cust:
@@ -61,7 +79,10 @@ class PropertyService:
             owner_id = cust.customerID
 
         # Determine approval and status
-        if is_employee:
+        if is_draft:
+            status = 'Draft'
+            approved_by = None
+        elif is_employee:
             status = 'Published'
             approved_by = user.userID
         else:
@@ -69,8 +90,8 @@ class PropertyService:
             approved_by = None
 
         try:
-            price_val = float(price)
-            area_val = float(area)
+            price_val = float(price) if price else 0.0
+            area_val = float(area) if area else 0.0
             rooms_val = int(rooms) if rooms else None
             bathrooms_val = int(bathrooms) if bathrooms else None
             floor_val = int(floor_number) if floor_number else None
@@ -81,28 +102,57 @@ class PropertyService:
         except ValueError:
             return {'success': False, 'error': 'Invalid numeric values provided for specs.', 'code': 400}
 
-        # Create Property record
-        new_prop = Property(
-            ownerID=owner_id,
-            createdBy=user.userID,
-            approvedBy=approved_by,
-            title=title,
-            description=description,
-            propertyType=property_type,
-            listingType=listing_type,
-            location=region,
-            address=address,
-            price=price_val,
-            area=area_val,
-            rooms=rooms_val,
-            bathrooms=bathrooms_val,
-            floorNumber=floor_val,
-            parkingAvailable=parking_avail,
-            status=status,
-            latitude=lat_val,
-            longitude=lng_val
-        )
-        db.session.add(new_prop)
+        # Check if updating an existing draft for this user
+        draft_id = form_data.get('draft_id')
+        existing_prop = None
+        if draft_id:
+            existing_prop = Property.query.filter_by(propertyID=draft_id, createdBy=user.userID).first()
+        if not existing_prop and is_draft:
+            existing_prop = Property.query.filter_by(createdBy=user.userID, status='Draft').first()
+
+        if existing_prop:
+            new_prop = existing_prop
+            new_prop.ownerID = owner_id
+            new_prop.approvedBy = approved_by
+            new_prop.title = title
+            new_prop.description = description
+            new_prop.propertyType = property_type
+            new_prop.listingType = listing_type
+            new_prop.location = region
+            new_prop.address = address
+            new_prop.price = price_val
+            new_prop.area = area_val
+            new_prop.rooms = rooms_val
+            new_prop.bathrooms = bathrooms_val
+            new_prop.floorNumber = floor_val
+            new_prop.parkingAvailable = parking_avail
+            new_prop.status = status
+            new_prop.latitude = lat_val
+            new_prop.longitude = lng_val
+            new_prop.updatedAt = datetime.now()
+        else:
+            # Create Property record
+            new_prop = Property(
+                ownerID=owner_id,
+                createdBy=user.userID,
+                approvedBy=approved_by,
+                title=title,
+                description=description,
+                propertyType=property_type,
+                listingType=listing_type,
+                location=region,
+                address=address,
+                price=price_val,
+                area=area_val,
+                rooms=rooms_val,
+                bathrooms=bathrooms_val,
+                floorNumber=floor_val,
+                parkingAvailable=parking_avail,
+                status=status,
+                latitude=lat_val,
+                longitude=lng_val
+            )
+            db.session.add(new_prop)
 
         try:
             db.session.flush() # Populate new_prop.propertyID
@@ -176,16 +226,82 @@ class PropertyService:
             db.session.rollback()
             return {'success': False, 'error': f'Database error: {str(e)}', 'code': 500}
 
-        msg = 'Property listing published directly!' if is_employee else 'Property submitted successfully! Pending approval from an employee.'
+        if is_draft:
+            msg = 'Draft property listing saved successfully!'
+        elif is_employee:
+            msg = 'Property listing published directly!'
+        else:
+            msg = 'Property submitted successfully! Pending approval from an employee.'
         return {'success': True, 'message': msg, 'property_id': new_prop.propertyID}
 
     @staticmethod
-    def get_all_properties_and_stats():
+    def get_user_draft(user_id):
+        draft = Property.query.filter_by(createdBy=user_id, status='Draft').order_by(Property.createdAt.desc()).first()
+        if not draft:
+            return None
+        return {
+            'propertyID': draft.propertyID,
+            'title': draft.title,
+            'description': draft.description or '',
+            'propertyType': draft.propertyType,
+            'listingType': draft.listingType,
+            'location': draft.location,
+            'address': draft.address or '',
+            'price': float(draft.price or 0.0),
+            'area': float(draft.area or 0.0),
+            'rooms': draft.rooms or 0,
+            'bathrooms': draft.bathrooms or 0,
+            'floorNumber': draft.floorNumber or 0,
+            'parkingAvailable': bool(draft.parkingAvailable),
+            'latitude': float(draft.latitude) if draft.latitude else None,
+            'longitude': float(draft.longitude) if draft.longitude else None,
+            'ownerID': draft.ownerID
+        }
+
+    @staticmethod
+    def discard_user_draft(user_id):
+        drafts = Property.query.filter_by(createdBy=user_id, status='Draft').all()
+        for d in drafts:
+            db.session.delete(d)
+        db.session.commit()
+        return {'success': True, 'message': 'Draft discarded successfully.'}
+
+    @staticmethod
+    def get_all_properties_and_stats(filters=None):
         """
-        Queries all properties ordered by creation date, computes active/pending counts,
-        valuation sums, and formats valuation for the template context.
+        Queries all properties ordered by creation date, applying optional server-side filters,
+        computes active/pending counts, valuation sums, and formats valuation for template context.
         """
-        all_properties = Property.query.order_by(Property.createdAt.desc()).all()
+        query = Property.query.filter(Property.status != 'Draft')
+
+        if filters:
+            q = filters.get('server_q', '').strip()
+            if q:
+                from sqlalchemy import or_
+                query = query.filter(or_(
+                    Property.title.ilike(f'%{q}%'),
+                    Property.description.ilike(f'%{q}%'),
+                    Property.location.ilike(f'%{q}%'),
+                    Property.address.ilike(f'%{q}%')
+                ))
+
+            status = filters.get('status', 'All').strip()
+            if status and status.lower() != 'all':
+                query = query.filter(Property.status.ilike(status))
+
+            listing_type = filters.get('listing_type', 'All').strip()
+            if listing_type and listing_type.lower() != 'all':
+                query = query.filter(Property.listingType.ilike(listing_type))
+
+            property_type = filters.get('property_type', 'All').strip()
+            if property_type and property_type.lower() != 'all':
+                query = query.filter(Property.propertyType.ilike(property_type))
+
+            location = filters.get('location', 'All').strip()
+            if location and location.lower() != 'all':
+                query = query.filter(Property.location.ilike(location))
+
+        all_properties = query.order_by(Property.createdAt.desc()).all()
 
         total_properties = len(all_properties)
         active_properties = sum(1 for p in all_properties if p.status == 'Published')
@@ -225,7 +341,7 @@ class PropertyService:
         if not prop:
             return {'success': False, 'error': 'Property not found', 'code': 404}
 
-        valid_statuses = ['Published', 'Pending', 'Sold', 'Rented', 'Rejected']
+        valid_statuses = ['Published', 'Pending', 'Draft', 'Sold', 'Rejected', 'Cancelled', 'Refused']
         if new_status not in valid_statuses:
             return {'success': False, 'error': 'Invalid status', 'code': 400}
 

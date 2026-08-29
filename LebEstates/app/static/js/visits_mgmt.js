@@ -1,23 +1,83 @@
+/* -------------------------------------------------------------
+   LEBESTATES VISITS MANAGEMENT CLIENT CONTROLLER
+   ------------------------------------------------------------- */
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('LebEstates Admin UI Initialized - Visits Management');
 
-    // 1. Dynamic Table Search and Filters
-    function applyFilters() {
-        const searchInput = document.getElementById('search-visits');
-        if (!searchInput) return; // guard against element not loaded
+    // 1. Dynamic Table Search, Filters & 10-Record Pagination
+    let currentPage = 1;
+    const pageSize = 10;
+    let matchingRows = [];
+
+    function renderPagination() {
+        const pagFooter = document.querySelector('.pagination-footer');
+        const rows = document.querySelectorAll('.visits-table tbody tr');
         
-        const searchQuery = searchInput.value.toLowerCase().trim();
-        const statusFilter = document.getElementById('filter-status').value;
-        const consultantFilter = document.getElementById('filter-consultant').value;
-        const timeFilter = document.getElementById('filter-time').value;
+        const totalItems = matchingRows.length;
+        const totalPages = Math.ceil(totalItems / pageSize) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, totalItems);
+
+        rows.forEach(row => {
+            if (row.id !== 'no-matching-row') row.style.display = 'none';
+        });
+        matchingRows.slice(startIdx, endIdx).forEach(row => row.style.display = '');
+
+        let noMatchRow = document.getElementById('no-matching-row');
+        if (totalItems === 0) {
+            if (!noMatchRow) {
+                noMatchRow = document.createElement('tr');
+                noMatchRow.id = 'no-matching-row';
+                noMatchRow.innerHTML = `
+                    <td colspan="7" class="text-center" style="padding: 40px; color: var(--on-surface-variant); text-align: center;">
+                        <span class="material-symbols-outlined" style="font-size: 48px; margin-bottom: 8px; display: block;">search_off</span>
+                        No visits match your search criteria.
+                    </td>
+                `;
+                document.querySelector('.visits-table tbody').appendChild(noMatchRow);
+            } else {
+                noMatchRow.style.display = '';
+            }
+        } else {
+            if (noMatchRow) noMatchRow.style.display = 'none';
+        }
+
+        if (pagFooter) {
+            pagFooter.innerHTML = `
+                <p class="pagination-text">Showing <span class="text-primary font-bold">${totalItems > 0 ? startIdx + 1 : 0}-${endIdx}</span> of <span class="text-primary font-bold">${totalItems}</span> visits</p>
+                <div class="pagination-controls" style="display: flex; gap: 8px; align-items: center;">
+                    <button class="page-btn btn-prev-page" ${currentPage === 1 ? 'disabled' : ''} style="padding: 6px 12px; cursor: pointer;">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <span style="font-size: 0.85rem;">Page <strong>${currentPage}</strong> of <strong>${totalPages}</strong></span>
+                    <button class="page-btn btn-next-page" ${currentPage >= totalPages ? 'disabled' : ''} style="padding: 6px 12px; cursor: pointer;">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+            `;
+
+            const prevBtn = pagFooter.querySelector('.btn-prev-page');
+            const nextBtn = pagFooter.querySelector('.btn-next-page');
+            if (prevBtn) prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderPagination(); } };
+            if (nextBtn) nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderPagination(); } };
+        }
+    }
+
+    function applyFilters() {
+        const clientSearchInput = document.getElementById('filter-client-search');
+        if (!clientSearchInput) return;
+        
+        const searchQuery = clientSearchInput.value.toLowerCase().trim();
 
         const rows = document.querySelectorAll('.visits-table tbody tr');
-        let visibleCount = 0;
+        matchingRows = [];
 
         rows.forEach(row => {
             if (row.id === 'no-matching-row') return;
 
-            // Extract values
             const propNameEl = row.querySelector('.property-name');
             const propIdEl = row.querySelector('.property-id');
             const custNameEl = row.querySelector('.customer-name');
@@ -29,17 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const customerName = custNameEl ? custNameEl.textContent.toLowerCase() : '';
             const customerEmail = custEmailEl ? custEmailEl.textContent.toLowerCase() : '';
             
-            const consultantSelect = row.querySelector('.consultant-dropdown');
-            const consultantId = consultantSelect ? consultantSelect.value : '';
-            const selectedOption = consultantSelect ? consultantSelect.options[consultantSelect.selectedIndex] : null;
-            const consultantName = selectedOption ? (selectedOption.dataset.name || selectedOption.text).toLowerCase() : '';
+            const consultantTrigger = row.querySelector('.select-trigger .selected-text');
+            const consultantName = consultantTrigger ? consultantTrigger.textContent.toLowerCase() : '';
 
             const statusSelect = row.querySelector('.status-dropdown');
             const status = statusSelect ? statusSelect.value : '';
 
-            const visitDateText = visitDateEl ? visitDateEl.textContent.trim() : '';
-
-            // Match query
             const matchesSearch = 
                 propertyName.includes(searchQuery) ||
                 propertyId.includes(searchQuery) ||
@@ -48,84 +103,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 consultantName.includes(searchQuery) ||
                 status.toLowerCase().includes(searchQuery);
 
-            // Match Status
-            const matchesStatus = (statusFilter === 'All' || status === statusFilter);
-
-            // Match Consultant
-            const matchesConsultant = (consultantFilter === 'All' || consultantId === consultantFilter);
-
-            // Match Time range
-            let matchesTime = true;
-            if (timeFilter !== 'All') {
-                const visitDateObj = new Date(visitDateText);
-                const today = new Date();
-                today.setHours(0,0,0,0);
-
-                if (timeFilter === 'Today') {
-                    matchesTime = visitDateObj.toDateString() === today.toDateString();
-                } else if (timeFilter === 'ThisWeek') {
-                    const oneWeekAgo = new Date(today);
-                    oneWeekAgo.setDate(today.getDate() - 7);
-                    const oneWeekAhead = new Date(today);
-                    oneWeekAhead.setDate(today.getDate() + 7);
-                    matchesTime = visitDateObj >= oneWeekAgo && visitDateObj <= oneWeekAhead;
-                } else if (timeFilter === 'ThisMonth') {
-                    matchesTime = visitDateObj.getMonth() === today.getMonth() && visitDateObj.getFullYear() === today.getFullYear();
-                }
-            }
-
-            if (matchesSearch && matchesStatus && matchesConsultant && matchesTime) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+            if (matchesSearch) {
+                matchingRows.push(row);
             }
         });
 
-        // Toggle "No matches" row
-        let noMatchRow = document.getElementById('no-matching-row');
-        if (visibleCount === 0) {
-            if (!noMatchRow) {
-                noMatchRow = document.createElement('tr');
-                noMatchRow.id = 'no-matching-row';
-                noMatchRow.innerHTML = `
-                    <td colspan="6" class="text-center" style="padding: 40px; color: var(--on-surface-variant); text-align: center;">
-                        <span class="material-symbols-outlined" style="font-size: 48px; margin-bottom: 8px; display: block;">search_off</span>
-                        No visits match your search criteria.
-                    </td>
-                `;
-                document.querySelector('.visits-table tbody').appendChild(noMatchRow);
-            } else {
-                noMatchRow.style.display = '';
-            }
-        } else {
-            if (noMatchRow) {
-                noMatchRow.style.display = 'none';
-            }
-        }
-
-        // Update showing text
-        const pagText = document.querySelector('.pagination-text');
-        if (pagText) {
-            const totalRowsCount = rows.length - (document.getElementById('no-matching-row') ? 1 : 0);
-            pagText.innerHTML = `Showing <span class="text-primary font-bold">${visibleCount}</span> of <span class="text-primary font-bold">${totalRowsCount}</span> visits`;
-        }
+        currentPage = 1;
+        renderPagination();
     }
 
     // Bind filters
-    const searchInp = document.getElementById('search-visits');
-    const statusFlt = document.getElementById('filter-status');
-    const consultantFlt = document.getElementById('filter-consultant');
-    const timeFlt = document.getElementById('filter-time');
-
-    if (searchInp) searchInp.addEventListener('input', applyFilters);
-    if (statusFlt) statusFlt.addEventListener('change', applyFilters);
-    if (consultantFlt) consultantFlt.addEventListener('change', applyFilters);
-    if (timeFlt) timeFlt.addEventListener('change', applyFilters);
+    const clientSearchInp = document.getElementById('filter-client-search');
+    if (clientSearchInp) {
+        clientSearchInp.addEventListener('input', applyFilters);
+    }
+    // Initial pagination setup
+    applyFilters();
 
     // 2. Status Dropdown Inline Updates
     document.querySelectorAll('.status-dropdown').forEach(dropdown => {
-        // For overdue visits the current value is 'Overdue'; store the real DB status
         dropdown.dataset.originalStatus = dropdown.dataset.actualStatus || dropdown.value;
         
         dropdown.addEventListener('change', (e) => {
@@ -133,17 +129,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const newStatus = dropdown.value;
             const oldDisplayStatus = dropdown.dataset.originalStatus;
 
-            // If user selects 'Overdue' (display-only option), revert without calling API
             if (newStatus === 'Overdue') {
                 dropdown.value = 'Overdue';
                 return;
             }
 
-            // The actual status to restore on cancel/error is what's in DB
             const oldStatus = dropdown.dataset.actualStatus || oldDisplayStatus;
             
             if (!confirm(`Are you sure you want to change the status of visit #${id} to ${newStatus}?`)) {
-                // Restore previous display
                 if (dropdown.querySelector('option[value="Overdue"]') && oldStatus === 'Scheduled') {
                     dropdown.value = 'Overdue';
                 } else {
@@ -163,10 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     dropdown.className = `status-dropdown status-${newStatus.toLowerCase()}`;
                     dropdown.dataset.originalStatus = newStatus;
                     dropdown.dataset.actualStatus = newStatus;
-                    // Remove the 'Overdue' option if it was there (no longer overdue after update)
                     const overdueOpt = dropdown.querySelector('option[value="Overdue"]');
                     if (overdueOpt) overdueOpt.remove();
-                    // Reload to update stats cards and note entries
                     location.reload();
                 } else {
                     alert(data.error || 'Failed to update status.');
@@ -189,80 +180,156 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 3. Consultant Dropdown Inline Updates
-    document.querySelectorAll('.consultant-dropdown').forEach(dropdown => {
-        dropdown.dataset.originalConsultant = dropdown.value;
-        
-        dropdown.addEventListener('change', (e) => {
-            const id = dropdown.dataset.id;
-            const newConsultantId = dropdown.value;
-            const oldConsultantId = dropdown.dataset.originalConsultant;
+    // 3. Searchable Consultant Inline Select Dropdown in Table
+    document.querySelectorAll('.searchable-consultant-select').forEach(container => {
+        const id = container.dataset.id;
+        const trigger = container.querySelector('.select-trigger');
+        const menu = container.querySelector('.select-dropdown-menu');
+        const searchInput = container.querySelector('.dropdown-search-input');
+        const optionsList = container.querySelector('.dropdown-options-list');
+
+        // Toggle dropdown open/close
+        trigger.addEventListener('click', async (e) => {
+            e.stopPropagation();
             
-            const selectedOption = dropdown.options[dropdown.selectedIndex];
-            const fullName = selectedOption.dataset.name || selectedOption.text;
-            
-            if (!confirm(`Are you sure you want to assign ${fullName} to visit #${id}?`)) {
-                dropdown.value = oldConsultantId;
+            // Close all other open menus
+            document.querySelectorAll('.searchable-consultant-select .select-dropdown-menu').forEach(m => {
+                if (m !== menu) m.classList.add('hidden');
+            });
+
+            const isHidden = menu.classList.toggle('hidden');
+            if (!isHidden) {
+                searchInput.value = '';
+                filterItems(optionsList, '');
+                searchInput.focus();
+
+                // Fetch Availability check for this row's scheduled date and time
+                const date = container.dataset.date;
+                const time = container.dataset.time;
+                if (date && time) {
+                    try {
+                        trigger.style.opacity = '0.5';
+                        const res = await fetch(`/control-panel/visits/api/employees/availability?date=${date}&time=${time}&exclude_visit_id=${id}`);
+                        const availList = await res.json();
+                        trigger.style.opacity = '1';
+
+                        // Map availability to UI options list items
+                        optionsList.querySelectorAll('.dropdown-option-item').forEach(optionItem => {
+                            const empId = optionItem.dataset.value;
+                            if (empId && empId !== 'Unassigned') {
+                                const status = availList.find(x => x.id == empId);
+                                if (status && status.has_conflict) {
+                                    optionItem.classList.add('conflicted');
+                                    optionItem.style.color = '#c5221f';
+                                    optionItem.style.background = '#fce8e6';
+                                    optionItem.innerHTML = `${status.fullName} <span style="font-size:10px; font-weight:700; color:#c5221f; margin-left:6px;">[Conflict]</span>`;
+                                } else {
+                                    optionItem.classList.remove('conflicted');
+                                    optionItem.style.color = '';
+                                    optionItem.style.background = '';
+                                    optionItem.textContent = optionItem.dataset.name || optionItem.textContent;
+                                }
+                            }
+                        });
+                    } catch (err) {
+                        console.error(err);
+                        trigger.style.opacity = '1';
+                    }
+                }
+            }
+        });
+
+        // Filter list items based on search input
+        searchInput.addEventListener('input', (e) => {
+            filterItems(optionsList, e.target.value);
+        });
+
+        // Option clicked
+        optionsList.addEventListener('click', (e) => {
+            const item = e.target.closest('.dropdown-option-item');
+            if (!item) return;
+            e.stopPropagation();
+
+            if (item.classList.contains('conflicted')) {
+                alert("This consultant is unavailable due to a scheduled appointment at this time.");
+                return;
+            }
+
+            const value = item.dataset.value;
+            const name = item.dataset.name || 'Unassigned';
+
+            if (!confirm(`Are you sure you want to assign ${name} to visit #${id}?`)) {
+                menu.classList.add('hidden');
                 return;
             }
 
             fetch(`/control-panel/visits/${id}/update_consultant`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ employee_id: newConsultantId })
+                body: JSON.stringify({ employee_id: value === 'Unassigned' ? null : parseInt(value) })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    dropdown.dataset.originalConsultant = newConsultantId;
+                    // Update trigger label
+                    container.querySelector('.selected-text').textContent = name;
                     
-                    // Update initials avatar dynamically
+                    // Update Avatar Initials
                     const avatarDiv = document.getElementById(`avatar-${id}`);
                     if (avatarDiv) {
-                        const names = fullName.trim().split(' ');
-                        const initials = names.length > 1 ? (names[0][0] + names[1][0]) : names[0][0];
-                        avatarDiv.textContent = initials.toUpperCase();
+                        if (value === 'Unassigned') {
+                            avatarDiv.textContent = '--';
+                        } else {
+                            const names = name.trim().split(' ');
+                            const initials = names.length > 1 ? (names[0][0] + names[1][0]) : names[0][0];
+                            avatarDiv.textContent = initials.toUpperCase();
+                        }
                     }
+                    menu.classList.add('hidden');
                 } else {
                     alert(data.error || 'Failed to assign consultant.');
-                    dropdown.value = oldConsultantId;
                 }
             })
             .catch(err => {
                 console.error(err);
                 alert('Network error occurred.');
-                dropdown.value = oldConsultantId;
             });
         });
     });
 
-    // 4. Export PDF Button Event
-    const exportBtn = document.querySelector('.btn-export');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.print();
+    function filterItems(container, filterText) {
+        const text = filterText.toLowerCase();
+        container.querySelectorAll('.dropdown-option-item').forEach(item => {
+            const label = item.textContent.toLowerCase();
+            if (label.includes(text)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
         });
     }
 
-    // 5. Details Modal Interaction
-    const modal = document.getElementById('visit-details-modal');
+    // Close searchable selects if clicking outside
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.searchable-consultant-select .select-dropdown-menu').forEach(m => {
+            m.classList.add('hidden');
+        });
+    });
+
+    // 4. Details Modal Interaction
+    const detailsModal = document.getElementById('visit-details-modal');
     const closeBtnTop = document.getElementById('btn-close-visit-modal');
     const closeBtnBottom = document.getElementById('btn-close-visit-bottom');
 
-    function closeModal() {
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+    function closeDetailsModal() {
+        if (detailsModal) detailsModal.classList.add('hidden');
     }
 
-    if (closeBtnTop) closeBtnTop.addEventListener('click', closeModal);
-    if (closeBtnBottom) closeBtnBottom.addEventListener('click', closeModal);
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
+    if (closeBtnTop) closeBtnTop.addEventListener('click', closeDetailsModal);
+    if (closeBtnBottom) closeBtnBottom.addEventListener('click', closeDetailsModal);
+    if (detailsModal) {
+        detailsModal.addEventListener('click', (e) => {
+            if (e.target === detailsModal) closeDetailsModal();
         });
     }
 
@@ -270,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             
-            // Read data attributes
             const propName = btn.dataset.propName;
             const propId = btn.dataset.propId;
             const custName = btn.dataset.custName;
@@ -281,7 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const status = btn.dataset.status;
             const notes = btn.dataset.notes;
 
-            // Populate elements
             document.getElementById('modal-prop-name').textContent = propName;
             document.getElementById('modal-prop-id').textContent = propId;
             document.getElementById('modal-cust-name').textContent = custName;
@@ -291,18 +356,379 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('modal-consultant-name').textContent = consultant;
             document.getElementById('modal-visit-notes').textContent = notes;
 
-            // Update badge classes
             const badge = document.getElementById('modal-status-badge');
             if (badge) {
                 badge.className = `status-badge status-${status.toLowerCase()}`;
                 badge.textContent = status;
             }
 
-            // Show modal
-            if (modal) {
-                modal.classList.remove('hidden');
-            }
+            if (detailsModal) detailsModal.classList.remove('hidden');
         });
     });
-});
 
+    // 5. VISIT SCHEDULING / EDITING MODAL CLIENT CONTROLLER
+    const scheduleModal = document.getElementById('visit-schedule-modal');
+    const scheduleForm = document.getElementById('form-visit-schedule');
+    const scheduleTitle = document.getElementById('visit-schedule-title');
+    const scheduleVisitId = document.getElementById('schedule-visit-id');
+
+    // Radios
+    const assignOptionLater = document.getElementById('assign-option-later');
+    const assignOptionNow = document.getElementById('assign-option-now');
+    const assignLaterWarning = document.getElementById('assign-later-warning');
+    const directAssignField = document.getElementById('direct-assign-field');
+
+    // Fields
+    const propSearch = document.getElementById('schedule-prop-search');
+    const propIdHidden = document.getElementById('schedule-property-id');
+    const propSuggestions = document.getElementById('schedule-prop-suggestions');
+    const propPreview = document.getElementById('selected-prop-preview');
+
+    const custSearch = document.getElementById('schedule-cust-search');
+    const custIdHidden = document.getElementById('schedule-customer-id');
+    const custSuggestions = document.getElementById('schedule-cust-suggestions');
+    const custPreview = document.getElementById('selected-cust-preview');
+
+    const empSearch = document.getElementById('schedule-emp-search');
+    const empIdHidden = document.getElementById('schedule-employee-id');
+    const empSuggestions = document.getElementById('schedule-emp-suggestions');
+    const empPreview = document.getElementById('selected-emp-preview');
+
+    const visitDateInput = document.getElementById('schedule-visit-date');
+    const visitTimeInput = document.getElementById('schedule-visit-time');
+    const notesInput = document.getElementById('schedule-notes');
+    const statusSelectInput = document.getElementById('schedule-status');
+    const statusGroupContainer = document.getElementById('status-group-container');
+
+    // Open schedule modal
+    const openScheduleBtn = document.getElementById('btn-open-schedule-visit');
+    if (openScheduleBtn) {
+        openScheduleBtn.addEventListener('click', () => {
+            scheduleForm.reset();
+            scheduleVisitId.value = '';
+            scheduleTitle.textContent = 'Schedule New Visit';
+            
+            // Clear previews
+            clearPreview(propPreview, propSearch, propIdHidden, propSuggestions);
+            clearPreview(custPreview, custSearch, custIdHidden, custSuggestions);
+            clearPreview(empPreview, empSearch, empIdHidden, empSuggestions);
+
+            // Defaults
+            assignOptionLater.checked = true;
+            assignLaterWarning.style.display = 'flex';
+            directAssignField.classList.add('hidden');
+            statusGroupContainer.classList.add('hidden');
+
+            scheduleModal.classList.remove('hidden');
+        });
+    }
+
+    // Close modals
+    const closeScheduleBtn = document.getElementById('btn-close-schedule-modal');
+    const cancelScheduleBtn = document.getElementById('btn-cancel-schedule-modal');
+    
+    function hideScheduleModal() {
+        if (scheduleModal) scheduleModal.classList.add('hidden');
+    }
+    if (closeScheduleBtn) closeScheduleBtn.addEventListener('click', hideScheduleModal);
+    if (cancelScheduleBtn) cancelScheduleBtn.addEventListener('click', hideScheduleModal);
+
+    // Radios toggling
+    assignOptionLater.addEventListener('change', () => {
+        assignLaterWarning.style.display = 'flex';
+        directAssignField.classList.add('hidden');
+        clearPreview(empPreview, empSearch, empIdHidden);
+    });
+
+    assignOptionNow.addEventListener('change', () => {
+        assignLaterWarning.style.display = 'none';
+        directAssignField.classList.remove('hidden');
+    });
+
+    // Property searchable autocompletion
+    propSearch.addEventListener('input', debounce(async (e) => {
+        const val = e.target.value.trim();
+        if (val.length < 2) {
+            propSuggestions.classList.add('hidden');
+            return;
+        }
+        const res = await fetch(`/control-panel/visits/api/search-properties?q=${encodeURIComponent(val)}`);
+        const items = await res.json();
+        
+        propSuggestions.innerHTML = '';
+        if (items.length === 0) {
+            propSuggestions.innerHTML = '<div class="suggestion-item">No properties found</div>';
+        } else {
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = `${item.title} (${item.location}) - $${item.price.toLocaleString()}`;
+                div.addEventListener('click', () => {
+                    propIdHidden.value = item.id;
+                    propPreview.querySelector('.text').textContent = item.title;
+                    propPreview.classList.remove('hidden');
+                    propSearch.classList.add('hidden');
+                    propSuggestions.innerHTML = '';
+                    propSuggestions.classList.add('hidden');
+                    propSuggestions.style.display = 'none';
+                });
+                propSuggestions.appendChild(div);
+            });
+        }
+        propSuggestions.style.display = '';
+        propSuggestions.classList.remove('hidden');
+    }, 300));
+
+    propPreview.querySelector('.btn-clear').addEventListener('click', () => {
+        clearPreview(propPreview, propSearch, propIdHidden, propSuggestions);
+    });
+
+    // Customer searchable autocompletion
+    custSearch.addEventListener('input', debounce(async (e) => {
+        const val = e.target.value.trim();
+        if (val.length < 2) {
+            custSuggestions.classList.add('hidden');
+            return;
+        }
+        const res = await fetch(`/control-panel/visits/api/search-users?role=customer&q=${encodeURIComponent(val)}`);
+        const items = await res.json();
+        
+        custSuggestions.innerHTML = '';
+        if (items.length === 0) {
+            custSuggestions.innerHTML = '<div class="suggestion-item">No customers found</div>';
+        } else {
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = `${item.fullName} (${item.email}) - Phone: ${item.phone}`;
+                div.addEventListener('click', () => {
+                    custIdHidden.value = item.id;
+                    custPreview.querySelector('.text').textContent = item.fullName;
+                    custPreview.classList.remove('hidden');
+                    custSearch.classList.add('hidden');
+                    custSuggestions.innerHTML = '';
+                    custSuggestions.classList.add('hidden');
+                    custSuggestions.style.display = 'none';
+                });
+                custSuggestions.appendChild(div);
+            });
+        }
+        custSuggestions.style.display = '';
+        custSuggestions.classList.remove('hidden');
+    }, 300));
+
+    custPreview.querySelector('.btn-clear').addEventListener('click', () => {
+        clearPreview(custPreview, custSearch, custIdHidden, custSuggestions);
+    });
+
+    // Employee searchable autocompletion with live availability checks
+    empSearch.addEventListener('input', debounce(async (e) => {
+        const val = e.target.value.trim();
+        const targetDate = visitDateInput.value;
+        const targetTime = visitTimeInput.value;
+
+        if (!targetDate || !targetTime) {
+            empSuggestions.innerHTML = '<div class="suggestion-item" style="color:#b78103;">Please fill in Visit Date & Time first to query consultant availability.</div>';
+            empSuggestions.classList.remove('hidden');
+            return;
+        }
+
+        if (val.length < 1) {
+            empSuggestions.classList.add('hidden');
+            return;
+        }
+
+        // Fetch users matching query
+        const userRes = await fetch(`/control-panel/visits/api/search-users?role=employee&q=${encodeURIComponent(val)}`);
+        const employees = await userRes.json();
+
+        // Fetch availability status
+        const visitId = scheduleVisitId.value;
+        const availRes = await fetch(`/control-panel/visits/api/employees/availability?date=${targetDate}&time=${targetTime}${visitId ? '&exclude_visit_id=' + visitId : ''}`);
+        const availability = await availRes.json();
+
+        empSuggestions.innerHTML = '';
+        if (employees.length === 0) {
+            empSuggestions.innerHTML = '<div class="suggestion-item">No employees found</div>';
+        } else {
+            employees.forEach(emp => {
+                const avail = availability.find(x => x.id === emp.id);
+                const isConflicted = avail ? avail.has_conflict : false;
+
+                const div = document.createElement('div');
+                div.className = `suggestion-item ${isConflicted ? 'conflicted' : ''}`;
+                
+                if (isConflicted) {
+                    div.innerHTML = `<span>${emp.fullName} (${emp.email})</span> <span class="conflict-badge">Conflict</span>`;
+                    div.title = avail.conflict_reason || "Not available";
+                } else {
+                    div.textContent = `${emp.fullName} (${emp.email})`;
+                    div.addEventListener('click', () => {
+                        empIdHidden.value = emp.id;
+                        empPreview.querySelector('.text').textContent = emp.fullName;
+                        empPreview.classList.remove('hidden');
+                        empSearch.classList.add('hidden');
+                        empSuggestions.innerHTML = '';
+                        empSuggestions.classList.add('hidden');
+                        empSuggestions.style.display = 'none';
+                    });
+                }
+                empSuggestions.appendChild(div);
+            });
+        }
+        empSuggestions.style.display = '';
+        empSuggestions.classList.remove('hidden');
+    }, 300));
+
+    empPreview.querySelector('.btn-clear').addEventListener('click', () => {
+        clearPreview(empPreview, empSearch, empIdHidden, empSuggestions);
+    });
+
+    // Form submit scheduling / updates
+    scheduleForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const visitId = scheduleVisitId.value;
+        const propId = propIdHidden.value;
+        const custId = custIdHidden.value;
+        const dateVal = visitDateInput.value;
+        const timeVal = visitTimeInput.value;
+        const notesVal = notesInput.value;
+        
+        let employeeIdVal = null;
+        if (assignOptionNow.checked) {
+            employeeIdVal = empIdHidden.value;
+            if (!employeeIdVal) {
+                alert("Please select a consultant or check 'Assign Later'.");
+                return;
+            }
+        }
+
+        const payload = {
+            property_id: propId,
+            customer_id: custId,
+            employee_id: employeeIdVal,
+            visit_date: dateVal,
+            visit_time: timeVal,
+            notes: notesVal
+        };
+
+        if (visitId) {
+            payload.status = statusSelectInput.value;
+        }
+
+        const endpoint = visitId ? `/control-panel/visits/${visitId}/edit` : `/control-panel/visits/create`;
+        
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message || "Visit saved successfully");
+                window.location.reload();
+            } else {
+                alert(data.error || "Failed to save visit");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error. Failed to save visit.");
+        }
+    });
+
+    // Edit visit buttons binding
+    document.querySelectorAll('.edit-visit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const id = btn.dataset.id;
+            const propId = btn.dataset.propertyId;
+            const propTitle = btn.dataset.propertyTitle;
+            const custId = btn.dataset.customerId;
+            const custName = btn.dataset.customerName;
+            const empId = btn.dataset.employeeId;
+            const empName = btn.dataset.employeeName;
+            const date = btn.dataset.visitDate;
+            const time = btn.dataset.visitTime;
+            const status = btn.dataset.status;
+            const notes = btn.dataset.notes;
+
+            // Prepare edit form
+            scheduleVisitId.value = id;
+            scheduleTitle.textContent = `Edit Visit #${id}`;
+
+            // Property Preview
+            propIdHidden.value = propId;
+            propPreview.querySelector('.text').textContent = propTitle;
+            propPreview.classList.remove('hidden');
+            propSearch.classList.add('hidden');
+
+            // Customer Preview
+            custIdHidden.value = custId;
+            custPreview.querySelector('.text').textContent = custName;
+            custPreview.classList.remove('hidden');
+            custSearch.classList.add('hidden');
+
+            // Date & Time
+            visitDateInput.value = date;
+            visitTimeInput.value = time;
+
+            // Consultant Selection
+            if (empId && empId !== 'None' && empId !== '') {
+                assignOptionNow.checked = true;
+                assignLaterWarning.style.display = 'none';
+                directAssignField.classList.remove('hidden');
+                
+                empIdHidden.value = empId;
+                empPreview.querySelector('.text').textContent = empName;
+                empPreview.classList.remove('hidden');
+                empSearch.classList.add('hidden');
+            } else {
+                assignOptionLater.checked = true;
+                assignLaterWarning.style.display = 'flex';
+                directAssignField.classList.add('hidden');
+                clearPreview(empPreview, empSearch, empIdHidden);
+            }
+
+            // Status Editing
+            statusSelectInput.value = status;
+            statusGroupContainer.classList.remove('hidden');
+
+            // Notes
+            notesInput.value = notes;
+
+            scheduleModal.classList.remove('hidden');
+        });
+    });
+
+    // Helper functions
+    function clearPreview(previewEl, searchEl, hiddenEl, suggestionsEl) {
+        hiddenEl.value = '';
+        searchEl.value = '';
+        searchEl.classList.remove('hidden');
+        previewEl.classList.add('hidden');
+        if (suggestionsEl) {
+            suggestionsEl.innerHTML = '';
+            suggestionsEl.classList.add('hidden');
+            suggestionsEl.style.display = 'none';
+        }
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#schedule-prop-search')) propSuggestions.classList.add('hidden');
+        if (!e.target.closest('#schedule-cust-search')) custSuggestions.classList.add('hidden');
+        if (!e.target.closest('#schedule-emp-search')) empSuggestions.classList.add('hidden');
+    });
+});

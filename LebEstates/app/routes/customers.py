@@ -20,9 +20,13 @@ def admin_or_employee_required(f):
 @customers_bp.route('/')
 @admin_or_employee_required
 def index():
-    customers = get_all_customers()
+    filters = {
+        'server_q': request.args.get('server_q', ''),
+        'status': request.args.get('status', 'All')
+    }
+    customers = get_all_customers(filters)
     stats = get_customer_stats(customers)
-    return render_template('customers/index.html', customers=customers, stats=stats)
+    return render_template('customers/index.html', customers=customers, stats=stats, filters=filters)
 
 @customers_bp.route('/add', methods=['POST'])
 @admin_or_employee_required
@@ -88,4 +92,28 @@ def delete_customer_route(customer_id):
         return jsonify({'message': message, 'soft_deleted': result.get('soft_deleted', False)}), 200
     else:
         return jsonify({'error': result.get('error', 'Deletion failed')}), result.get('code', 400)
+
+@customers_bp.route('/<int:customer_id>/details', methods=['GET'])
+@admin_or_employee_required
+def get_customer_details(customer_id):
+    from app.models.customer import Customer
+    cust = Customer.query.get(customer_id)
+    if not cust:
+        return jsonify({'error': 'Customer not found'}), 404
+    
+    docs = [{'type': d.documentType, 'status': d.status, 'fileName': d.fileName} for d in cust.documents]
+    data = {
+        'customerID': cust.customerID,
+        'userID': cust.userID,
+        'fullName': cust.user.fullName if cust.user else 'N/A',
+        'email': cust.user.email if cust.user else 'N/A',
+        'phoneNumber': cust.user.phoneNumber if cust.user else 'N/A',
+        'nationalID': cust.nationalID or 'Not Provided',
+        'address': cust.address or 'N/A',
+        'status': cust.user.status if cust.user else 'Active',
+        'createdAt': cust.createdAt.strftime('%b %d, %Y') if cust.createdAt else 'N/A',
+        'avatar': cust.user.avatar_url if cust.user else None,
+        'documents': docs
+    }
+    return jsonify({'success': True, 'customer': data})
 

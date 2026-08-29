@@ -203,6 +203,18 @@
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
+
+                <!-- Office Expenses -->
+                <div class="module-card" data-icon="receipt_long" data-href="{{ url_for('expenses.index') }}" style="cursor: pointer;">
+                    <div class="module-card__icon-wrapper">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                    </div>
+                    <h3 class="module-card__title">Office Expenses</h3>
+                    <p class="module-card__description">Track operating overheads, utilities, rent, and marketing spend.</p>
+                    <div class="module-card__action">
+                        Launch Module <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
                 {% elif role == 'admin' %}
                 <!-- Transactions -->
                 <div class="module-card" data-icon="payments"
@@ -252,6 +264,7 @@
                     </div>
                 </div>
 
+                {% if role == 'admin' %}
                 <!-- Role Management -->
                 <div class="module-card" data-icon="admin_panel_settings" data-href="{{ url_for('roles.index') }}"
                     style="cursor: pointer;">
@@ -264,6 +277,7 @@
                         Launch Module <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
 

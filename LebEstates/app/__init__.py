@@ -61,6 +61,9 @@ def create_app(config_class=Config):
     from app.routes.support import support_bp
     app.register_blueprint(support_bp)
 
+    from app.routes.expenses import expenses_bp
+    app.register_blueprint(expenses_bp)
+
     # Global session checker middleware
     from flask import session, redirect, url_for, request
     from datetime import datetime
