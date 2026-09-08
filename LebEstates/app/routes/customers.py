@@ -9,7 +9,7 @@ def admin_or_employee_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('user_id'):
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('auth.login_page'))
         role = session.get('role_name', '').lower()
         if role not in ['admin', 'employee']:
             flash("You do not have permission to access this page.", "error")

@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!form || !btnSubmit || !alertBox) return;
 
+    if (typeof initCountryPicker === 'function') {
+        initCountryPicker('signup-country-picker', 'signup_country_code', '+961');
+    }
+
     // Helper: show or hide validation errors on individual input fields
     const toggleFieldError = (inputId, errorId, showMsg) => {
         const input = document.getElementById(inputId);
@@ -138,11 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const codeSelect = document.getElementById('signup_country_code');
+        const countryCode = codeSelect ? codeSelect.value : '+961';
+        const formattedPhone = phoneVal.startsWith('+') ? phoneVal : `${countryCode} ${phoneVal}`;
+
         // 3. Prep data payload
         const payload = {
             full_name: fullNameInput.value.trim(),
             email: emailInput.value.trim(),
-            phone_number: phoneInput ? phoneInput.value.trim() : '',
+            phone_number: formattedPhone,
             address: addressInput ? addressInput.value.trim() : '',
             password: passwordInput.value
         };

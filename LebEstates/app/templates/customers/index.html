@@ -192,7 +192,10 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone Number *</label>
-                        <input class="form-input" id="addCustomerPhone" placeholder="+961 XX XXX XXX" type="tel" required>
+                        <div class="phone-input-combo">
+                            <div id="add-customer-country-picker"></div>
+                            <input class="form-input flex-1" id="addCustomerPhone" placeholder="70 123 456" type="tel" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Password</label>
@@ -238,7 +241,10 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone Number *</label>
-                        <input class="form-input" id="editCustomerPhone" type="tel" required>
+                        <div class="phone-input-combo">
+                            <div id="edit-customer-country-picker"></div>
+                            <input class="form-input flex-1" id="editCustomerPhone" type="tel" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Location (Address)</label>
@@ -319,12 +325,34 @@
         }, 10);
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initCountryPicker === 'function') {
+            initCountryPicker('add-customer-country-picker', 'addCustomerCountryCode', '+961');
+            initCountryPicker('edit-customer-country-picker', 'editCustomerCountryCode', '+961');
+        }
+    });
+
     function openEditModal(id, name, email, phone, location) {
         document.getElementById('editCustomerID').value = id;
         document.getElementById('editCustomerName').value = name;
         document.getElementById('editCustomerEmail').value = email;
-        document.getElementById('editCustomerPhone').value = phone;
         document.getElementById('editCustomerLocation').value = location;
+        
+        const container = document.getElementById('edit-customer-country-picker');
+        const phoneInput = document.getElementById('editCustomerPhone');
+        if (phone && phone.startsWith('+')) {
+            const match = phone.match(/^(\+\d{1,4})\s*(.*)$/);
+            if (match) {
+                if (container && container.setCountryCode) container.setCountryCode(match[1]);
+                phoneInput.value = match[2];
+            } else {
+                if (container && container.setCountryCode) container.setCountryCode('+961');
+                phoneInput.value = phone;
+            }
+        } else {
+            if (container && container.setCountryCode) container.setCountryCode('+961');
+            phoneInput.value = phone || '';
+        }
         openModal('editCustomerModal');
     }
 
@@ -383,11 +411,14 @@
         const first_name = document.getElementById('addCustomerFirstName').value.trim();
         const last_name = document.getElementById('addCustomerLastName').value.trim();
         const email = document.getElementById('addCustomerEmail').value.trim();
-        const phone = document.getElementById('addCustomerPhone').value.trim();
+        const rawPhone = document.getElementById('addCustomerPhone').value.trim();
+        const code = document.getElementById('addCustomerCountryCode').value;
         const address = document.getElementById('addCustomerAddress').value.trim();
         const password = document.getElementById('addCustomerPassword').value;
 
-        if (!first_name || !last_name || !email || !phone || !password) {
+        const phone = rawPhone.startsWith('+') ? rawPhone : `${code} ${rawPhone}`;
+
+        if (!first_name || !last_name || !email || !rawPhone || !password) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
@@ -435,10 +466,13 @@
         const id = document.getElementById('editCustomerID').value;
         const full_name = document.getElementById('editCustomerName').value.trim();
         const email = document.getElementById('editCustomerEmail').value.trim();
-        const phone = document.getElementById('editCustomerPhone').value.trim();
+        const rawPhone = document.getElementById('editCustomerPhone').value.trim();
+        const code = document.getElementById('editCustomerCountryCode').value;
         const location = document.getElementById('editCustomerLocation').value.trim();
 
-        if (!full_name || !email || !phone) {
+        const phone = rawPhone.startsWith('+') ? rawPhone : `${code} ${rawPhone}`;
+
+        if (!full_name || !email || !rawPhone) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }

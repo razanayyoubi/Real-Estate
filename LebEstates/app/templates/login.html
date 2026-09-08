@@ -24,14 +24,39 @@
                     <div class="signup-alert-box" id="login-alert-box" aria-live="polite"></div>
 
                     <form class="signup-form" id="login-form" novalidate>
+                        <!-- Segmented Mode Toggle Box -->
+                        <div class="login-toggle-container">
+                            <button type="button" class="login-toggle-btn active" id="toggle-email-btn" onclick="switchLoginMode('email')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">mail</span>
+                                <span>Sign in with Email</span>
+                            </button>
+                            <button type="button" class="login-toggle-btn" id="toggle-phone-btn" onclick="switchLoginMode('phone')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">call</span>
+                                <span>Sign in with Phone</span>
+                            </button>
+                        </div>
                         
-                        <div class="form-field-group">
-                            <label class="label-md uppercase-tracking" for="email">Email Address or Phone Number</label>
+                        <!-- Mode 1: Email Address -->
+                        <div class="form-field-group" id="group-login-email">
+                            <label class="label-md uppercase-tracking" for="email">Email Address</label>
                             <div class="input-icon-wrapper">
                                 <span class="material-symbols-outlined input-icon">mail</span>
-                                <input class="form-input" id="email" placeholder="email@example.com or +961 70 123456" required type="text"/>
+                                <input class="form-input" id="email" placeholder="example@lebestates.com" type="email"/>
                             </div>
-                            <span class="field-error-msg" id="err-email">Please enter a valid email address or phone number.</span>
+                            <span class="field-error-msg" id="err-email">Please enter a valid email address.</span>
+                        </div>
+
+                        <!-- Mode 2: Phone Number -->
+                        <div class="form-field-group" id="group-login-phone" style="display: none;">
+                            <label class="label-md uppercase-tracking" for="login_phone">Phone Number</label>
+                            <div class="phone-input-combo">
+                                <div id="login-country-picker"></div>
+                                <div class="input-icon-wrapper flex-1">
+                                    <span class="material-symbols-outlined input-icon">call</span>
+                                    <input class="form-input" id="login_phone" placeholder="70 123 456" type="tel"/>
+                                </div>
+                            </div>
+                            <span class="field-error-msg" id="err-phone">Please enter a valid phone number.</span>
                         </div>
 
                         <div class="form-field-group">

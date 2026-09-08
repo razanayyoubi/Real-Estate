@@ -202,7 +202,11 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone Number *</label>
-                        <input class="form-input" id="addEmployeePhone" placeholder="+961 XX XXX XXX" type="tel" required>
+                        <div class="phone-input-combo">
+                            <div id="add-employee-country-picker"></div>
+                            <input type="hidden" id="addEmployeeCountryCode" value="+961">
+                            <input class="form-input flex-1" id="addEmployeePhone" placeholder="70 123 456" type="tel" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Position / Role</label>
@@ -252,7 +256,11 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone Number *</label>
-                        <input class="form-input" id="editEmployeePhone" type="tel" required>
+                        <div class="phone-input-combo">
+                            <div id="edit-employee-country-picker"></div>
+                            <input type="hidden" id="editEmployeeCountryCode" value="+961">
+                            <input class="form-input flex-1" id="editEmployeePhone" type="tel" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Position / Role</label>
@@ -345,14 +353,36 @@
         }, 10);
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initCountryPicker === 'function') {
+            initCountryPicker('add-employee-country-picker', 'addEmployeeCountryCode', '+961');
+            initCountryPicker('edit-employee-country-picker', 'editEmployeeCountryCode', '+961');
+        }
+    });
+
     function openEditModal(id, name, email, phone, position, salary, status) {
         document.getElementById('editEmployeeID').value = id;
         document.getElementById('editEmployeeName').value = name;
         document.getElementById('editEmployeeEmail').value = email;
-        document.getElementById('editEmployeePhone').value = phone;
         document.getElementById('editEmployeePosition').value = position;
         document.getElementById('editEmployeeSalary').value = salary;
         document.getElementById('editEmployeeStatus').value = status;
+        
+        const container = document.getElementById('edit-employee-country-picker');
+        const phoneInput = document.getElementById('editEmployeePhone');
+        if (phone && phone.startsWith('+')) {
+            const match = phone.match(/^(\+\d{1,4})\s*(.*)$/);
+            if (match) {
+                if (container && container.setCountryCode) container.setCountryCode(match[1]);
+                phoneInput.value = match[2];
+            } else {
+                if (container && container.setCountryCode) container.setCountryCode('+961');
+                phoneInput.value = phone;
+            }
+        } else {
+            if (container && container.setCountryCode) container.setCountryCode('+961');
+            phoneInput.value = phone || '';
+        }
         openModal('editEmployeeModal');
     }
 
@@ -411,12 +441,15 @@
         const first_name = document.getElementById('addEmployeeFirstName').value.trim();
         const last_name = document.getElementById('addEmployeeLastName').value.trim();
         const email = document.getElementById('addEmployeeEmail').value.trim();
-        const phone = document.getElementById('addEmployeePhone').value.trim();
+        const rawPhone = document.getElementById('addEmployeePhone').value.trim();
+        const code = document.getElementById('addEmployeeCountryCode').value;
         const position = document.getElementById('addEmployeePosition').value.trim();
         const salary = document.getElementById('addEmployeeSalary').value;
         const password = document.getElementById('addEmployeePassword').value;
 
-        if (!first_name || !last_name || !email || !phone || !position || !salary || !password) {
+        const phone = rawPhone.startsWith('+') ? rawPhone : `${code} ${rawPhone}`;
+
+        if (!first_name || !last_name || !email || !rawPhone || !position || !salary || !password) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
@@ -465,12 +498,15 @@
         const id = document.getElementById('editEmployeeID').value;
         const full_name = document.getElementById('editEmployeeName').value.trim();
         const email = document.getElementById('editEmployeeEmail').value.trim();
-        const phone = document.getElementById('editEmployeePhone').value.trim();
+        const rawPhone = document.getElementById('editEmployeePhone').value.trim();
+        const code = document.getElementById('editEmployeeCountryCode').value;
         const position = document.getElementById('editEmployeePosition').value.trim();
         const salary = document.getElementById('editEmployeeSalary').value;
         const status = document.getElementById('editEmployeeStatus').value;
 
-        if (!full_name || !email || !phone || !position || !salary) {
+        const phone = rawPhone.startsWith('+') ? rawPhone : `${code} ${rawPhone}`;
+
+        if (!full_name || !email || !rawPhone || !position || !salary) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }

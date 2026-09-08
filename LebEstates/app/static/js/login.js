@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!form || !btnSubmit || !alertBox) return;
 
+    if (typeof initCountryPicker === 'function') {
+        initCountryPicker('login-country-picker', 'login_country_code', '+961');
+    }
+
     const toggleFieldError = (inputId, errorId, showMsg) => {
         const input = document.getElementById(inputId);
         const error = document.getElementById(errorId);
@@ -44,16 +48,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    let currentLoginMode = 'email';
+
+    window.switchLoginMode = function(mode) {
+        currentLoginMode = mode;
+        const btnEmail = document.getElementById('toggle-email-btn');
+        const btnPhone = document.getElementById('toggle-phone-btn');
+        const groupEmail = document.getElementById('group-login-email');
+        const groupPhone = document.getElementById('group-login-phone');
+
+        if (mode === 'phone') {
+            if (btnEmail) btnEmail.classList.remove('active');
+            if (btnPhone) btnPhone.classList.add('active');
+            if (groupEmail) groupEmail.style.display = 'none';
+            if (groupPhone) groupPhone.style.display = 'flex';
+        } else {
+            if (btnPhone) btnPhone.classList.remove('active');
+            if (btnEmail) btnEmail.classList.add('active');
+            if (groupPhone) groupPhone.style.display = 'none';
+            if (groupEmail) groupEmail.style.display = 'flex';
+        }
+        
+        toggleFieldError('email', 'err-email', false);
+        toggleFieldError('login_phone', 'err-phone', false);
+    };
+
     setupErrorClearing('email', 'err-email');
+    setupErrorClearing('login_phone', 'err-phone');
     setupErrorClearing('password', 'err-password');
     setupErrorClearing('code', 'err-code');
 
-    const isValidEmailOrPhone = (val) => {
-        const trimmed = val.trim();
-        if (!trimmed) return false;
-        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-        const isPhone = /^\+?[0-9\s\-()]{6,}$/.test(trimmed);
-        return isEmail || isPhone;
+    const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+    const isValidPhone = (val) => {
+        const digits = val.replace(/\D/g, '');
+        return digits.length >= 6;
     };
 
     const showAlert = (message, type) => {
@@ -76,15 +104,31 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAlert();
 
         const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('login_phone');
+        const codeSelect = document.getElementById('login_country_code');
         const passwordInput = document.getElementById('password');
         const codeInput = document.getElementById('code');
         const fieldGroup2fa = document.getElementById('2fa-field-group');
 
         let isValid = true;
+        let identifierValue = '';
 
-        if (!isValidEmailOrPhone(emailInput.value)) {
-            toggleFieldError('email', 'err-email', true);
-            isValid = false;
+        if (currentLoginMode === 'email') {
+            if (!isValidEmail(emailInput.value)) {
+                toggleFieldError('email', 'err-email', true);
+                isValid = false;
+            } else {
+                identifierValue = emailInput.value.trim();
+            }
+        } else {
+            const rawPhone = phoneInput ? phoneInput.value.trim() : '';
+            if (!isValidPhone(rawPhone)) {
+                toggleFieldError('login_phone', 'err-phone', true);
+                isValid = false;
+            } else {
+                const prefix = codeSelect ? codeSelect.value : '+961';
+                identifierValue = rawPhone.startsWith('+') ? rawPhone : `${prefix} ${rawPhone}`;
+            }
         }
 
         if (!passwordInput.value) {
@@ -105,7 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const payload = {
-            email: emailInput.value.trim(),
+            email: identifierValue,
+            identifier: identifierValue,
             password: passwordInput.value
         };
 

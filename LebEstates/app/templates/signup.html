@@ -28,24 +28,27 @@
 
                     <form class="signup-form" id="signup-form" novalidate>
                         
-                        <!-- Full Name & Phone Number (Side by Side) -->
-                        <div class="form-row">
-                            <div class="form-field-group">
-                                <label class="label-md uppercase-tracking" for="full_name">Full Name *</label>
-                                <div class="input-icon-wrapper">
-                                    <span class="material-symbols-outlined input-icon">person</span>
-                                    <input class="form-input" id="full_name" placeholder="John Doe" required type="text"/>
-                                </div>
-                                <span class="field-error-msg" id="err-full-name">Please enter your full name.</span>
+                        <!-- Full Name -->
+                        <div class="form-field-group">
+                            <label class="label-md uppercase-tracking" for="full_name">Full Name *</label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined input-icon">person</span>
+                                <input class="form-input" id="full_name" placeholder="John Doe" required type="text"/>
                             </div>
-                            <div class="form-field-group">
-                                <label class="label-md uppercase-tracking" for="phone_number">Phone Number *</label>
-                                <div class="input-icon-wrapper">
+                            <span class="field-error-msg" id="err-full-name">Please enter your full name.</span>
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="form-field-group">
+                            <label class="label-md uppercase-tracking" for="phone_number">Phone Number *</label>
+                            <div class="phone-input-combo">
+                                <div id="signup-country-picker"></div>
+                                <div class="input-icon-wrapper flex-1">
                                     <span class="material-symbols-outlined input-icon">phone</span>
-                                    <input class="form-input" id="phone_number" placeholder="+961 71 234 567" required type="tel"/>
+                                    <input class="form-input" id="phone_number" placeholder="71 234 567" required type="tel"/>
                                 </div>
-                                <span class="field-error-msg" id="err-phone-number">Please enter a valid phone number (digits only).</span>
                             </div>
+                            <span class="field-error-msg" id="err-phone-number">Please enter a valid phone number.</span>
                         </div>
 
                         <!-- Email -->
