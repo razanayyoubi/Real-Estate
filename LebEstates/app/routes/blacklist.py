@@ -30,13 +30,16 @@ def admin_required(f):
 def index():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
+    status_filter = request.args.get('status', '').strip()
+    search_query = request.args.get('server_q', '').strip()
     
     # Retrieve all entries and stats
-    all_entries = get_all_blacklist_entries()
+    all_entries = get_all_blacklist_entries(status_filter=status_filter, search_query=search_query)
     stats = get_blacklist_stats()
     
     total = len(all_entries)
     total_pages = math.ceil(total / per_page) if total > 0 else 1
+    page = max(1, min(page, total_pages))
     
     # Slice the results for pagination
     start_idx = (page - 1) * per_page
@@ -50,7 +53,9 @@ def index():
         current_page=page,
         total_pages=total_pages,
         per_page=per_page,
-        total_records=total
+        total_records=total,
+        status_filter=status_filter,
+        search_query=search_query
     )
 
 @blacklist_bp.route('/search-users')

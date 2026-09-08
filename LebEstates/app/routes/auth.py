@@ -27,15 +27,16 @@ def register_submit():
         return jsonify({'error': 'Full Name is required.'}), 400
     if not email:
         return jsonify({'error': 'Email address is required.'}), 400
+    if not phone_number:
+        return jsonify({'error': 'Phone number is required.'}), 400
     if not password or len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters long.'}), 400
 
-    if phone_number:
-        import re
-        if not re.match(r'^\+?[0-9\s\-()]+$', phone_number):
-            return jsonify({'error': 'Phone number must contain only numbers.'}), 400
-        if len(re.sub(r'\D', '', phone_number)) < 6:
-            return jsonify({'error': 'Phone number must contain at least 6 digits.'}), 400
+    import re
+    if not re.match(r'^\+?[0-9\s\-()]+$', phone_number):
+        return jsonify({'error': 'Phone number must contain only numbers.'}), 400
+    if len(re.sub(r'\D', '', phone_number)) < 6:
+        return jsonify({'error': 'Phone number must contain at least 6 digits.'}), 400
 
     result = AuthService.register_customer(full_name, email, phone_number, password, address)
     if result["success"]:
@@ -54,14 +55,14 @@ def login_submit():
     else:
         data = request.form
 
-    email = data.get('email', '').strip()
+    identifier = (data.get('email') or data.get('identifier') or data.get('phone') or data.get('username') or '').strip()
     password = data.get('password', '')
     code = data.get('code', '').strip()
 
-    if not email or not password:
-        return jsonify({'error': 'Email and Password are required.'}), 400
+    if not identifier or not password:
+        return jsonify({'error': 'Email / Phone Number and Password are required.'}), 400
 
-    result = AuthService.verify_credentials(email, password)
+    result = AuthService.verify_credentials(identifier, password)
     if result["success"]:
         user_id = result['user_id']
         role_id = result['role_id']
@@ -125,9 +126,10 @@ def login_submit():
         else:
             return jsonify({'error': 'Failed to create active session.'}), 500
     else:
-        # Check if email is registered to log failed attempt
+        # Check if user exists by email or phone to log failed attempt
         from app.models.users import Users
-        user = Users.query.filter_by(email=email).first() if email else None
+        from sqlalchemy import or_
+        user = Users.query.filter(or_(Users.email == identifier, Users.phoneNumber == identifier)).first() if identifier else None
         if user:
             AuthService.log_login_attempt(user.userID, request.remote_addr, request.headers.get('User-Agent', ''), 'Failed')
 

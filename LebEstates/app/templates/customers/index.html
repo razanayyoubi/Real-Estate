@@ -191,8 +191,8 @@
                         <input class="form-input" id="addCustomerEmail" placeholder="email@example.com" type="email" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Phone Number</label>
-                        <input class="form-input" id="addCustomerPhone" placeholder="+961 XX XXX XXX" type="tel">
+                        <label class="form-label">Phone Number *</label>
+                        <input class="form-input" id="addCustomerPhone" placeholder="+961 XX XXX XXX" type="tel" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Password</label>
@@ -237,8 +237,8 @@
                         <input class="form-input" id="editCustomerEmail" type="email" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Phone Number</label>
-                        <input class="form-input" id="editCustomerPhone" type="tel">
+                        <label class="form-label">Phone Number *</label>
+                        <input class="form-input" id="editCustomerPhone" type="tel" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Location (Address)</label>
@@ -387,7 +387,7 @@
         const address = document.getElementById('addCustomerAddress').value.trim();
         const password = document.getElementById('addCustomerPassword').value;
 
-        if (!first_name || !last_name || !email || !password) {
+        if (!first_name || !last_name || !email || !phone || !password) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
@@ -438,7 +438,7 @@
         const phone = document.getElementById('editCustomerPhone').value.trim();
         const location = document.getElementById('editCustomerLocation').value.trim();
 
-        if (!full_name || !email) {
+        if (!full_name || !email || !phone) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }

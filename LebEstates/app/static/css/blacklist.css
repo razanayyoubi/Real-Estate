@@ -229,11 +229,12 @@
     border-bottom-right-radius: 16px;
     border: 1px solid var(--outline-variant);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .table-responsive {
     overflow-x: auto;
+    overflow-y: visible;
     width: 100%;
 }
 
@@ -261,12 +262,15 @@
 .table-row {
     border-bottom: 1px solid var(--outline-variant);
     transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    z-index: 1;
 }
 
 .table-row:hover {
     background-color: rgba(239, 244, 255, 0.5); /* surface-container-low/50 */
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    z-index: 999;
 }
 
 .table-td {
@@ -283,7 +287,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    cursor: help;
+    cursor: pointer;
 }
 
 .user-avatar {
@@ -294,9 +298,21 @@
     object-fit: cover;
 }
 
+.system-avatar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--surface-variant);
+    color: var(--on-surface-variant);
+}
+
+.system-avatar-icon span {
+    font-size: 18px;
+}
+
 .admin-trigger {
     font-weight: 500;
-    cursor: help;
+    cursor: pointer;
     border-bottom: 1px dotted var(--outline-variant);
     transition: color 0.2s;
 }
@@ -402,31 +418,74 @@
 /* Popover Panel Styles */
 .popover-container {
     position: relative;
+    z-index: 1;
+}
+
+.popover-container:hover {
+    z-index: 99999;
 }
 
 .popover {
     position: absolute;
-    left: 24px;
-    top: 100%;
-    margin-top: 8px;
-    width: 288px;
-    background-color: var(--surface-container-lowest);
-    border: 1px solid var(--outline-variant);
+    left: 0;
+    bottom: calc(100% + 8px);
+    top: auto;
+    width: 320px;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid var(--outline-variant, #c5c6cf);
     border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     padding: 16px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(10px);
+    transform: translateY(-6px);
     transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s;
     pointer-events: none;
-    z-index: 100;
+    z-index: 99999 !important;
+}
+
+[data-theme="dark"] .popover {
+    background-color: #1e1e2d !important;
+    background: #1e1e2d !important;
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .popover-container:hover .popover {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Global Floating Popover Portal Overlay */
+.global-popover-portal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid var(--outline-variant, #c5c6cf);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+    padding: 16px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    z-index: 999999 !important;
+}
+
+[data-theme="dark"] .global-popover-portal {
+    background-color: #1e1e2d !important;
+    background: #1e1e2d !important;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.global-popover-portal.active {
+    opacity: 1;
+    visibility: visible;
     pointer-events: auto;
 }
 
@@ -602,7 +661,7 @@
 }
 
 .modal-container.max-w-md {
-    max-w-md: 448px;
+    max-width: 448px;
 }
 
 .modal-header {
@@ -707,51 +766,75 @@
 
 .btn-confirm {
     flex: 1;
-    height: 48px;
+    width: 100%;
+    min-height: 54px !important;
+    height: 54px !important;
+    padding: 0 24px;
     background-color: var(--primary);
-    color: white;
-    font-weight: 600;
-    border-radius: 8px;
-    border: none;
+    color: #ffffff !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    border-radius: 14px !important;
+    border: none !important;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.2s;
+    box-shadow: 0 4px 14px rgba(0, 8, 30, 0.15);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-sizing: border-box;
 }
 
 .btn-confirm:hover {
     background-color: rgba(0, 8, 30, 0.9);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
 }
 
 .btn-confirm.error {
-    background-color: var(--error);
+    background-color: var(--error) !important;
 }
 
 .btn-confirm.error:hover {
-    background-color: rgba(186, 26, 26, 0.9);
+    background-color: rgba(186, 26, 26, 0.9) !important;
 }
 
 .btn-confirm.secondary {
-    background-color: var(--secondary);
+    background-color: var(--secondary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(115, 92, 0, 0.25);
 }
 
 .btn-confirm.secondary:hover {
+    background-color: #5c4a00 !important;
     filter: brightness(1.1);
 }
 
 .btn-discard {
     flex: 1;
-    height: 48px;
-    border: 1px solid var(--outline);
-    color: var(--on-surface);
-    font-weight: 600;
-    background-color: transparent;
-    border-radius: 8px;
+    width: 100%;
+    min-height: 54px !important;
+    height: 54px !important;
+    padding: 0 24px;
+    border: 1px solid var(--outline-variant) !important;
+    color: var(--on-surface) !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    background-color: var(--surface-container-low) !important;
+    border-radius: 14px !important;
     cursor: pointer;
-    transition: background-color 0.2s;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    transition: background-color 0.2s, transform 0.1s;
+    box-sizing: border-box;
 }
 
 .btn-discard:hover {
-    background-color: var(--surface-container);
+    background-color: var(--surface-container-high) !important;
 }
 
 /* Autocomplete Suggestions Box */

@@ -20,7 +20,41 @@
                     <h2 class="hub-title">Agent Commissions</h2>
                     <p class="hub-subtitle">Track agent earnings, splits, top performers, and agency operations expenses.</p>
                 </div>
-                <div class="sync-controls">
+                <div class="sync-controls" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <!-- Period Type Granularity Tabs -->
+                    <div class="period-type-selector" style="display: flex; background: var(--surface-container-low, #181818); border-radius: 8px; padding: 3px; border: 1px solid var(--outline-variant, rgba(255,255,255,0.1));">
+                        <button type="button" id="tab-period-all" class="btn-period-tab {% if not filter_meta or filter_meta.period_type == 'all' %}active{% endif %}" onclick="switchViewPeriod('all')">All Time</button>
+                        <button type="button" id="tab-period-yearly" class="btn-period-tab {% if filter_meta and filter_meta.period_type == 'yearly' %}active{% endif %}" onclick="switchViewPeriod('yearly')">Yearly</button>
+                        <button type="button" id="tab-period-monthly" class="btn-period-tab {% if filter_meta and filter_meta.period_type == 'monthly' %}active{% endif %}" onclick="switchViewPeriod('monthly')">Monthly</button>
+                    </div>
+
+                    <!-- Year Dropdown -->
+                    <div id="comm-year-select-wrapper" style="{% if not filter_meta or filter_meta.period_type == 'all' %}display: none;{% endif %}">
+                        <select id="comm-year-select" onchange="onCommissionFilterChange()" style="background: #ffffff; color: #000000; border: 1px solid var(--outline-variant, rgba(255,255,255,0.15)); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer;">
+                            {% for yr in (filter_meta.available_years if filter_meta else [2026]) %}
+                            <option value="{{ yr }}" {% if filter_meta and filter_meta.selected_year == yr %}selected{% endif %}>Year: {{ yr }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Month Dropdown -->
+                    <div id="comm-month-select-wrapper" style="{% if not filter_meta or filter_meta.period_type != 'monthly' %}display: none;{% endif %}">
+                        <select id="comm-month-select" onchange="onCommissionFilterChange()" style="background: #ffffff; color: #000000; border: 1px solid var(--outline-variant, rgba(255,255,255,0.15)); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer;">
+                            <option value="1" {% if filter_meta and filter_meta.selected_month == 1 %}selected{% endif %}>Month: January</option>
+                            <option value="2" {% if filter_meta and filter_meta.selected_month == 2 %}selected{% endif %}>Month: February</option>
+                            <option value="3" {% if filter_meta and filter_meta.selected_month == 3 %}selected{% endif %}>Month: March</option>
+                            <option value="4" {% if filter_meta and filter_meta.selected_month == 4 %}selected{% endif %}>Month: April</option>
+                            <option value="5" {% if filter_meta and filter_meta.selected_month == 5 %}selected{% endif %}>Month: May</option>
+                            <option value="6" {% if filter_meta and filter_meta.selected_month == 6 %}selected{% endif %}>Month: June</option>
+                            <option value="7" {% if filter_meta and filter_meta.selected_month == 7 %}selected{% endif %}>Month: July</option>
+                            <option value="8" {% if filter_meta and filter_meta.selected_month == 8 %}selected{% endif %}>Month: August</option>
+                            <option value="9" {% if filter_meta and filter_meta.selected_month == 9 %}selected{% endif %}>Month: September</option>
+                            <option value="10" {% if filter_meta and filter_meta.selected_month == 10 %}selected{% endif %}>Month: October</option>
+                            <option value="11" {% if filter_meta and filter_meta.selected_month == 11 %}selected{% endif %}>Month: November</option>
+                            <option value="12" {% if filter_meta and filter_meta.selected_month == 12 %}selected{% endif %}>Month: December</option>
+                        </select>
+                    </div>
+
                     <div class="sync-status-badge">
                         <div class="sync-dot pulsing" id="syncDot"></div>
                         <span id="syncStatusText">Syncing live</span>
@@ -31,14 +65,6 @@
                     <a href="/control-panel/commission-settings" class="btn-sync" title="Commission Settings" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                         <span class="material-symbols-outlined">tune</span>
                     </a>
-                    <div class="date-selector-badge" style="display: flex; gap: 8px; align-items: center;">
-                        <span class="material-symbols-outlined">payments</span>
-                        <span>Agent Share: {{ kpis.agent_split }}</span>
-                        <div class="view-toggle-buttons" style="display: flex; gap: 4px; background: rgba(255,255,255,0.08); padding: 2px 4px; border-radius: 6px; margin-left: 8px;">
-                            <button type="button" class="btn-view-toggle active" id="view-monthly-btn" onclick="switchViewPeriod('monthly')" style="padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; border: none; background: var(--primary); color: white; cursor: pointer;">Monthly</button>
-                            <button type="button" class="btn-view-toggle" id="view-yearly-btn" onclick="switchViewPeriod('yearly')" style="padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; border: none; background: transparent; color: var(--on-surface-variant); cursor: pointer;">Yearly</button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -59,7 +85,7 @@
                 </div>
             </div>
 
-            <!-- Ready for Payout -->
+            <!-- Ready for Payout (Paid) -->
             <div class="kpi-metric-card">
                 <div class="kpi-card-header">
                     <div class="kpi-icon-box secondary">
@@ -68,22 +94,22 @@
                     <span class="kpi-tag highlight">Closed Deals</span>
                 </div>
                 <div class="kpi-card-body">
-                    <p class="kpi-label">Agent Share Payout</p>
+                    <p class="kpi-label">Paid Agent Share</p>
                     <h3 class="kpi-value payout" id="kpi-ready-payout">{{ kpis.ready_for_payout }}</h3>
                 </div>
             </div>
 
-            <!-- Average Commission Rate -->
+            <!-- Unpaid Agent Share (Pending) -->
             <div class="kpi-metric-card">
                 <div class="kpi-card-header">
                     <div class="kpi-icon-box tertiary">
-                        <span class="material-symbols-outlined">percent</span>
+                        <span class="material-symbols-outlined">hourglass_empty</span>
                     </div>
-                    <span class="kpi-tag">Sales Avg</span>
+                    <span class="kpi-tag warning">Pending Deals</span>
                 </div>
                 <div class="kpi-card-body">
-                    <p class="kpi-label">Avg Commission Rate</p>
-                    <h3 class="kpi-value" id="kpi-avg-rate">{{ kpis.avg_commission_rate }}</h3>
+                    <p class="kpi-label">Unpaid Agent Share</p>
+                    <h3 class="kpi-value" id="kpi-unpaid-payout">{{ kpis.unpaid_payout }}</h3>
                 </div>
             </div>
 
@@ -173,9 +199,9 @@
                             <label class="filter-label">Payout Status</label>
                             <select id="ledger-status-filter" class="filter-select" onchange="filterLedger()">
                                 <option value="All">All Statuses</option>
-                                <option value="Closed">Closed</option>
-                                <option value="Escrow">Escrow</option>
-                                <option value="Legal">Legal</option>
+                                <option value="Closed">Paid (Closed)</option>
+                                <option value="Escrow">Unpaid (Escrow)</option>
+                                <option value="Legal">In progress (Legal)</option>
                                 <option value="Cancelled">Cancelled</option>
                             </select>
                         </div>
@@ -248,6 +274,10 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    <div class="pagination-footer">
+                        <div class="pagination-info" id="commissions-pagination-info">Showing 0 to 0 of 0 entries</div>
+                        <div class="pagination-buttons" id="commissions-pagination-buttons"></div>
+                    </div>
                 </div>
             </div>
         </section>

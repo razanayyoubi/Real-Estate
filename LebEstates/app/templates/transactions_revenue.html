@@ -19,12 +19,46 @@
                 <span class="hub-header-line"></span>
                 <span class="hub-header-tag">Financial Operations</span>
             </div>
-            <div class="hub-header-main-flex">
+            <div class="hub-header-main-flex" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
                 <div class="hub-header-details">
                     <h2 class="hub-title">Revenue Dashboard</h2>
                     <p class="hub-subtitle">Visual financial analytics and agency profitability reporting for LebEstates.</p>
                 </div>
-                <div class="sync-controls">
+                <div class="sync-controls" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <!-- Period Type Granularity Tabs -->
+                    <div class="period-type-selector" style="display: flex; background: var(--surface-container-low, #181818); border-radius: 8px; padding: 3px; border: 1px solid var(--outline-variant, rgba(255,255,255,0.1));">
+                        <button type="button" id="tab-period-all" class="btn-period-tab {% if not filter_meta or filter_meta.period_type == 'all' %}active{% endif %}" onclick="setRevenuePeriod('all')">All Time</button>
+                        <button type="button" id="tab-period-year" class="btn-period-tab {% if filter_meta and filter_meta.period_type == 'year' %}active{% endif %}" onclick="setRevenuePeriod('year')">Yearly</button>
+                        <button type="button" id="tab-period-month" class="btn-period-tab {% if filter_meta and filter_meta.period_type == 'month' %}active{% endif %}" onclick="setRevenuePeriod('month')">Monthly</button>
+                    </div>
+
+                    <!-- Year Dropdown -->
+                    <div id="year-select-wrapper" style="{% if not filter_meta or filter_meta.period_type == 'all' %}display: none;{% endif %}">
+                        <select id="revenue-year-select" onchange="onRevenueFilterChange()" style="background: #ffffff; color: #000000; border: 1px solid var(--outline-variant, rgba(255,255,255,0.15)); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer;">
+                            {% for yr in (filter_meta.available_years if filter_meta else [2026]) %}
+                            <option value="{{ yr }}" {% if filter_meta and filter_meta.selected_year == yr %}selected{% endif %}>Year: {{ yr }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Month Dropdown -->
+                    <div id="month-select-wrapper" style="{% if not filter_meta or filter_meta.period_type != 'month' %}display: none;{% endif %}">
+                        <select id="revenue-month-select" onchange="onRevenueFilterChange()" style="background: #ffffff; color: #000000; border: 1px solid var(--outline-variant, rgba(255,255,255,0.15)); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer;">
+                            <option value="1" {% if filter_meta and filter_meta.selected_month == 1 %}selected{% endif %}>Month: January</option>
+                            <option value="2" {% if filter_meta and filter_meta.selected_month == 2 %}selected{% endif %}>Month: February</option>
+                            <option value="3" {% if filter_meta and filter_meta.selected_month == 3 %}selected{% endif %}>Month: March</option>
+                            <option value="4" {% if filter_meta and filter_meta.selected_month == 4 %}selected{% endif %}>Month: April</option>
+                            <option value="5" {% if filter_meta and filter_meta.selected_month == 5 %}selected{% endif %}>Month: May</option>
+                            <option value="6" {% if filter_meta and filter_meta.selected_month == 6 %}selected{% endif %}>Month: June</option>
+                            <option value="7" {% if filter_meta and filter_meta.selected_month == 7 %}selected{% endif %}>Month: July</option>
+                            <option value="8" {% if filter_meta and filter_meta.selected_month == 8 %}selected{% endif %}>Month: August</option>
+                            <option value="9" {% if filter_meta and filter_meta.selected_month == 9 %}selected{% endif %}>Month: September</option>
+                            <option value="10" {% if filter_meta and filter_meta.selected_month == 10 %}selected{% endif %}>Month: October</option>
+                            <option value="11" {% if filter_meta and filter_meta.selected_month == 11 %}selected{% endif %}>Month: November</option>
+                            <option value="12" {% if filter_meta and filter_meta.selected_month == 12 %}selected{% endif %}>Month: December</option>
+                        </select>
+                    </div>
+
                     <div class="sync-status-badge">
                         <div class="sync-dot pulsing" id="syncDot"></div>
                         <span id="syncStatusText">Syncing live</span>
@@ -273,9 +307,42 @@
                                     <span class="recent-prop-title">{{ t.property_title }}</span>
                                 </div>
                             </td>
-                            <td style="cursor: pointer; font-weight: 600; color: var(--primary);" {% if t.customer_id %}onclick="openCustomerModal({{ t.customer_id }})" title="Click to view customer profile"{% endif %}>
-                                <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">account_circle</span>
-                                {{ t.client_name }}
+                            <td style="position: relative;">
+                                <div class="customer-popover-wrapper">
+                                    <span class="customer-name-trigger" {% if t.customer_id %}onclick="openCustomerModal({{ t.customer_id }})"{% endif %}>
+                                        <span class="material-symbols-outlined" style="font-size: 15px; vertical-align: middle; margin-right: 4px; color: var(--primary);">account_circle</span>
+                                        <span style="font-weight: 600; color: var(--primary);">{{ t.client_name }}</span>
+                                    </span>
+                                    {% if t.customer_id %}
+                                    <!-- Hover Popover Card -->
+                                    <div class="customer-hover-card">
+                                        <div class="cust-card-header">
+                                            <img src="{{ t.customer_avatar }}" alt="{{ t.client_name }}" class="cust-card-img">
+                                            <div class="cust-card-meta">
+                                                <div class="cust-card-title">{{ t.client_name }}</div>
+                                                <div class="cust-card-sub">Client #{{ t.customer_id }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="cust-card-divider"></div>
+                                        <div class="cust-card-info">
+                                            <div class="cust-card-info-row">
+                                                <span class="material-symbols-outlined">email</span>
+                                                <span>{{ t.customer_email or 'No email recorded' }}</span>
+                                            </div>
+                                            <div class="cust-card-info-row">
+                                                <span class="material-symbols-outlined">call</span>
+                                                <span>{{ t.customer_phone or 'No phone number' }}</span>
+                                            </div>
+                                            {% if t.customer_username %}
+                                            <div class="cust-card-info-row">
+                                                <span class="material-symbols-outlined">person</span>
+                                                <span>@{{ t.customer_username }}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td>{{ t.agent_name }}</td>
                             <td style="text-align: right; font-weight: 700; color: var(--primary);">{{ t.final_price_formatted }}</td>
@@ -296,6 +363,10 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <div class="pagination-footer">
+                    <div class="pagination-info" id="revenue-pagination-info">Showing 0 to 0 of 0 entries</div>
+                    <div class="pagination-buttons" id="revenue-pagination-buttons"></div>
+                </div>
             </div>
             </div>
         </section>
@@ -368,6 +439,11 @@
     let revVsProfitChart = null;
     let dashboardData = null;
     let isFetching = false;
+
+    // Period granularity state
+    let currentPeriodType = "{{ filter_meta.period_type if filter_meta else 'all' }}";
+    let currentYear = {{ filter_meta.selected_year if filter_meta else 2026 }};
+    let currentMonth = {{ filter_meta.selected_month if filter_meta else 9 }};
 
     document.addEventListener('DOMContentLoaded', () => {
         // Parse initial server-side rendered data passed via Jinja
@@ -568,11 +644,45 @@
         updateDateRangeLabel();
         updateProgressBars();
 
+        window.refreshRevenuePagination = initTablePagination('recent-transactions-table-body', 'tr', 'revenue-pagination-info', 'revenue-pagination-buttons', 10);
+
         // Setup background auto-polling every 30 seconds
         setInterval(() => {
             fetchDashboardData(false);
         }, 30000);
     });
+
+    // Period granularity handler
+    function setRevenuePeriod(period) {
+        currentPeriodType = period;
+        document.querySelectorAll('.btn-period-tab').forEach(tab => tab.classList.remove('active'));
+        const activeTab = document.getElementById(`tab-period-${period}`);
+        if (activeTab) activeTab.classList.add('active');
+
+        const yearWrapper = document.getElementById('year-select-wrapper');
+        const monthWrapper = document.getElementById('month-select-wrapper');
+
+        if (period === 'all') {
+            if (yearWrapper) yearWrapper.style.display = 'none';
+            if (monthWrapper) monthWrapper.style.display = 'none';
+        } else if (period === 'year') {
+            if (yearWrapper) yearWrapper.style.display = 'block';
+            if (monthWrapper) monthWrapper.style.display = 'none';
+        } else if (period === 'month') {
+            if (yearWrapper) yearWrapper.style.display = 'block';
+            if (monthWrapper) monthWrapper.style.display = 'block';
+        }
+
+        fetchDashboardData(true);
+    }
+
+    function onRevenueFilterChange() {
+        const yrSelect = document.getElementById('revenue-year-select');
+        const moSelect = document.getElementById('revenue-month-select');
+        if (yrSelect) currentYear = parseInt(yrSelect.value, 10);
+        if (moSelect) currentMonth = parseInt(moSelect.value, 10);
+        fetchDashboardData(true);
+    }
 
     // Animate DOM text modifications using the css transition keys
     function animateValueUpdate(elementId, newValue) {
@@ -644,7 +754,13 @@
         if (syncStatusText) syncStatusText.textContent = "Syncing...";
         if (syncDot) syncDot.classList.remove('pulsing');
 
-        fetch('/control-panel/transactions/revenue-dashboard/data')
+        const params = new URLSearchParams({
+            period_type: currentPeriodType,
+            year: currentYear,
+            month: currentMonth
+        });
+
+        fetch(`/control-panel/transactions/revenue-dashboard/data?${params.toString()}`)
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
@@ -751,7 +867,7 @@
         animateValueUpdate('insight-best-agent', `${data.insights.best_agent_name} (${data.insights.best_agent_val})`);
         animateValueUpdate('insight-highest-revenue-prop', `${data.insights.highest_revenue_prop_title} (${data.insights.highest_revenue_prop_val})`);
 
-        // 5. Update Recent Transactions
+        // 5. Update Recent Transactions (with Customer Hover Popover Card)
         const recentBody = document.getElementById('recent-transactions-table-body');
         if (recentBody) {
             recentBody.innerHTML = '';
@@ -760,6 +876,42 @@
                     const tr = document.createElement('tr');
                     tr.setAttribute('data-search-text', `${t.id.toLowerCase()} ${t.property_title.toLowerCase()} ${t.client_name.toLowerCase()} ${t.agent_name.toLowerCase()}`);
                     const statusClass = t.status.toLowerCase().replace(/\s+/g, '');
+
+                    const custModalOnClick = t.customer_id ? `onclick="openCustomerModal(${t.customer_id})"` : '';
+                    const custAvatar = t.customer_avatar || '/static/images/default-avatar.png';
+                    const custEmail = t.customer_email || 'No email recorded';
+                    const custPhone = t.customer_phone || 'No phone number';
+                    const custUsernameHtml = t.customer_username ? `
+                        <div class="cust-card-info-row">
+                            <span class="material-symbols-outlined">person</span>
+                            <span>@${t.customer_username}</span>
+                        </div>
+                    ` : '';
+
+                    const custPopoverHtml = t.customer_id ? `
+                        <div class="customer-hover-card">
+                            <div class="cust-card-header">
+                                <img src="${custAvatar}" alt="${t.client_name}" class="cust-card-img">
+                                <div class="cust-card-meta">
+                                    <div class="cust-card-title">${t.client_name}</div>
+                                    <div class="cust-card-sub">Client #${t.customer_id}</div>
+                                </div>
+                            </div>
+                            <div class="cust-card-divider"></div>
+                            <div class="cust-card-info">
+                                <div class="cust-card-info-row">
+                                    <span class="material-symbols-outlined">email</span>
+                                    <span>${custEmail}</span>
+                                </div>
+                                <div class="cust-card-info-row">
+                                    <span class="material-symbols-outlined">call</span>
+                                    <span>${custPhone}</span>
+                                </div>
+                                ${custUsernameHtml}
+                            </div>
+                        </div>
+                    ` : '';
+
                     tr.innerHTML = `
                         <td style="font-weight: 700; color: var(--primary-container);">${t.id}</td>
                         <td>
@@ -770,7 +922,15 @@
                                 <span class="recent-prop-title">${t.property_title}</span>
                             </div>
                         </td>
-                        <td>${t.client_name}</td>
+                        <td style="position: relative;">
+                            <div class="customer-popover-wrapper">
+                                <span class="customer-name-trigger" ${custModalOnClick}>
+                                    <span class="material-symbols-outlined" style="font-size: 15px; vertical-align: middle; margin-right: 4px; color: var(--primary);">account_circle</span>
+                                    <span style="font-weight: 600; color: var(--primary);">${t.client_name}</span>
+                                </span>
+                                ${custPopoverHtml}
+                            </div>
+                        </td>
                         <td>${t.agent_name}</td>
                         <td style="text-align: right; font-weight: 700; color: var(--primary);">${t.final_price_formatted}</td>
                         <td style="text-align: right; font-weight: 700; color: var(--secondary);">${t.commission_formatted}</td>
@@ -808,6 +968,8 @@
             revVsProfitChart.data.datasets[1].data = data.charts.quarterly.map(q => q.profit);
             revVsProfitChart.update();
         }
+
+        if (window.refreshRevenuePagination) window.refreshRevenuePagination();
     }
 
     // Client-side quick filter for the recent transactions list
@@ -817,12 +979,14 @@
 
         rows.forEach(row => {
             const text = row.getAttribute('data-search-text');
-            if (text && text.includes(searchInput)) {
-                row.style.display = '';
+            if (!searchInput || (text && text.includes(searchInput))) {
+                row.classList.remove('filter-hidden');
             } else {
-                row.style.display = 'none';
+                row.classList.add('filter-hidden');
             }
         });
+
+        if (window.refreshRevenuePagination) window.refreshRevenuePagination();
     }
 
     // CSV exporter helper

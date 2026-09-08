@@ -13,7 +13,7 @@ class Users(db.Model):
     userID = db.Column(db.Integer, primary_key=True)
     fullName = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    phoneNumber = db.Column(db.String(20))
+    phoneNumber = db.Column(db.String(20), unique=True)
     passwordHash = db.Column(db.String(255), nullable=False)
     roleID = db.Column(db.Integer, db.ForeignKey('role.roleID'), nullable=False)
     status = db.Column(db.Enum('Active', 'Inactive', 'Blacklisted', name='user_status'), default='Active')

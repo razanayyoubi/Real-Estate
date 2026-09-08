@@ -48,7 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setupErrorClearing('password', 'err-password');
     setupErrorClearing('code', 'err-code');
 
-    const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+    const isValidEmailOrPhone = (val) => {
+        const trimmed = val.trim();
+        if (!trimmed) return false;
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+        const isPhone = /^\+?[0-9\s\-()]{6,}$/.test(trimmed);
+        return isEmail || isPhone;
+    };
 
     const showAlert = (message, type) => {
         alertBox.className = 'signup-alert-box';
@@ -76,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let isValid = true;
 
-        if (!isValidEmail(emailInput.value)) {
+        if (!isValidEmailOrPhone(emailInput.value)) {
             toggleFieldError('email', 'err-email', true);
             isValid = false;
         }

@@ -216,6 +216,10 @@
                 </tbody>
             </table>
         </div>
+        <div class="pagination-footer">
+            <div class="pagination-info" id="expense-pagination-info">Showing 0 to 0 of 0 entries</div>
+            <div class="pagination-buttons" id="expense-pagination-buttons"></div>
+        </div>
     </div>
 </main>
 
@@ -283,6 +287,17 @@
 
 {% block scripts %}
 <script>
+let refreshExpensePagination = null;
+document.addEventListener('DOMContentLoaded', () => {
+    refreshExpensePagination = initTablePagination('expenses-tbody', '.expense-row', 'expense-pagination-info', 'expense-pagination-buttons', 10);
+    const clientSearch = document.getElementById('filter-client-search');
+    if (clientSearch) {
+        clientSearch.addEventListener('input', () => {
+            filterExpenses();
+        });
+    }
+});
+
 function openAddModal() {
     document.getElementById('expense-id').value = '';
     document.getElementById('modal-title-text').textContent = 'Record Office Expense';
@@ -368,26 +383,21 @@ function deleteExpense(id) {
     });
 }
 
-function applyExpenseFilters() {
-    const q = document.getElementById('search-expenses').value.toLowerCase().trim();
-    const cat = document.getElementById('filter-category').value;
-    const status = document.getElementById('filter-status').value;
+function filterExpenses() {
+    const searchVal = (document.getElementById('filter-client-search')?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#expenses-tbody .expense-row');
 
-    document.querySelectorAll('.expense-row').forEach(row => {
-        const searchVal = row.dataset.search || '';
-        const catVal = row.dataset.category || '';
-        const statusVal = row.dataset.status || '';
-
-        const mSearch = !q || searchVal.includes(q);
-        const mCat = cat === 'All' || catVal === cat;
-        const mStatus = status === 'All' || statusVal === status;
-
-        if (mSearch && mCat && mStatus) {
-            row.style.display = '';
+    rows.forEach(row => {
+        const rowSearch = (row.getAttribute('data-search') || '').toLowerCase();
+        if (!searchVal || rowSearch.includes(searchVal)) {
+            row.classList.remove('filter-hidden');
         } else {
-            row.style.display = 'none';
+            row.classList.add('filter-hidden');
         }
     });
+
+    if (refreshExpensePagination) refreshExpensePagination();
 }
 </script>
 {% endblock %}
+

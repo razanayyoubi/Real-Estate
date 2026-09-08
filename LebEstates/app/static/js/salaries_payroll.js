@@ -74,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = `/control-panel/salaries?month=${month}`;
     };
 
+    window.refreshSalariesPagination = initTablePagination(document.querySelector('.ledger-table tbody'), '.ledger-row', 'salaries-pagination-info', 'salaries-pagination-buttons', 10);
+
     // 3. Department dropdown client-side filter
     const deptFilter = document.getElementById('departmentFilter');
     if (deptFilter) {
@@ -84,12 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
             rows.forEach(row => {
                 const dept = (row.dataset.dept || '').toLowerCase();
                 
-                if (selectedVal === 'All') {
-                    row.style.display = '';
+                if (selectedVal === 'All' || dept === selectedVal.toLowerCase()) {
+                    row.classList.remove('filter-hidden');
                 } else {
-                    row.style.display = (dept === selectedVal.toLowerCase()) ? '' : 'none';
+                    row.classList.add('filter-hidden');
                 }
             });
+
+            if (window.refreshSalariesPagination) window.refreshSalariesPagination();
         });
     }
 

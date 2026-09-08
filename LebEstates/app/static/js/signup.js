@@ -104,14 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
             isValid = false;
         }
 
-        if (phoneInput && phoneInput.value.trim()) {
-            const phoneVal = phoneInput.value.trim();
-            const phoneRegex = /^\+?[0-9\s\-()]+$/;
-            const digitsOnly = phoneVal.replace(/\D/g, '');
-            if (!phoneRegex.test(phoneVal) || digitsOnly.length < 6) {
-                toggleFieldError('phone_number', 'err-phone-number', true);
-                isValid = false;
-            }
+        const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+        const phoneRegex = /^\+?[0-9\s\-()]+$/;
+        const digitsOnly = phoneVal.replace(/\D/g, '');
+        if (!phoneVal || !phoneRegex.test(phoneVal) || digitsOnly.length < 6) {
+            toggleFieldError('phone_number', 'err-phone-number', true);
+            isValid = false;
         }
 
         if (passwordInput.value.length < 6) {

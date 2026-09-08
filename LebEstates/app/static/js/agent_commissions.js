@@ -3,33 +3,54 @@
  */
 
 let isSyncing = false;
+let currentPeriodType = 'all';
+let currentYear = 2026;
+let currentMonth = 9;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialization setup
+    // Initialize offset pagination for recent commissions ledger
+    window.refreshCommissionsPagination = initTablePagination(
+        'ledger-table-body',
+        'tr',
+        'commissions-pagination-info',
+        'commissions-pagination-buttons',
+        10
+    );
+
     updateSyncTime();
 });
 
 function switchViewPeriod(period) {
-    const monthlyBtn = document.getElementById('view-monthly-btn');
-    const yearlyBtn = document.getElementById('view-yearly-btn');
-    if (monthlyBtn && yearlyBtn) {
-        if (period === 'monthly') {
-            monthlyBtn.classList.add('active');
-            monthlyBtn.style.background = 'var(--primary)';
-            monthlyBtn.style.color = 'white';
-            yearlyBtn.classList.remove('active');
-            yearlyBtn.style.background = 'transparent';
-            yearlyBtn.style.color = 'var(--on-surface-variant)';
-        } else {
-            yearlyBtn.classList.add('active');
-            yearlyBtn.style.background = 'var(--primary)';
-            yearlyBtn.style.color = 'white';
-            monthlyBtn.classList.remove('active');
-            monthlyBtn.style.background = 'transparent';
-            monthlyBtn.style.color = 'var(--on-surface-variant)';
-        }
+    currentPeriodType = period;
+
+    document.querySelectorAll('.btn-period-tab').forEach(tab => tab.classList.remove('active'));
+    const activeTab = document.getElementById(`tab-period-${period}`);
+    if (activeTab) activeTab.classList.add('active');
+
+    const yearWrapper = document.getElementById('comm-year-select-wrapper');
+    const monthWrapper = document.getElementById('comm-month-select-wrapper');
+
+    if (period === 'all') {
+        if (yearWrapper) yearWrapper.style.display = 'none';
+        if (monthWrapper) monthWrapper.style.display = 'none';
+    } else if (period === 'yearly') {
+        if (yearWrapper) yearWrapper.style.display = 'block';
+        if (monthWrapper) monthWrapper.style.display = 'none';
+    } else if (period === 'monthly') {
+        if (yearWrapper) yearWrapper.style.display = 'block';
+        if (monthWrapper) monthWrapper.style.display = 'block';
     }
-    fetchCommissionsData();
+
+    fetchCommissionsData(true);
+}
+
+function onCommissionFilterChange() {
+    const yrSelect = document.getElementById('comm-year-select');
+    const moSelect = document.getElementById('comm-month-select');
+    if (yrSelect) currentYear = parseInt(yrSelect.value, 10);
+    if (moSelect) currentMonth = parseInt(moSelect.value, 10);
+
+    fetchCommissionsData(true);
 }
 
 /**
@@ -68,7 +89,7 @@ function updateElementTextAnimated(elementId, newText) {
 /**
  * Fetch commissions dashboard stats dynamically from the backend JSON endpoint
  */
-function fetchCommissionsData() {
+function fetchCommissionsData(isManual = false) {
     if (isSyncing) return;
     isSyncing = true;
 
@@ -80,7 +101,13 @@ function fetchCommissionsData() {
     if (syncDot) syncDot.classList.remove('pulsing');
     if (syncStatusText) syncStatusText.textContent = 'Syncing...';
 
-    fetch('/control-panel/commissions/data')
+    const params = new URLSearchParams({
+        period_type: currentPeriodType,
+        year: currentYear,
+        month: currentMonth
+    });
+
+    fetch(`/control-panel/commissions/data?${params.toString()}`)
         .then(response => {
             if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
             return response.json();
@@ -92,7 +119,7 @@ function fetchCommissionsData() {
                 // 1. Update KPI Values
                 updateElementTextAnimated('kpi-total-volume', data.kpis.total_commission_volume);
                 updateElementTextAnimated('kpi-ready-payout', data.kpis.ready_for_payout);
-                updateElementTextAnimated('kpi-avg-rate', data.kpis.avg_commission_rate);
+                updateElementTextAnimated('kpi-unpaid-payout', data.kpis.unpaid_payout);
                 updateElementTextAnimated('kpi-active-agents', data.kpis.active_agents);
 
                 // 2. Re-render Top Performing Agents
@@ -100,9 +127,6 @@ function fetchCommissionsData() {
 
                 // 3. Re-render Recent Commissions Ledger
                 renderLedgerTable(data.ledger);
-
-                // 4. Re-render Agency Expenses
-                renderExpensesTable(data.expenses);
 
                 updateSyncTime();
             } else {
@@ -184,6 +208,7 @@ function renderLedgerTable(ledgerItems) {
                 <td colspan="8" class="no-records">No commissions transactions found.</td>
             </tr>
         `;
+        if (window.refreshCommissionsPagination) window.refreshCommissionsPagination();
         return;
     }
 
@@ -223,9 +248,9 @@ function renderLedgerTable(ledgerItems) {
                 <td class="text-right highlight font-weight-700">${item.agent_share_formatted}</td>
                 <td class="text-center">
                     <select class="payment-select-dropdown status-${selectClass}" onchange="updateCommissionTransactionStatus(${item.raw_id}, this)">
-                        <option value="Pending" ${optPending}>Pending</option>
-                        <option value="In progress" ${optProgress}>In progress</option>
-                        <option value="Completed" ${optCompleted}>Completed</option>
+                        <option value="Completed" ${optCompleted}>Paid (Closed)</option>
+                        <option value="Pending" ${optPending}>Unpaid (Escrow)</option>
+                        <option value="In progress" ${optProgress}>In progress (Legal)</option>
                         <option value="Cancelled" ${optCancelled}>Cancelled</option>
                     </select>
                 </td>
@@ -234,46 +259,8 @@ function renderLedgerTable(ledgerItems) {
         `;
     }).join('');
 
-    // Apply any active filters
+    // Apply any active filters and refresh pagination
     filterLedger();
-}
-
-/**
- * Re-renders the agency expenses table rows
- */
-function renderExpensesTable(expenses) {
-    const tbody = document.getElementById('expense-table-body');
-    if (!tbody) return;
-
-    if (!expenses || expenses.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="no-records">No operations expenses recorded.</td>
-            </tr>
-        `;
-        return;
-    }
-
-    tbody.innerHTML = expenses.map(exp => {
-        const catClass = exp.category.toLowerCase().replace(/\s+/g, '-');
-        return `
-            <tr class="expense-row" data-search="${exp.id.toLowerCase()} ${exp.item.toLowerCase()} ${exp.category.toLowerCase()}">
-                <td class="id-cell">${exp.id}</td>
-                <td class="item-cell font-weight-600">${exp.item}</td>
-                <td>
-                    <span class="category-tag ${catClass}">${exp.category}</span>
-                </td>
-                <td class="text-right error-color font-weight-700">${exp.amount_formatted}</td>
-                <td class="text-center">
-                    <span class="status-badge ${exp.status.toLowerCase()}">${exp.status}</span>
-                </td>
-                <td class="date-cell">${exp.date}</td>
-            </tr>
-        `;
-    }).join('');
-
-    // Apply any active filters
-    filterExpenses();
 }
 
 /**
@@ -285,7 +272,6 @@ function filterLedger() {
     const statusVal = document.getElementById('ledger-status-filter')?.value || 'All';
 
     const rows = document.querySelectorAll('#ledger-table-body .ledger-row');
-    let visibleCount = 0;
 
     rows.forEach(row => {
         const rowSearch = row.getAttribute('data-search') || '';
@@ -297,64 +283,13 @@ function filterLedger() {
         const matchesStatus = statusVal === 'All' || rowStatus === statusVal;
 
         if (matchesSearch && matchesType && matchesStatus) {
-            row.style.display = '';
-            visibleCount++;
+            row.classList.remove('filter-hidden');
         } else {
-            row.style.display = 'none';
+            row.classList.add('filter-hidden');
         }
     });
 
-    // Handle no matching records state
-    const tableBody = document.getElementById('ledger-table-body');
-    const existingNoRecordsRow = document.getElementById('ledger-no-records-row');
-    
-    if (visibleCount === 0 && rows.length > 0) {
-        if (!existingNoRecordsRow) {
-            const noRecordsRow = document.createElement('tr');
-            noRecordsRow.id = 'ledger-no-records-row';
-            noRecordsRow.innerHTML = `
-                <td colspan="8" class="no-records">No matching ledger items found.</td>
-            `;
-            tableBody.appendChild(noRecordsRow);
-        }
-    } else if (existingNoRecordsRow) {
-        existingNoRecordsRow.remove();
-    }
-}
-
-/**
- * Interactive filter for the operations ledger table
- */
-function filterExpenses() {
-    const searchVal = (document.getElementById('expense-search-input')?.value || '').toLowerCase().trim();
-    const rows = document.querySelectorAll('#expense-table-body .expense-row');
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        const rowSearch = row.getAttribute('data-search') || '';
-        if (searchVal === '' || rowSearch.includes(searchVal)) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-
-    const tableBody = document.getElementById('expense-table-body');
-    const existingNoRecordsRow = document.getElementById('expense-no-records-row');
-
-    if (visibleCount === 0 && rows.length > 0) {
-        if (!existingNoRecordsRow) {
-            const noRecordsRow = document.createElement('tr');
-            noRecordsRow.id = 'expense-no-records-row';
-            noRecordsRow.innerHTML = `
-                <td colspan="6" class="no-records">No matching operations items found.</td>
-            `;
-            tableBody.appendChild(noRecordsRow);
-        }
-    } else if (existingNoRecordsRow) {
-        existingNoRecordsRow.remove();
-    }
+    if (window.refreshCommissionsPagination) window.refreshCommissionsPagination();
 }
 
 /**
@@ -376,7 +311,6 @@ function resetLedgerFilters() {
  * AJAX update for transaction payment status on the commissions ledger
  */
 function updateCommissionTransactionStatus(transId, selectElement) {
-    const originalClass = selectElement.className;
     const newStatus = selectElement.value;
 
     fetch(`/control-panel/transactions/${transId}/update-status`, {
@@ -392,10 +326,6 @@ function updateCommissionTransactionStatus(transId, selectElement) {
             alert(data.error);
             fetchCommissionsData();
         } else {
-            const simplifiedStatus = newStatus.replace(/\s+/g, '').toLowerCase();
-            selectElement.className = `payment-select-dropdown status-${simplifiedStatus}`;
-            
-            // Trigger a complete refresh to recalculate KPIs, Top Performers list and table data
             fetchCommissionsData();
         }
     })

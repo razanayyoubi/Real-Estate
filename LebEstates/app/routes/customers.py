@@ -44,6 +44,8 @@ def add_customer_route():
         return jsonify({'error': 'First name and Last name are required.'}), 400
     if not email:
         return jsonify({'error': 'Email address is required.'}), 400
+    if not phone:
+        return jsonify({'error': 'Phone number is required.'}), 400
     if not password or len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters long.'}), 400
         
@@ -69,6 +71,8 @@ def edit_customer_route(customer_id):
         return jsonify({'error': 'Full Name is required.'}), 400
     if not email:
         return jsonify({'error': 'Email address is required.'}), 400
+    if not phone:
+        return jsonify({'error': 'Phone number is required.'}), 400
         
     update_data = {
         'full_name': full_name,

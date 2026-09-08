@@ -300,6 +300,10 @@
                         </tr>
                     </tbody>
                 </table>
+                <div class="pagination-footer">
+                    <div class="pagination-info" id="payment-pagination-info">Showing 0 to 0 of 0 entries</div>
+                    <div class="pagination-buttons" id="payment-pagination-buttons"></div>
+                </div>
             </div>
         </section>
     </div>
@@ -509,6 +513,8 @@
         });
 
         updateLastUpdatedTime();
+
+        window.refreshPaymentPagination = initTablePagination('ledger-table-body', '.ledger-row', 'payment-pagination-info', 'payment-pagination-buttons', 10);
 
         // 3. Setup Auto-polling every 30 seconds
         setInterval(() => {
@@ -738,7 +744,6 @@
     function filterLedger() {
         const query = document.getElementById('ledger-search').value.toLowerCase().trim();
         const rows = document.querySelectorAll('.ledger-row');
-        let count = 0;
 
         rows.forEach(row => {
             const status = row.getAttribute('data-status');
@@ -751,19 +756,13 @@
             const matchesSearch = !query || searchText.includes(query);
 
             if (matchesTab && matchesSearch) {
-                row.style.display = '';
-                count++;
+                row.classList.remove('filter-hidden');
             } else {
-                row.style.display = 'none';
+                row.classList.add('filter-hidden');
             }
         });
 
-        const empty = document.getElementById('ledger-empty-state');
-        if (count === 0) {
-            empty.style.display = '';
-        } else {
-            empty.style.display = 'none';
-        }
+        if (window.refreshPaymentPagination) window.refreshPaymentPagination();
     }
 
     // Global variable to keep track of current transaction remaining balance in record modal

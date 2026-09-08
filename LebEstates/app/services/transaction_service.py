@@ -602,18 +602,30 @@ class TransactionService:
             return {'success': False, 'error': str(e)}
 
     @staticmethod
-    def get_revenue_dashboard_data():
+    def get_revenue_dashboard_data(period_type='all', selected_year=None, selected_month=None):
         """
         Gathers comprehensive revenue, sales trend, agent leaderboard,
-        recent transaction, and profitability analytics for the dashboard.
+        recent transaction, and profitability analytics for the dashboard with period filtering.
         """
         from app.models.users import Users
         from app.models.hr import Salary, Employee
         from app.models.property import Property
         from app.models.customer import Customer
+        from app.models.operations import Transaction
         from datetime import datetime, timedelta
         from sqlalchemy.orm import joinedload
         import calendar
+
+        now = datetime.now()
+        if not selected_year:
+            selected_year = now.year
+        else:
+            selected_year = int(selected_year)
+
+        if not selected_month:
+            selected_month = now.month
+        else:
+            selected_month = int(selected_month)
 
         # Helper currency formatter
         def format_currency(val):
@@ -624,15 +636,42 @@ class TransactionService:
             else:
                 return f"${val:,.2f}"
 
-        # 1. Base database aggregate queries for closed transactions (no in-memory looping of model objects)
-        closed_stats = db.session.query(
+        # Fetch all available transaction years from database for year picker
+        years_query = db.session.query(func.year(Transaction.transactionDate)).distinct().all()
+        available_years = sorted([r[0] for r in years_query if r[0]], reverse=True)
+        if not available_years or now.year not in available_years:
+            if now.year not in available_years:
+                available_years.insert(0, now.year)
+
+        # Calculate date range bounds if period_type is specified
+        start_date = None
+        end_date = None
+        if period_type == 'month':
+            start_date = datetime(selected_year, selected_month, 1)
+            _, last_day = calendar.monthrange(selected_year, selected_month)
+            end_date = datetime(selected_year, selected_month, last_day, 23, 59, 59)
+        elif period_type == 'year':
+            start_date = datetime(selected_year, 1, 1)
+            end_date = datetime(selected_year, 12, 31, 23, 59, 59)
+
+        # 1. Base database aggregate queries for closed transactions
+        closed_query = db.session.query(
             func.count(Transaction.transactionID).label('cnt'),
             func.sum(Transaction.commissionAmount).label('total_comm'),
             func.sum(Transaction.finalPrice).label('total_price'),
             func.avg(Transaction.finalPrice).label('avg_price')
-        ).filter(Transaction.paymentStatus == 'Closed').first()
+        ).filter(Transaction.paymentStatus == 'Closed')
 
-        all_transactions_count = db.session.query(func.count(Transaction.transactionID)).scalar() or 0
+        if start_date and end_date:
+            closed_query = closed_query.filter(Transaction.transactionDate >= start_date, Transaction.transactionDate <= end_date)
+
+        closed_stats = closed_query.first()
+
+        all_tx_query = db.session.query(func.count(Transaction.transactionID))
+        if start_date and end_date:
+            all_tx_query = all_tx_query.filter(Transaction.transactionDate >= start_date, Transaction.transactionDate <= end_date)
+        all_transactions_count = all_tx_query.scalar() or 0
+
         closed_count = closed_stats.cnt or 0
         total_commission = float(closed_stats.total_comm or 0.0)
         commission_revenue = total_commission
@@ -640,14 +679,13 @@ class TransactionService:
         avg_deal_value = float(closed_stats.avg_price or 0.0)
 
         # Current month's revenue query
-        now = datetime.now()
         this_month_start = datetime(now.year, now.month, 1)
         revenue_this_month = db.session.query(func.sum(Transaction.commissionAmount)).filter(
             Transaction.paymentStatus == 'Closed',
             Transaction.transactionDate >= this_month_start
         ).scalar() or 0.0
 
-        # Percentages / trends comparison (relative to previous month for realistic trend)
+        # Percentages / trends comparison (relative to previous month)
         prev_month_start = (this_month_start - timedelta(days=1)).replace(day=1)
         prev_month_end = this_month_start - timedelta(seconds=1)
         revenue_prev_month = db.session.query(func.sum(Transaction.commissionAmount)).filter(
@@ -659,27 +697,30 @@ class TransactionService:
         if revenue_prev_month > 0:
             rev_month_change = ((float(revenue_this_month) - float(revenue_prev_month)) / float(revenue_prev_month)) * 100
         else:
-            rev_month_change = 8.0 # default fallback trend percentage
+            rev_month_change = 8.0
 
-        # 2. Pre-fetch monthly salaries & transactions globally to prevent N+1 loop queries
-        # salaryMonth format is 'YYYY-MM'
-        monthly_salaries_stats = db.session.query(
+        # 2. Monthly Salaries & Trend Line calculations
+        salary_stats = db.session.query(
             Salary.salaryMonth,
             func.sum(Salary.totalSalary).label('total_salary')
         ).group_by(Salary.salaryMonth).all()
-        salary_map = {row.salaryMonth: float(row.total_salary or 0.0) for row in monthly_salaries_stats}
+        salary_map = {row.salaryMonth: float(row.total_salary or 0.0) for row in salary_stats}
 
-        # Last 12 calendar months list generation
-        months_list = []
-        for i in range(11, -1, -1):
-            year_offset = (now.month - 1 - i) // 12
-            month_index = (now.month - 1 - i) % 12 + 1
-            month_year = now.year + year_offset
-            months_list.append((month_year, month_index))
+        if period_type == 'year':
+            months_list = [(selected_year, m) for m in range(1, 13)]
+        else:
+            months_list = []
+            for i in range(11, -1, -1):
+                year_offset = (selected_month - 1 - i) // 12
+                month_index = (selected_month - 1 - i) % 12 + 1
+                month_year = selected_year + year_offset
+                months_list.append((month_year, month_index))
 
         min_start_date = datetime(months_list[0][0], months_list[0][1], 1)
-        
-        # Batch query transaction metrics grouped by year/month
+        max_end_year, max_end_month = months_list[-1]
+        _, max_end_day = calendar.monthrange(max_end_year, max_end_month)
+        max_end_date = datetime(max_end_year, max_end_month, max_end_day, 23, 59, 59)
+
         monthly_trans_stats = db.session.query(
             func.year(Transaction.transactionDate).label('yr'),
             func.month(Transaction.transactionDate).label('mo'),
@@ -687,14 +728,14 @@ class TransactionService:
             func.sum(Transaction.finalPrice).label('total_price')
         ).filter(
             Transaction.paymentStatus == 'Closed',
-            Transaction.transactionDate >= min_start_date
+            Transaction.transactionDate >= min_start_date,
+            Transaction.transactionDate <= max_end_date
         ).group_by(
             func.year(Transaction.transactionDate),
             func.month(Transaction.transactionDate)
         ).all()
         trans_map = {(row.yr, row.mo): (float(row.total_comm or 0.0), float(row.total_price or 0.0)) for row in monthly_trans_stats}
 
-        # Monthly lists populating
         trend_months = []
         trend_revenue = []
         trend_volume = []
@@ -704,27 +745,26 @@ class TransactionService:
         best_month_name = "N/A"
         best_month_val = 0.0
 
-        for year, month in months_list:
-            month_label = f"{calendar.month_abbr[month]} {str(year)[2:]}"
+        from app.models.expenses import OfficeExpense
+
+        for yr, mo in months_list:
+            month_label = f"{calendar.month_abbr[mo]} {str(yr)[2:]}"
             trend_months.append(month_label)
 
-            monthly_rev, monthly_vol = trans_map.get((year, month), (0.0, 0.0))
+            monthly_rev, monthly_vol = trans_map.get((yr, mo), (0.0, 0.0))
             trend_revenue.append(monthly_rev)
             trend_volume.append(monthly_vol)
 
-            # Query Office Expense items
-            from app.models.expenses import OfficeExpense
             office_exp_total = db.session.query(func.sum(OfficeExpense.amount)).filter(
-                func.year(OfficeExpense.expenseDate) == year,
-                func.month(OfficeExpense.expenseDate) == month
+                func.year(OfficeExpense.expenseDate) == yr,
+                func.month(OfficeExpense.expenseDate) == mo
             ).scalar() or 0.0
 
-            # Calculate recurring expenses projection
             recurring_exp_total = db.session.query(func.sum(OfficeExpense.amount)).filter(
                 OfficeExpense.isRecurring == True
             ).scalar() or 0.0
 
-            salary_month_str = f"{year:04d}-{month:02d}"
+            salary_month_str = f"{yr:04d}-{mo:02d}"
             monthly_salaries = salary_map.get(salary_month_str, 0.0)
 
             monthly_exp = monthly_salaries + float(office_exp_total) + float(recurring_exp_total) + (monthly_rev * 0.10)
@@ -736,13 +776,18 @@ class TransactionService:
 
             if monthly_rev > best_month_val:
                 best_month_val = monthly_rev
-                best_month_name = f"{calendar.month_name[month]} {year}"
+                best_month_name = f"{calendar.month_name[mo]} {yr}"
 
-        # 3. Revenue Sources breakdown (Sales vs Rentals) in a single optimized group-by query
-        sales_rental_stats = db.session.query(
+        # 3. Revenue Sources breakdown (Sales vs Rentals)
+        sources_query = db.session.query(
             Transaction.transactionType,
             func.sum(Transaction.commissionAmount).label('total_comm')
-        ).filter(Transaction.paymentStatus == 'Closed').group_by(Transaction.transactionType).all()
+        ).filter(Transaction.paymentStatus == 'Closed')
+
+        if start_date and end_date:
+            sources_query = sources_query.filter(Transaction.transactionDate >= start_date, Transaction.transactionDate <= end_date)
+
+        sales_rental_stats = sources_query.group_by(Transaction.transactionType).all()
 
         sales_total = 0.0
         rental_total = 0.0
@@ -761,8 +806,7 @@ class TransactionService:
             rental_percentage = 25
 
         # 4. Top Revenue Agents
-        # Including avatar checks inside the query to prevent N+1 lazy lookup loops
-        top_agents_query = db.session.query(
+        agents_query = db.session.query(
             Employee.employeeID,
             Users.userID,
             Users.fullName,
@@ -772,17 +816,20 @@ class TransactionService:
             func.count(Transaction.transactionID).label('deal_count')
         ).join(Users, Employee.userID == Users.userID)\
          .join(Transaction, Transaction.employeeID == Employee.employeeID)\
-         .filter(Transaction.paymentStatus == 'Closed')\
-         .group_by(Employee.employeeID, Users.userID, Users.fullName, Employee.position, Users.avatar)\
-         .order_by(func.sum(Transaction.commissionAmount).desc())\
-         .limit(5)\
-         .all()
+         .filter(Transaction.paymentStatus == 'Closed')
+
+        if start_date and end_date:
+            agents_query = agents_query.filter(Transaction.transactionDate >= start_date, Transaction.transactionDate <= end_date)
+
+        top_agents_query = agents_query.group_by(Employee.employeeID, Users.userID, Users.fullName, Employee.position, Users.avatar)\
+                                     .order_by(func.sum(Transaction.commissionAmount).desc())\
+                                     .limit(5).all()
 
         top_agents = []
         best_agent_name = "N/A"
         best_agent_val = 0.0
         best_agent_avatar = None
-        
+
         for idx, row in enumerate(top_agents_query):
             agent_comm = float(row.total_comm)
             agent_name = row.fullName
@@ -822,11 +869,16 @@ class TransactionService:
                 'avatar_url': 'https://ui-avatars.com/api/?name=No+Agents'
             })
 
-        # 5. Revenue Insights (Eager loaded queries to prevent child attribute query loops)
-        largest_trans = Transaction.query.options(
+        # 5. Revenue Insights
+        largest_query = Transaction.query.options(
             joinedload(Transaction.property_obj),
             joinedload(Transaction.employee).joinedload(Employee.user)
-        ).filter_by(paymentStatus='Closed').order_by(Transaction.finalPrice.desc()).first()
+        ).filter_by(paymentStatus='Closed')
+
+        if start_date and end_date:
+            largest_query = largest_query.filter(Transaction.transactionDate >= start_date, Transaction.transactionDate <= end_date)
+
+        largest_trans = largest_query.order_by(Transaction.finalPrice.desc()).first()
 
         if largest_trans:
             largest_trans_title = f"{largest_trans.property_obj.title} ({format_currency(float(largest_trans.finalPrice))})"
@@ -837,14 +889,17 @@ class TransactionService:
             largest_trans_val = 0.0
             largest_trans_agent = "N/A"
 
-        highest_prop_query = db.session.query(
+        highest_prop_q = db.session.query(
             Property.title,
             func.sum(Transaction.commissionAmount).label('prop_comm')
         ).join(Transaction, Transaction.propertyID == Property.propertyID)\
-         .filter(Transaction.paymentStatus == 'Closed')\
-         .group_by(Property.propertyID, Property.title)\
-         .order_by(func.sum(Transaction.commissionAmount).desc())\
-         .first()
+         .filter(Transaction.paymentStatus == 'Closed')
+
+        if start_date and end_date:
+            highest_prop_q = highest_prop_q.filter(Transaction.transactionDate >= start_date, Transaction.transactionDate <= end_date)
+
+        highest_prop_query = highest_prop_q.group_by(Property.propertyID, Property.title)\
+                                          .order_by(func.sum(Transaction.commissionAmount).desc()).first()
 
         if highest_prop_query:
             highest_revenue_prop_title = highest_prop_query.title
@@ -853,12 +908,17 @@ class TransactionService:
             highest_revenue_prop_title = "N/A"
             highest_revenue_prop_val = 0.0
 
-        # 6. Recent Revenue Transactions Table (Eager joinedloads to avoid N+1 loading in templates)
-        recent_trans_query = Transaction.query.options(
+        # 6. Recent Revenue Transactions Table (Filtered by Month/Year if requested)
+        recent_query = Transaction.query.options(
             joinedload(Transaction.property_obj).joinedload(Property.images),
             joinedload(Transaction.customer).joinedload(Customer.user),
             joinedload(Transaction.employee).joinedload(Employee.user)
-        ).order_by(Transaction.transactionDate.desc()).limit(8).all()
+        )
+
+        if start_date and end_date:
+            recent_query = recent_query.filter(Transaction.transactionDate >= start_date, Transaction.transactionDate <= end_date)
+
+        recent_trans_query = recent_query.order_by(Transaction.transactionDate.desc()).all()
 
         recent_transactions = []
         for t in recent_trans_query:
@@ -868,15 +928,31 @@ class TransactionService:
             if not main_image:
                 main_image = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80"
 
+            cust_user = t.customer.user if (t.customer and t.customer.user) else None
+            cust_name = cust_user.fullName if cust_user else 'N/A'
+            cust_email = cust_user.email if cust_user else ''
+            cust_phone = cust_user.phoneNumber if cust_user else ''
+            
+            if cust_user and cust_user.avatar:
+                cust_avatar = f"/profile/avatar/{cust_user.userID}"
+            elif cust_name != 'N/A':
+                cust_avatar = f"https://ui-avatars.com/api/?name={cust_name.replace(' ', '+')}&background=random"
+            else:
+                cust_avatar = "https://ui-avatars.com/api/?name=Unknown"
+
             recent_transactions.append({
                 'id': f"TX-{t.transactionID}",
                 'customer_id': t.customerID if t.customer else None,
+                'customer_email': cust_email,
+                'customer_phone': cust_phone if cust_phone else 'No phone number',
+                'customer_avatar': cust_avatar,
+                'customer_username': cust_email.split('@')[0] if cust_email else '',
                 'property_title': t.property_obj.title,
                 'property_type': t.property_obj.propertyType,
                 'listing_type': t.transactionType,
                 'image_url': main_image,
-                'client_name': t.customer.user.fullName if t.customer else 'N/A',
-                'agent_name': t.employee.user.fullName if t.employee else 'N/A',
+                'client_name': cust_name,
+                'agent_name': t.employee.user.fullName if (t.employee and t.employee.user) else 'N/A',
                 'final_price': float(t.finalPrice),
                 'final_price_formatted': format_currency(float(t.finalPrice)),
                 'commission': float(t.commissionAmount),
@@ -886,14 +962,13 @@ class TransactionService:
             })
 
         # 7. Profitability Details
-        total_salaries_expense = float(total_salaries_expense) if 'total_salaries_expense' in locals() else sum(salary_map.values())
+        total_salaries_expense = sum(salary_map.values())
         computed_op_expenses = total_commission * 0.15
         total_expenses = total_salaries_expense + computed_op_expenses
 
         net_profit = total_commission - total_expenses
         profit_margin = int((net_profit / total_commission) * 100) if total_commission > 0 else 0
 
-        # Quarterly details: Pre-fetched all-time monthly sums to compile metrics in-memory (No database substring splits)
         all_time_monthly_stats = db.session.query(
             func.month(Transaction.transactionDate).label('mo'),
             func.sum(Transaction.commissionAmount).label('total_comm')
@@ -907,8 +982,6 @@ class TransactionService:
         quarterly_trend = []
         for q in range(1, 5):
             q_rev = quarter_rev[q]
-            
-            # Map suffix month identifiers ('01', '02', etc.) in-memory to accumulate salaries database-agnostically
             q_months = [f"{(q-1)*3+1:02d}", f"{(q-1)*3+2:02d}", f"{(q-1)*3+3:02d}"]
             q_salaries = sum(val for key, val in salary_map.items() if len(key) >= 7 and key[5:7] in q_months)
 
@@ -924,6 +997,12 @@ class TransactionService:
             })
 
         return {
+            'filter_meta': {
+                'period_type': period_type,
+                'selected_year': selected_year,
+                'selected_month': selected_month,
+                'available_years': available_years
+            },
             'kpis': {
                 'total_revenue': format_currency(total_commission),
                 'revenue_this_month': format_currency(revenue_this_month),
@@ -969,6 +1048,7 @@ class TransactionService:
                 'profit_margin': profit_margin
             }
         }
+
 
     @staticmethod
     def get_payment_tracking_data():

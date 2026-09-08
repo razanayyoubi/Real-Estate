@@ -40,6 +40,8 @@ def add_employee_route():
         return jsonify({'error': 'First name and Last name are required.'}), 400
     if not email:
         return jsonify({'error': 'Email address is required.'}), 400
+    if not phone:
+        return jsonify({'error': 'Phone number is required.'}), 400
     if not password or len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters long.'}), 400
         
@@ -81,6 +83,8 @@ def edit_employee_route(employee_id):
         return jsonify({'error': 'Full Name is required.'}), 400
     if not email:
         return jsonify({'error': 'Email address is required.'}), 400
+    if not phone:
+        return jsonify({'error': 'Phone number is required.'}), 400
         
     try:
         sal_val = float(base_salary) if base_salary else 0.0

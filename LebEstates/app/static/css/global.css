@@ -2223,3 +2223,302 @@ body.dark-mode .popover {
 .hidden {
   display: none !important;
 }
+
+/* ==========================================================================
+   UNIFIED TRANSACTIONS MANAGEMENT THEME STYLES
+   ========================================================================== */
+
+.mgmt-stats-grid,
+.stats-grid,
+.kpi-grid,
+.kpi-metrics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 20px !important;
+  margin-bottom: 28px !important;
+}
+
+.stat-card,
+.kpi-card,
+.kpi-metric-card,
+.insight-item-card {
+  background-color: var(--surface-container-lowest, #1e1e1e) !important;
+  padding: 22px 24px !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--outline-variant, rgba(255,255,255,0.1)) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.stat-card:hover,
+.kpi-card:hover,
+.kpi-metric-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
+}
+
+.stat-label,
+.kpi-label,
+.insight-label-caption {
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-weight: 600 !important;
+  color: var(--on-surface-variant, #a0a0a0) !important;
+  margin-bottom: 6px !important;
+}
+
+.stat-value,
+.kpi-val,
+.kpi-value,
+.insight-value-bold {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  color: var(--primary, #c5a059) !important;
+  line-height: 1.2 !important;
+}
+
+.unified-table-container,
+.table-container,
+.table-responsive {
+  background-color: var(--surface-container-lowest, #1e1e1e) !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--outline-variant, rgba(255,255,255,0.1)) !important;
+  overflow: hidden !important;
+}
+
+.unified-table,
+.leaderboard-table,
+.recent-table-element,
+.payment-ledger-table,
+.ledger-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.unified-table th,
+.leaderboard-table th,
+.recent-table-element th,
+.payment-ledger-table th,
+.ledger-table th {
+  background-color: var(--surface-container-low, #181818) !important;
+  color: var(--on-surface-variant, #a0a0a0) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 14px 20px !important;
+  border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.1)) !important;
+}
+
+.unified-table td,
+.leaderboard-table td,
+.recent-table-element td,
+.payment-ledger-table td,
+.ledger-table td {
+  padding: 16px 20px !important;
+  border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.06)) !important;
+  color: var(--on-surface, #ffffff) !important;
+  font-size: 13px !important;
+}
+
+.unified-table tbody tr:hover,
+.leaderboard-table tbody tr:hover,
+.recent-table-element tbody tr:hover,
+.payment-ledger-table tbody tr:hover,
+.ledger-table tbody tr:hover {
+  background-color: var(--surface-container-high, rgba(255,255,255,0.04)) !important;
+}
+
+.pagination-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 24px !important;
+  background-color: var(--surface-container-lowest, #1e1e1e) !important;
+  border-top: 1px solid var(--outline-variant, rgba(255,255,255,0.1)) !important;
+}
+
+.pagination-info {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--on-surface-variant, #a0a0a0) !important;
+}
+
+.pagination-buttons {
+  display: flex !important;
+  gap: 6px !important;
+  align-items: center !important;
+}
+
+.btn-page {
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--outline-variant, rgba(255,255,255,0.15)) !important;
+  background: var(--surface-container-low, #242424) !important;
+  color: var(--on-surface, #ffffff) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: var(--primary, #c5a059) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #c5a059) !important;
+}
+
+.btn-page.active {
+  background: var(--primary, #c5a059) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #c5a059) !important;
+  font-weight: 700 !important;
+}
+
+.btn-page:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+/* ==========================================================================
+   CUSTOMER HOVER POPOVER CARD & PERIOD FILTER STYLES
+   ========================================================================== */
+
+.customer-popover-wrapper {
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.customer-name-trigger {
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.customer-name-trigger:hover {
+  text-decoration: underline !important;
+}
+
+.customer-hover-card {
+  position: absolute !important;
+  bottom: 125% !important;
+  left: 0 !important;
+  z-index: 99999 !important;
+  width: 240px !important;
+  background: #161622 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(6px) !important;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s !important;
+  pointer-events: none !important;
+}
+
+.customer-popover-wrapper:hover .customer-hover-card {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+.cust-card-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.cust-card-img {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid var(--primary, #c5a059) !important;
+}
+
+.cust-card-title {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.2 !important;
+}
+
+.cust-card-sub {
+  font-size: 11px !important;
+  color: var(--primary, #c5a059) !important;
+  font-weight: 600 !important;
+  margin-top: 2px !important;
+}
+
+.cust-card-divider {
+  height: 1px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  margin: 10px 0 !important;
+}
+
+.cust-card-info-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 12px !important;
+  color: #d1d5db !important;
+  margin-bottom: 6px !important;
+}
+
+.cust-card-info-row:last-child {
+  margin-bottom: 0 !important;
+}
+
+.cust-card-info-row .material-symbols-outlined {
+  font-size: 16px !important;
+  color: var(--primary, #c5a059) !important;
+}
+
+.btn-period-tab {
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--on-surface-variant, #a0a0a0) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-period-tab.active,
+.btn-period-tab:hover {
+  background: var(--primary, #c5a059) !important;
+  color: #ffffff !important;
+}
+
+/* Revenue Dashboard Year and Month Dropdown Text Color */
+#revenue-year-select,
+#revenue-month-select,
+#revenue-year-select option,
+#revenue-month-select option {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* Global Responsive Table Horizontal Scrolling */
+.table-responsive,
+.unified-table-container,
+.ledger-table-wrapper {
+  width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.unified-table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+}

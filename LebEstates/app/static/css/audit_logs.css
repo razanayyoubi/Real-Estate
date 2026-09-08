@@ -344,8 +344,9 @@
 .popover {
     position: absolute;
     left: 0;
-    top: calc(100% + 6px);
-    width: 300px;
+    bottom: calc(100% + 8px);
+    top: auto;
+    width: 320px;
     background-color: #ffffff !important;
     background: #ffffff !important;
     border: 1px solid var(--outline-variant, #c5c6cf);
@@ -354,7 +355,7 @@
     padding: 16px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(6px);
+    transform: translateY(-6px);
     transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s;
     pointer-events: none;
     z-index: 99999 !important;
@@ -370,6 +371,37 @@
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Global Floating Popover Portal Overlay */
+.global-popover-portal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid var(--outline-variant, #c5c6cf);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+    padding: 16px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    z-index: 999999 !important;
+}
+
+[data-theme="dark"] .global-popover-portal {
+    background-color: #1e1e2d !important;
+    background: #1e1e2d !important;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.global-popover-portal.active {
+    opacity: 1;
+    visibility: visible;
     pointer-events: auto;
 }
 

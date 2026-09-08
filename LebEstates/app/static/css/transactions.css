@@ -1248,77 +1248,35 @@
   background-color: var(--error);
 }
 
-/* ===== 9. RESPONSIVE TABLE OVERRIDES (MOBILE & TABLETS) ===== */
-@media (max-width: 860px) {
-  /* Collapse table headers and cells to block layout */
-  .transactions-table, 
-  .transactions-table thead, 
-  .transactions-table tbody, 
-  .transactions-table tr, 
-  .transactions-table td {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-  }
+/* ===== 9. RESPONSIVE TABLE (HORIZONTAL SCROLL ON MOBILE & TABLETS) ===== */
+.table-responsive,
+.ledger-table-wrapper {
+  width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
 
-  .transactions-table thead {
-    display: none; /* Hide standard th headers */
-  }
+.transactions-table,
+.payment-ledger-table,
+.ledger-table,
+.recent-table-element,
+.unified-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  text-align: left;
+}
 
-  .transactions-table tbody tr {
-    border: 1px solid var(--outline-variant) !important;
-    border-radius: 16px !important;
-    margin-bottom: 16px !important;
-    padding: 16px 20px !important;
-    box-shadow: 0 4px 16px rgba(10, 31, 68, 0.02) !important;
-    background-color: var(--surface-container-lowest) !important;
-  }
-
-  .transactions-table td {
-    border: none !important;
-    padding: 12px 0 !important;
-    position: relative;
-    padding-left: 40% !important;
-    text-align: right !important;
-    border-bottom: 1px solid rgba(197, 198, 207, 0.1) !important;
-  }
-
-  .transactions-table td:last-child {
-    border-bottom: none !important;
-  }
-
-  /* Dynamically inject headers on the left of each cell content */
-  .transactions-table td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    font-weight: 700;
-    font-size: 11px;
-    color: var(--on-surface-variant);
-    text-transform: uppercase;
-    text-align: left;
-    width: 35%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .td-property {
-    height: auto;
-  }
-
-  .property-cell-wrapper {
-    justify-content: flex-end;
-  }
-
-  .value-cell-box {
-    align-items: flex-end;
-  }
-
-  .actions-cell-wrapper {
-    justify-content: flex-end;
+@media (max-width: 768px) {
+  .transactions-table th,
+  .transactions-table td,
+  .payment-ledger-table th,
+  .payment-ledger-table td,
+  .ledger-table th,
+  .ledger-table td {
+    padding: 12px 14px;
+    font-size: 13px;
   }
 }
 

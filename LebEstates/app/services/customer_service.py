@@ -68,10 +68,14 @@ def update_customer(customer_id, data):
                 return {"success": False, "error": "This email address is already in use.", "code": 400}
             user.email = email
             
+        if phone and phone != user.phoneNumber:
+            existing_phone = Users.query.filter_by(phoneNumber=phone).first()
+            if existing_phone:
+                return {"success": False, "error": "This phone number is already in use by another user.", "code": 400}
+            user.phoneNumber = phone
+            
         if full_name is not None:
             user.fullName = full_name
-        if phone is not None:
-            user.phoneNumber = phone
             
         if location is not None:
             customer.address = location

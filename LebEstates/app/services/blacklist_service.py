@@ -1,64 +1,30 @@
+from datetime import datetime
+from sqlalchemy.orm import joinedload
+from app.models.base import db
 from app.models.users import Users, Blacklist
 from app.models.customer import Customer
 from app.models.hr import Employee
-from app.models.base import db
-from datetime import datetime
-from sqlalchemy.orm import aliased
 
-def get_all_blacklist_entries():
+def get_all_blacklist_entries(status_filter='', search_query=''):
     """Retrieve all blacklist entries with target user and admin profiles."""
-    TargetUser = aliased(Users)
-    AdminUser = aliased(Users)
+    query = Blacklist.query.options(
+        joinedload(Blacklist.user).joinedload(Users.role),
+        joinedload(Blacklist.user).joinedload(Users.customer_profile),
+        joinedload(Blacklist.admin).joinedload(Users.role),
+        joinedload(Blacklist.admin).joinedload(Users.employee_profile)
+    ).order_by(Blacklist.blacklistedAt.desc())
 
-    entries = (
-        db.session.query(Blacklist, TargetUser, AdminUser, Customer, Employee)
-        .join(TargetUser, Blacklist.userID == TargetUser.userID)
-        .outerjoin(AdminUser, Blacklist.blacklistedBy == AdminUser.userID)
-        .outerjoin(Customer, TargetUser.userID == Customer.userID)
-        .outerjoin(Employee, AdminUser.userID == Employee.userID)
-        .order_by(Blacklist.blacklistedAt.desc())
-        .all()
-    )
+    if status_filter and status_filter != 'All':
+        query = query.filter(Blacklist.status == status_filter)
 
-    result = []
-    for entry, target, admin_u, customer, employee in entries:
-        admin_name = admin_u.fullName if admin_u else "System Administrator"
-        admin_email = admin_u.email if admin_u else "admin@lebestates.com"
-        admin_phone = (admin_u.phoneNumber if admin_u else None) or "N/A"
-        admin_id = admin_u.userID if admin_u else 0
+    if search_query:
+        query = query.outerjoin(Users, Blacklist.userID == Users.userID).filter(
+            (Users.fullName.like(f"%{search_query}%")) |
+            (Users.email.like(f"%{search_query}%")) |
+            (Blacklist.reason.like(f"%{search_query}%"))
+        )
 
-        result.append({
-            'blacklist_id': f"#BL-{entry.blacklistID}",
-            'raw_id': entry.blacklistID,
-            'reason': entry.reason,
-            'status': entry.status or 'Active',
-            'restricted_at_date': entry.blacklistedAt.strftime("%b %d, %Y") if entry.blacklistedAt else "N/A",
-            'restricted_at_time': entry.blacklistedAt.strftime("%I:%M %p") if entry.blacklistedAt else "N/A",
-            
-            # Target User Details
-            'user': {
-                'user_id': target.userID,
-                'full_name': target.fullName,
-                'email': target.email,
-                'phone': target.phoneNumber or 'N/A',
-                'national_id': customer.nationalID if customer else 'N/A',
-                'address': customer.address if customer else 'N/A',
-                'status': target.status or 'Active',
-                'avatar_url': f"https://ui-avatars.com/api/?name={target.fullName.replace(' ', '+')}&background=random"
-            },
-            
-            # Admin who blacklisted
-            'admin': {
-                'user_id': admin_id,
-                'full_name': admin_name,
-                'email': admin_email,
-                'phone': admin_phone,
-                'hire_date': employee.hireDate.strftime("%b %d, %Y") if (employee and employee.hireDate) else 'N/A',
-                'position': employee.position if employee else 'Administrator',
-                'status': employee.status if employee else 'Active'
-            }
-        })
-    return result
+    return query.all()
 
 def get_blacklist_stats():
     """Calculate and return blacklist statistics."""

@@ -32,10 +32,19 @@ class AuthService:
 
     @staticmethod
     def register_customer(full_name, email, phone_number, password, address):
+        if not email or not email.strip():
+            return {"success": False, "error": "Email address is required.", "code": 400}
+        if not phone_number or not phone_number.strip():
+            return {"success": False, "error": "Phone number is required.", "code": 400}
+
         # Check for unique constraints in DB
-        existing_email = Users.query.filter_by(email=email).first()
+        existing_email = Users.query.filter_by(email=email.strip()).first()
         if existing_email:
             return {"success": False, "error": "This email address is already registered.", "code": 400}
+
+        existing_phone = Users.query.filter_by(phoneNumber=phone_number.strip()).first()
+        if existing_phone:
+            return {"success": False, "error": "This phone number is already registered.", "code": 400}
 
         # Dynamic role resolution: Ensure 'Customer' role exists
         customer_role = Role.query.filter_by(roleName='Customer').first()
@@ -56,9 +65,9 @@ class AuthService:
         try:
             # Create user record
             new_user = Users(
-                fullName=full_name,
-                email=email,
-                phoneNumber=phone_number if phone_number else None,
+                fullName=full_name.strip(),
+                email=email.strip(),
+                phoneNumber=phone_number.strip(),
                 passwordHash=hashed_pwd,
                 roleID=customer_role.roleID,
                 status='Active'
@@ -95,10 +104,15 @@ class AuthService:
             return {"success": False, "error": "An internal error occurred. Please try again.", "code": 500}
 
     @staticmethod
-    def verify_credentials(email, password):
-        user = Users.query.filter_by(email=email).first()
+    def verify_credentials(identifier, password):
+        if not identifier:
+            return {"success": False, "error": "Email or phone number is required.", "code": 400}
+        
+        clean_id = identifier.strip()
+        from sqlalchemy import or_
+        user = Users.query.filter(or_(Users.email == clean_id, Users.phoneNumber == clean_id)).first()
         if not user:
-            return {"success": False, "error": "Invalid email or password.", "code": 401}
+            return {"success": False, "error": "Invalid email/phone or password.", "code": 401}
 
         if user.status != 'Active':
             return {"success": False, "error": "Your account has been deactivated. Please contact support.", "code": 403}
@@ -113,7 +127,7 @@ class AuthService:
                 "role_name": user.role.roleName if user.role else 'Customer'
             }
         else:
-            return {"success": False, "error": "Invalid email or password.", "code": 401}
+            return {"success": False, "error": "Invalid email/phone or password.", "code": 401}
 
     @staticmethod
     def create_user_session(user_id, ip_address, user_agent):

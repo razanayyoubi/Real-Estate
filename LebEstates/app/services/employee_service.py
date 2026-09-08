@@ -39,10 +39,19 @@ def add_employee(data):
     position = data.get('position', 'Agent').strip()
     base_salary = data.get('base_salary', 0.0)
     
+    if not email:
+        return {"success": False, "error": "Email address is required.", "code": 400}
+    if not phone:
+        return {"success": False, "error": "Phone number is required.", "code": 400}
+
     # Check unique constraints
-    existing = Users.query.filter_by(email=email).first()
-    if existing:
+    existing_email = Users.query.filter_by(email=email).first()
+    if existing_email:
         return {"success": False, "error": "This email address is already registered.", "code": 400}
+
+    existing_phone = Users.query.filter_by(phoneNumber=phone).first()
+    if existing_phone:
+        return {"success": False, "error": "This phone number is already registered.", "code": 400}
         
     # Resolve role: 'Employee'
     employee_role = Role.query.filter_by(roleName='Employee').first()
@@ -132,11 +141,15 @@ def update_employee(employee_id, data):
             if existing:
                 return {"success": False, "error": "This email address is already in use.", "code": 400}
             user.email = email
+
+        if phone and phone != user.phoneNumber:
+            existing_phone = Users.query.filter_by(phoneNumber=phone).first()
+            if existing_phone:
+                return {"success": False, "error": "This phone number is already in use by another user.", "code": 400}
+            user.phoneNumber = phone
             
         if full_name is not None:
             user.fullName = full_name
-        if phone is not None:
-            user.phoneNumber = phone
         if position is not None:
             employee.position = position
         if status is not None:

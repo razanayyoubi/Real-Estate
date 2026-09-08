@@ -223,7 +223,11 @@ def transactions_revenue_dashboard():
     if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
         return redirect(url_for('auth.login_page'))
 
-    data = TransactionService.get_revenue_dashboard_data()
+    period_type = request.args.get('period_type', 'all')
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    data = TransactionService.get_revenue_dashboard_data(period_type=period_type, selected_year=year, selected_month=month)
     user = AuthService.get_user_by_id(session['user_id'])
 
     return render_template(
@@ -234,7 +238,8 @@ def transactions_revenue_dashboard():
         top_agents=data['top_agents'],
         insights=data['insights'],
         recent_transactions=data['recent_transactions'],
-        profitability=data['profitability']
+        profitability=data['profitability'],
+        filter_meta=data['filter_meta']
     )
 
 @transactions_bp.route('/control-panel/transactions/revenue-dashboard/data')
@@ -243,7 +248,11 @@ def transactions_revenue_dashboard_data():
         return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
 
     try:
-        data = TransactionService.get_revenue_dashboard_data()
+        period_type = request.args.get('period_type', 'all')
+        year = request.args.get('year', type=int)
+        month = request.args.get('month', type=int)
+
+        data = TransactionService.get_revenue_dashboard_data(period_type=period_type, selected_year=year, selected_month=month)
         return jsonify({'success': True, 'data': data})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

@@ -113,7 +113,7 @@
                             <p class="text-sm text-on-surface" style="margin: 0;">{{ log.createdAt.strftime("%b %d, %Y") }}</p>
                             <p class="caption text-on-surface-variant" style="margin: 0;">{{ log.createdAt.strftime("%I:%M:%S %p") }}</p>
                         </td>
-                        <td class="table-td user-cell popover-container">
+                        <td class="table-td user-cell popover-trigger-cell">
                             {% if log.user %}
                             <div class="user-profile-trigger">
                                 <img alt="User" class="user-avatar" src="{{ log.user.avatar_url }}"/>
@@ -123,14 +123,14 @@
                                 </div>
                             </div>
                             
-                            <!-- Actor Profile Popover -->
-                            <div class="popover">
+                            <!-- Actor Profile Popover Template -->
+                            <template class="popover-template">
                                 <div class="popover-header">
                                     <div>
                                         <h4 class="popover-title">{{ log.user.fullName }}</h4>
                                         <p class="popover-subtitle">User #{{ log.userID }}</p>
                                     </div>
-                                    <span class="popover-badge info">{{ log.user.role.roleName | upper }}</span>
+                                    <span class="popover-badge info">{{ log.user.role.roleName | upper if log.user.role else 'USER' }}</span>
                                 </div>
                                 <div class="popover-grid">
                                     <div class="popover-row">
@@ -143,7 +143,7 @@
                                     </div>
                                     <div class="popover-row">
                                         <span class="popover-label">Role:</span>
-                                        <span class="popover-value">{{ log.user.role.roleName }}</span>
+                                        <span class="popover-value">{{ log.user.role.roleName if log.user.role else 'User' }}</span>
                                     </div>
                                     <div class="popover-divider"></div>
                                     <div class="popover-row">
@@ -151,7 +151,7 @@
                                         <span class="popover-value">{{ log.user.status }}</span>
                                     </div>
                                 </div>
-                            </div>
+                            </template>
                             {% else %}
                             <div class="user-profile-trigger">
                                 <div class="user-avatar system-avatar-icon">
@@ -247,5 +247,75 @@
         url.searchParams.set('page', page);
         window.location.href = url.toString();
     }
+
+    // Global Floating Popover Portal Overlay Logic
+    (function() {
+        let portal = document.getElementById('globalPopoverPortal');
+        if (!portal) {
+            portal = document.createElement('div');
+            portal.id = 'globalPopoverPortal';
+            portal.className = 'global-popover-portal';
+            document.body.appendChild(portal);
+        }
+
+        let hideTimeout = null;
+
+        document.addEventListener('mouseover', function(e) {
+            const triggerCell = e.target.closest('.popover-trigger-cell');
+            if (!triggerCell) return;
+
+            const template = triggerCell.querySelector('.popover-template');
+            if (!template) return;
+
+            clearTimeout(hideTimeout);
+
+            portal.innerHTML = template.innerHTML;
+
+            const rect = triggerCell.getBoundingClientRect();
+            const portalWidth = 320;
+
+            portal.style.display = 'block';
+            portal.style.visibility = 'hidden';
+            
+            let left = rect.left;
+            if (left + portalWidth > window.innerWidth - 16) {
+                left = window.innerWidth - portalWidth - 16;
+            }
+            left = Math.max(16, left);
+
+            const portalHeight = portal.offsetHeight || 220;
+
+            let top = rect.top - portalHeight - 8;
+            if (top < 12) {
+                top = rect.bottom + 8;
+            }
+
+            portal.style.top = top + 'px';
+            portal.style.left = left + 'px';
+            portal.style.visibility = 'visible';
+            portal.classList.add('active');
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const triggerCell = e.target.closest('.popover-trigger-cell');
+            if (triggerCell) {
+                const related = e.relatedTarget;
+                if (related && (triggerCell.contains(related) || portal.contains(related))) {
+                    return;
+                }
+                hideTimeout = setTimeout(() => {
+                    portal.classList.remove('active');
+                }, 150);
+            }
+        });
+
+        portal.addEventListener('mouseenter', function() {
+            clearTimeout(hideTimeout);
+        });
+
+        portal.addEventListener('mouseleave', function() {
+            portal.classList.remove('active');
+        });
+    })();
 </script>
 {% endblock %}

@@ -201,8 +201,8 @@
                         <input class="form-input" id="addEmployeeEmail" placeholder="email@example.com" type="email" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Phone Number</label>
-                        <input class="form-input" id="addEmployeePhone" placeholder="+961 XX XXX XXX" type="tel">
+                        <label class="form-label">Phone Number *</label>
+                        <input class="form-input" id="addEmployeePhone" placeholder="+961 XX XXX XXX" type="tel" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Position / Role</label>
@@ -251,8 +251,8 @@
                         <input class="form-input" id="editEmployeeEmail" type="email" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Phone Number</label>
-                        <input class="form-input" id="editEmployeePhone" type="tel">
+                        <label class="form-label">Phone Number *</label>
+                        <input class="form-input" id="editEmployeePhone" type="tel" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Position / Role</label>
@@ -416,7 +416,7 @@
         const salary = document.getElementById('addEmployeeSalary').value;
         const password = document.getElementById('addEmployeePassword').value;
 
-        if (!first_name || !last_name || !email || !position || !salary || !password) {
+        if (!first_name || !last_name || !email || !phone || !position || !salary || !password) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
@@ -470,7 +470,7 @@
         const salary = document.getElementById('editEmployeeSalary').value;
         const status = document.getElementById('editEmployeeStatus').value;
 
-        if (!full_name || !email || !position || !salary) {
+        if (!full_name || !email || !phone || !position || !salary) {
             showToast('Please fill in all required fields.', 'error');
             return;
         }
