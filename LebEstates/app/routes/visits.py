@@ -269,6 +269,35 @@ def create_visit():
             user_id=session['user_id']
         )
         db.session.commit()
+
+        # Send automated emails (wrapped)
+        try:
+            from app.services.email_service import EmailService
+            cust_user = visit.customer.user if (visit.customer and visit.customer.user) else None
+            prop_title = visit.property_obj.title if visit.property_obj else "Property"
+            prop_addr = visit.property_obj.address if (visit.property_obj and visit.property_obj.address) else "Lebanon"
+            time_str = visit.visitTime.strftime('%I:%M %p') if visit.visitTime else str(visit_time)
+
+            if cust_user and cust_user.email:
+                EmailService.send_templated_email(
+                    recipient=cust_user.email,
+                    feature_key='VisitScheduled',
+                    default_template_key='VISIT-BOOKED-V1',
+                    placeholders={
+                        'CustomerName': cust_user.fullName,
+                        'PropertyTitle': prop_title,
+                        'VisitDate': str(visit_date),
+                        'VisitTime': time_str,
+                        'Address': prop_addr
+                    },
+                    fallback_subject=f"Property Visit Confirmed: {prop_title}",
+                    fallback_body=f"Hello {cust_user.fullName}, your visit request for {prop_title} on {visit_date} has been confirmed.",
+                    email_type="VisitScheduled",
+                    user_id=session.get('user_id')
+                )
+        except Exception as mail_err:
+            print(f"[Warning] Failed to send visit email: {mail_err}")
+
         return jsonify({'success': True, 'message': 'Visit scheduled successfully'})
     except Exception as e:
         db.session.rollback()
@@ -309,6 +338,7 @@ def edit_visit(visit_id):
     from app.models.users import AuditLog, db
     
     try:
+        old_status = visit.status
         visit.propertyID = int(property_id)
         visit.customerID = int(customer_id)
         visit.employeeID = emp_val
@@ -329,6 +359,34 @@ def edit_visit(visit_id):
             user_id=session['user_id']
         )
         db.session.commit()
+
+        # Send Status Change / Reschedule email if status or schedule changed
+        try:
+            from app.services.email_service import EmailService
+            cust_user = visit.customer.user if (visit.customer and visit.customer.user) else None
+            prop_title = visit.property_obj.title if visit.property_obj else "Property"
+            time_str = visit.visitTime.strftime('%I:%M %p') if visit.visitTime else str(visit_time)
+
+            if cust_user and cust_user.email:
+                EmailService.send_templated_email(
+                    recipient=cust_user.email,
+                    feature_key='VisitStatusChanged',
+                    default_template_key='CUST-VISIT-UPDATE',
+                    placeholders={
+                        'CustomerName': cust_user.fullName,
+                        'PropertyTitle': prop_title,
+                        'VisitStatus': visit.status,
+                        'VisitDate': str(visit_date),
+                        'VisitTime': time_str
+                    },
+                    fallback_subject=f"Visit Update: {prop_title} ({visit.status})",
+                    fallback_body=f"Hello {cust_user.fullName}, your visit details for '{prop_title}' have been updated to: {visit.status} on {visit_date} at {time_str}.",
+                    email_type="VisitStatusChanged",
+                    user_id=session.get('user_id')
+                )
+        except Exception as mail_err:
+            print(f"[Warning] Failed to send visit update email: {mail_err}")
+
         return jsonify({'success': True, 'message': 'Visit updated successfully'})
     except Exception as e:
         db.session.rollback()

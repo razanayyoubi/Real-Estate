@@ -96,6 +96,12 @@ class AuthService:
 
             db.session.commit()
 
+            # Automatically dispatch welcome registration email
+            try:
+                AuthService.send_welcome_email(new_user)
+            except Exception as mail_err:
+                print(f"[Warning] Failed to send welcome registration email: {mail_err}")
+
             return {"success": True}
 
         except Exception as db_err:
@@ -593,4 +599,68 @@ class AuthService:
         db.session.commit()
 
         return {"success": True, "user_id": token_record.userID}
+
+    @staticmethod
+    def send_welcome_email(user):
+        """
+        Sends the Welcome/Registration confirmation email to a newly registered user.
+        """
+        if not user or not user.email:
+            return False
+
+        from flask import has_request_context
+        if has_request_context():
+            login_url = url_for('auth.login_page', _external=True)
+        else:
+            login_url = "http://127.0.0.1:5000/login"
+
+        placeholders = {
+            'CustomerName': user.fullName,
+            'CustomerEmail': user.email,
+            'LoginUrl': login_url
+        }
+
+        return EmailService.send_templated_email(
+            recipient=user.email,
+            feature_key='WelcomeRegistration',
+            default_template_key='AUTH-WELCOME-V1',
+            placeholders=placeholders,
+            fallback_subject=f"Welcome to LebEstates, {user.fullName}!",
+            fallback_body=f"Hello {user.fullName}, welcome to LebEstates! Your account is active. Log in here: {login_url}",
+            email_type="WelcomeRegistration",
+            user_id=user.userID
+        )
+
+    @staticmethod
+    def send_2fa_otp_email(user):
+        """
+        Generates/fetches the current 2FA security code and delivers it to the user's email.
+        """
+        if not user or not user.email:
+            return False
+
+        if not user.twoFactorSecret:
+            return False
+
+        import pyotp
+        totp = pyotp.TOTP(user.twoFactorSecret)
+        current_code = totp.now()
+
+        placeholders = {
+            'CustomerName': user.fullName,
+            'OtpCode': current_code,
+            'expiry': '10 minutes'
+        }
+
+        return EmailService.send_templated_email(
+            recipient=user.email,
+            feature_key='Otp2FA',
+            default_template_key='AUTH-OTP-SECURE',
+            placeholders=placeholders,
+            fallback_subject=f"Your LebEstates 2FA Security Code: {current_code}",
+            fallback_body=f"Hello {user.fullName}, your secure verification code is: {current_code}",
+            email_type="Otp2FA",
+            user_id=user.userID
+        )
+
 

@@ -639,3 +639,19 @@ def view_log(id):
         'templateKey': log.templateKey,
         'createdAt': log.createdAt.strftime('%Y-%m-%d %H:%M:%S')
     })
+
+@email_hub_bp.route('/reminders/run-now', methods=['POST'])
+@admin_or_employee_required
+def run_reminders_now():
+    from app.services.reminder_service import ReminderService
+    try:
+        results = ReminderService.process_all_reminders()
+        total_processed = sum(results.values())
+        return jsonify({
+            'success': True,
+            'message': f"Automated background reminder cycle executed successfully ({total_processed} reminder tasks processed).",
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+

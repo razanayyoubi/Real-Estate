@@ -73,9 +73,15 @@ def login_submit():
         user_obj = AuthService.get_user_by_id(user_id)
         if user_obj and user_obj.twoFactorEnabled:
             if not code:
+                # Send 2FA code to email automatically
+                try:
+                    AuthService.send_2fa_otp_email(user_obj)
+                except Exception as otp_mail_err:
+                    print(f"[Warning] Failed to send 2FA OTP email: {otp_mail_err}")
+
                 return jsonify({
                     'two_factor_required': True,
-                    'message': 'Two-Factor Authentication is required.'
+                    'message': 'Two-Factor Authentication is required. A security code has been sent to your registered email.'
                 }), 200
             
             # Verify the TOTP code or backup code

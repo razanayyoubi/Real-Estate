@@ -438,6 +438,33 @@ def close_session(session_id):
             user_id=user_id
         )
         db.session.commit()
+
+        # Send automated support ticket closed email
+        try:
+            from app.services.email_service import EmailService
+            if chat_session.customer and chat_session.customer.email:
+                feedback_url = url_for('support.customer_chat', session_id=session_id, _external=True)
+                agent_name = chat_session.employee.fullName if chat_session.employee else "Support Agent"
+                EmailService.send_templated_email(
+                    recipient=chat_session.customer.email,
+                    feature_key='SupportTicketClosed',
+                    default_template_key='SUPP-CLOSED-V1',
+                    placeholders={
+                        'CustomerName': chat_session.customer.fullName,
+                        'TicketID': f"{session_id:05d}",
+                        'Subject': chat_session.subject or 'General Inquiry',
+                        'ResolutionDate': chat_session.closedAt.strftime('%B %d, %Y %I:%M %p') if chat_session.closedAt else datetime.now().strftime('%B %d, %Y'),
+                        'FeedbackLink': feedback_url,
+                        'AgentName': agent_name
+                    },
+                    fallback_subject=f"Support Request #{session_id:05d} Resolved - LebEstates Support",
+                    fallback_body=f"Hello {chat_session.customer.fullName}, your support ticket '{chat_session.subject}' has been marked as resolved by {agent_name}. Please rate your experience at: {feedback_url}",
+                    email_type="SupportTicketClosed",
+                    user_id=user_id
+                )
+        except Exception as mail_err:
+            print(f"[Warning] Failed to send support ticket closed email: {mail_err}")
+
         return jsonify({'success': True, 'message': 'Support session closed successfully.'})
     except Exception as e:
         db.session.rollback()

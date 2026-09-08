@@ -60,9 +60,10 @@ def request_consultation(user_id, data):
         )
         db.session.commit()
         
-        # Send notifications (wrapped)
+        # Send notifications & emails (wrapped)
         try:
             from app.services.notification_service import NotificationService
+            from app.services.email_service import EmailService
             from app.models.users import Users, Role
             
             # 1. Notify Customer
@@ -71,6 +72,27 @@ def request_consultation(user_id, data):
                 message=f"Your consultation request for '{consult_type}' has been submitted. Our team will coordinate with you shortly.",
                 action_url="/dashboard"
             )
+
+            cust_user = customer.user
+            if cust_user and cust_user.email:
+                date_display = pref_date_str if pref_date_str else "To Be Scheduled"
+                time_display = pref_time_str if pref_time_str else "To Be Coordinated"
+                EmailService.send_templated_email(
+                    recipient=cust_user.email,
+                    feature_key='ConsultationBooked',
+                    default_template_key='CONS-BOOKED-V1',
+                    placeholders={
+                        'CustomerName': cust_user.fullName,
+                        'ConsultationType': consult_type,
+                        'ScheduledDate': date_display,
+                        'ScheduledTime': time_display,
+                        'PreferredMethod': contact_method or 'Office / Phone'
+                    },
+                    fallback_subject=f"Consultation Confirmed: {consult_type}",
+                    fallback_body=f"Hello {cust_user.fullName}, your consultation request for '{consult_type}' has been received and confirmed.",
+                    email_type="ConsultationBooked",
+                    user_id=user_id
+                )
             
             # 2. Notify Staff (admin / employee)
             staff_users = Users.query.join(Role).filter(Role.roleName.in_(['admin', 'employee', 'Admin', 'Employee'])).all()
@@ -208,18 +230,39 @@ class ConsultationService:
             )
             db.session.commit()
             
-            # Send notifications (wrapped)
+            # Send notifications & emails (wrapped)
             try:
                 from app.services.notification_service import NotificationService
-                cust_user_id = consultation.customer.userID if (consultation.customer and consultation.customer.user) else None
-                if cust_user_id:
+                from app.services.email_service import EmailService
+                cust_user = consultation.customer.user if (consultation.customer and consultation.customer.user) else None
+                if cust_user:
                     NotificationService.create_notification(
-                        user_id=cust_user_id,
+                        user_id=cust_user.userID,
                         message=f"Your consultation request '{consultation.consultationType}' status has been updated to: {new_status}.",
                         action_url="/dashboard"
                     )
+
+                    if cust_user.email:
+                        date_str = consultation.scheduledDate.strftime('%B %d, %Y') if consultation.scheduledDate else "Not Set"
+                        time_str = consultation.scheduledTime.strftime('%I:%M %p') if consultation.scheduledTime else ""
+                        EmailService.send_templated_email(
+                            recipient=cust_user.email,
+                            feature_key='ConsultationStatusChanged',
+                            default_template_key='CONS-STATUS-V1',
+                            placeholders={
+                                'CustomerName': cust_user.fullName,
+                                'ConsultationType': consultation.consultationType,
+                                'Status': new_status,
+                                'ScheduledDate': date_str,
+                                'ScheduledTime': time_str
+                            },
+                            fallback_subject=f"Consultation Update: {consultation.consultationType} ({new_status})",
+                            fallback_body=f"Hello {cust_user.fullName}, your consultation for '{consultation.consultationType}' status has been updated to: {new_status}.",
+                            email_type="ConsultationStatusChanged",
+                            user_id=cust_user.userID
+                        )
             except Exception as notif_err:
-                print(f"[Warning] Failed to send status update notification: {str(notif_err)}")
+                print(f"[Warning] Failed to send status update notification/email: {str(notif_err)}")
 
             return {'success': True, 'message': 'Status updated successfully'}
         except Exception as e:
@@ -258,29 +301,73 @@ class ConsultationService:
             )
             db.session.commit()
             
-            # Send notifications (wrapped)
+            # Send notifications & emails (wrapped)
             try:
                 from app.services.notification_service import NotificationService
+                from app.services.email_service import EmailService
                 
+                cust_user = consultation.customer.user if (consultation.customer and consultation.customer.user) else None
+                date_str = consultation.scheduledDate.strftime('%B %d, %Y') if consultation.scheduledDate else "To Be Scheduled"
+                time_str = consultation.scheduledTime.strftime('%I:%M %p') if consultation.scheduledTime else "To Be Coordinated"
+                method_str = consultation.preferredMethod or "Office / Phone"
+
                 # 1. Notify Employee
-                if employee_id and employee:
+                if employee_id and employee and employee.user:
                     NotificationService.create_notification(
                         user_id=employee.userID,
                         message=f"You have been assigned to handle the consultation request for '{consultation.consultationType}' (Customer ID: {consultation.customerID}).",
                         action_url="/control-panel"
                     )
+
+                    if employee.user.email:
+                        EmailService.send_templated_email(
+                            recipient=employee.user.email,
+                            feature_key='ConsultationConsultantAssignedEmployee',
+                            default_template_key='CONS-AGENT-EMP-V1',
+                            placeholders={
+                                'EmployeeName': employee.user.fullName,
+                                'CustomerName': cust_user.fullName if cust_user else "Customer",
+                                'CustomerEmail': cust_user.email if cust_user else "N/A",
+                                'CustomerPhone': cust_user.phoneNumber if cust_user else "N/A",
+                                'ConsultationType': consultation.consultationType,
+                                'ScheduledDate': date_str,
+                                'ScheduledTime': time_str,
+                                'Notes': consultation.notes or 'No initial notes'
+                            },
+                            fallback_subject=f"Consultation Assignment: {consultation.consultationType} with {cust_user.fullName if cust_user else 'Client'}",
+                            fallback_body=f"Hello {employee.user.fullName}, you have been assigned to lead an advisory consultation for '{consultation.consultationType}'.",
+                            email_type="ConsultationConsultantAssignedEmployee",
+                            user_id=employee.userID
+                        )
                 
                 # 2. Notify Customer
-                cust_user_id = consultation.customer.userID if (consultation.customer and consultation.customer.user) else None
-                if cust_user_id:
-                    emp_name = employee.user.fullName if (employee_id and employee and employee.user) else "a specialist"
+                if cust_user:
                     NotificationService.create_notification(
-                        user_id=cust_user_id,
+                        user_id=cust_user.userID,
                         message=f"A consultant ({emp_name}) has been assigned to your consultation request '{consultation.consultationType}'.",
                         action_url="/dashboard"
                     )
+
+                    if cust_user.email:
+                        EmailService.send_templated_email(
+                            recipient=cust_user.email,
+                            feature_key='ConsultationConsultantAssignedCustomer',
+                            default_template_key='CONS-AGENT-CUST-V1',
+                            placeholders={
+                                'CustomerName': cust_user.fullName,
+                                'ConsultantName': emp_name,
+                                'ConsultationType': consultation.consultationType,
+                                'ScheduledDate': date_str,
+                                'ScheduledTime': time_str,
+                                'PreferredMethod': method_str
+                            },
+                            fallback_subject=f"Advisor Assigned for your Consultation: {consultation.consultationType}",
+                            fallback_body=f"Hello {cust_user.fullName}, {emp_name} has been assigned as your advisor for '{consultation.consultationType}'.",
+                            email_type="ConsultationConsultantAssignedCustomer",
+                            user_id=cust_user.userID
+                        )
             except Exception as notif_err:
-                print(f"[Warning] Failed to send consultant assignment notifications: {str(notif_err)}")
+                print(f"[Warning] Failed to send consultant assignment notifications/emails: {str(notif_err)}")
 
             return {'success': True, 'message': 'Consultant updated successfully'}
         except Exception as e:
@@ -325,18 +412,40 @@ class ConsultationService:
             )
             db.session.commit()
             
-            # Send notifications (wrapped)
+            # Send notifications & emails (wrapped)
             try:
                 from app.services.notification_service import NotificationService
-                cust_user_id = consultation.customer.userID if (consultation.customer and consultation.customer.user) else None
-                if cust_user_id and consultation.scheduledDate:
+                from app.services.email_service import EmailService
+                cust_user = consultation.customer.user if (consultation.customer and consultation.customer.user) else None
+                if cust_user and consultation.scheduledDate:
+                    time_display = consultation.scheduledTime.strftime('%I:%M %p') if consultation.scheduledTime else ""
+                    date_display = consultation.scheduledDate.strftime('%B %d, %Y')
+                    
                     NotificationService.create_notification(
-                        user_id=cust_user_id,
-                        message=f"Your consultation request '{consultation.consultationType}' has been scheduled for {consultation.scheduledDate} at {consultation.scheduledTime}.",
+                        user_id=cust_user.userID,
+                        message=f"Your consultation request '{consultation.consultationType}' has been scheduled for {date_display} at {time_display}.",
                         action_url="/dashboard"
                     )
+
+                    if cust_user.email:
+                        EmailService.send_templated_email(
+                            recipient=cust_user.email,
+                            feature_key='ConsultationStatusChanged',
+                            default_template_key='CONS-STATUS-V1',
+                            placeholders={
+                                'CustomerName': cust_user.fullName,
+                                'ConsultationType': consultation.consultationType,
+                                'Status': consultation.status,
+                                'ScheduledDate': date_display,
+                                'ScheduledTime': time_display
+                            },
+                            fallback_subject=f"Consultation Scheduled: {consultation.consultationType}",
+                            fallback_body=f"Hello {cust_user.fullName}, your consultation session for '{consultation.consultationType}' has been scheduled for {date_display} at {time_display}.",
+                            email_type="ConsultationStatusChanged",
+                            user_id=cust_user.userID
+                        )
             except Exception as notif_err:
-                print(f"[Warning] Failed to send schedule update notification: {str(notif_err)}")
+                print(f"[Warning] Failed to send schedule update notification/email: {str(notif_err)}")
 
             return {'success': True, 'message': 'Schedule updated successfully'}
         except Exception as e:

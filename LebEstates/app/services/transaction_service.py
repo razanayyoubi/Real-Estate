@@ -352,6 +352,66 @@ class TransactionService:
         
         try:
             db.session.commit()
+            
+            # Send automated transaction status emails & receipt PDF
+            try:
+                from app.services.email_service import EmailService
+                cust_user = transaction.customer.user if (transaction.customer and transaction.customer.user) else None
+                owner_user = transaction.owner.user if (transaction.owner and transaction.owner.user) else None
+                prop_title = transaction.property_obj.title if transaction.property_obj else f"Property #{transaction.propertyID}"
+                final_price = float(transaction.finalPrice)
+                amount_paid = float(transaction.amountPaid) if transaction.amountPaid is not None else final_price
+                due_date_str = transaction.nextDueDate.strftime('%B %d, %Y') if transaction.nextDueDate else 'N/A'
+
+                # 1. Notify Buyer / Tenant
+                if cust_user and cust_user.email:
+                    EmailService.send_templated_email(
+                        recipient=cust_user.email,
+                        feature_key='TransactionStatusUpdated',
+                        default_template_key='TRANS-STATUS-V1',
+                        placeholders={
+                            'RecipientName': cust_user.fullName,
+                            'Role': 'Buyer' if transaction.transactionType == 'Sell' else 'Tenant',
+                            'PropertyTitle': prop_title,
+                            'NewStatus': new_status,
+                            'OldStatus': old_status,
+                            'AmountPaid': f"${amount_paid:,.2f}",
+                            'NextDueDate': due_date_str,
+                            'TransactionID': f"{transaction.transactionID:05d}"
+                        },
+                        fallback_subject=f"Deal Status Update: {prop_title} (#TRX-{transaction.transactionID:05d})",
+                        fallback_body=f"Hello {cust_user.fullName}, the status of your transaction for {prop_title} has changed to: {new_status}.",
+                        email_type="TransactionStatusUpdated",
+                        user_id=user_id
+                    )
+
+                # 2. Notify Owner / Landlord
+                if owner_user and owner_user.email and owner_user.email != (cust_user.email if cust_user else None):
+                    EmailService.send_templated_email(
+                        recipient=owner_user.email,
+                        feature_key='TransactionStatusUpdated',
+                        default_template_key='TRANS-STATUS-V1',
+                        placeholders={
+                            'RecipientName': owner_user.fullName,
+                            'Role': 'Seller / Property Owner' if transaction.transactionType == 'Sell' else 'Landlord',
+                            'PropertyTitle': prop_title,
+                            'NewStatus': new_status,
+                            'OldStatus': old_status,
+                            'AmountPaid': f"${amount_paid:,.2f}",
+                            'NextDueDate': due_date_str,
+                            'TransactionID': f"{transaction.transactionID:05d}"
+                        },
+                        fallback_subject=f"Deal Status Update: {prop_title} (#TRX-{transaction.transactionID:05d})",
+                        fallback_body=f"Hello {owner_user.fullName}, your property deal for {prop_title} status has transitioned to: {new_status}.",
+                        email_type="TransactionStatusUpdated",
+                        user_id=user_id
+                    )
+
+                # 3. If Closed / Completed, automatically dispatch official PDF receipt to customer
+                if new_status == 'Closed':
+                    EmailService.send_transaction_receipt(transaction, user_id=user_id)
+            except Exception as mail_err:
+                print(f"[Warning] Failed to send transaction status update emails: {mail_err}")
         except Exception as e:
             db.session.rollback()
             return {'success': False, 'error': f'Database error: {str(e)}', 'code': 500}
@@ -540,6 +600,64 @@ class TransactionService:
                 user_id=user_id
             )
             db.session.commit()
+
+            # Send automated transaction initiated emails to Buyer/Tenant & Owner
+            try:
+                from app.services.email_service import EmailService
+                cust_user = new_trans.customer.user if (new_trans.customer and new_trans.customer.user) else None
+                owner_user = new_trans.owner.user if (new_trans.owner and new_trans.owner.user) else None
+                prop_title = property_obj.title or f"Property #{new_trans.propertyID}"
+                price_str = f"${float(new_trans.finalPrice):,.2f}"
+                due_date_str = new_trans.nextDueDate.strftime('%B %d, %Y') if new_trans.nextDueDate else 'Pending Schedule'
+
+                # 1. Notify Buyer / Tenant
+                if cust_user and cust_user.email:
+                    EmailService.send_templated_email(
+                        recipient=cust_user.email,
+                        feature_key='TransactionInitiated',
+                        default_template_key='TRANS-INIT-V1',
+                        placeholders={
+                            'RecipientName': cust_user.fullName,
+                            'Role': 'Buyer' if new_trans.transactionType == 'Sell' else 'Tenant',
+                            'PropertyTitle': prop_title,
+                            'TransactionType': 'Sale' if new_trans.transactionType == 'Sell' else 'Rental',
+                            'FinalPrice': price_str,
+                            'PaymentType': new_trans.paymentType or 'Full Payment',
+                            'PaymentMethod': new_trans.paymentMethod or 'Bank Transfer',
+                            'NextDueDate': due_date_str,
+                            'TransactionID': f"{new_trans.transactionID:05d}"
+                        },
+                        fallback_subject=f"Transaction Initiated: {prop_title} (#TRX-{new_trans.transactionID:05d})",
+                        fallback_body=f"Hello {cust_user.fullName}, a new real estate transaction has been initiated for {prop_title}.",
+                        email_type="TransactionInitiated",
+                        user_id=user_id
+                    )
+
+                # 2. Notify Owner / Landlord
+                if owner_user and owner_user.email and owner_user.email != (cust_user.email if cust_user else None):
+                    EmailService.send_templated_email(
+                        recipient=owner_user.email,
+                        feature_key='TransactionInitiated',
+                        default_template_key='TRANS-INIT-V1',
+                        placeholders={
+                            'RecipientName': owner_user.fullName,
+                            'Role': 'Seller / Property Owner' if new_trans.transactionType == 'Sell' else 'Landlord',
+                            'PropertyTitle': prop_title,
+                            'TransactionType': 'Sale' if new_trans.transactionType == 'Sell' else 'Rental',
+                            'FinalPrice': price_str,
+                            'PaymentType': new_trans.paymentType or 'Full Payment',
+                            'PaymentMethod': new_trans.paymentMethod or 'Bank Transfer',
+                            'NextDueDate': due_date_str,
+                            'TransactionID': f"{new_trans.transactionID:05d}"
+                        },
+                        fallback_subject=f"Transaction Initiated: {prop_title} (#TRX-{new_trans.transactionID:05d})",
+                        fallback_body=f"Hello {owner_user.fullName}, a deal has been initiated for your property: {prop_title}.",
+                        email_type="TransactionInitiated",
+                        user_id=user_id
+                    )
+            except Exception as mail_err:
+                print(f"[Warning] Failed to send transaction initiated emails: {mail_err}")
+
             return {'success': True}
         except Exception as e:
             db.session.rollback()
@@ -571,6 +689,7 @@ class TransactionService:
         }
         db_status = status_map.get(payment_status_frontend, 'Escrow')
         
+        old_status = transaction.paymentStatus
         transaction.customerID = int(customer_id)
         transaction.employeeID = int(employee_id)
         transaction.paymentType = payment_type
@@ -596,6 +715,68 @@ class TransactionService:
 
         try:
             db.session.commit()
+
+            # Send status update emails if status changed
+            if old_status != db_status:
+                try:
+                    from app.services.email_service import EmailService
+                    cust_user = transaction.customer.user if (transaction.customer and transaction.customer.user) else None
+                    owner_user = transaction.owner.user if (transaction.owner and transaction.owner.user) else None
+                    prop_title = transaction.property_obj.title if transaction.property_obj else f"Property #{transaction.propertyID}"
+                    final_price = float(transaction.finalPrice)
+                    amount_paid = float(transaction.amountPaid) if transaction.amountPaid is not None else final_price
+                    due_date_str = transaction.nextDueDate.strftime('%B %d, %Y') if transaction.nextDueDate else 'N/A'
+
+                    # 1. Notify Buyer / Tenant
+                    if cust_user and cust_user.email:
+                        EmailService.send_templated_email(
+                            recipient=cust_user.email,
+                            feature_key='TransactionStatusUpdated',
+                            default_template_key='TRANS-STATUS-V1',
+                            placeholders={
+                                'RecipientName': cust_user.fullName,
+                                'Role': 'Buyer' if transaction.transactionType == 'Sell' else 'Tenant',
+                                'PropertyTitle': prop_title,
+                                'NewStatus': db_status,
+                                'OldStatus': old_status,
+                                'AmountPaid': f"${amount_paid:,.2f}",
+                                'NextDueDate': due_date_str,
+                                'TransactionID': f"{transaction.transactionID:05d}"
+                            },
+                            fallback_subject=f"Deal Status Update: {prop_title} (#TRX-{transaction.transactionID:05d})",
+                            fallback_body=f"Hello {cust_user.fullName}, the status of your transaction for {prop_title} has changed to: {db_status}.",
+                            email_type="TransactionStatusUpdated",
+                            user_id=user_id
+                        )
+
+                    # 2. Notify Owner / Landlord
+                    if owner_user and owner_user.email and owner_user.email != (cust_user.email if cust_user else None):
+                        EmailService.send_templated_email(
+                            recipient=owner_user.email,
+                            feature_key='TransactionStatusUpdated',
+                            default_template_key='TRANS-STATUS-V1',
+                            placeholders={
+                                'RecipientName': owner_user.fullName,
+                                'Role': 'Seller / Property Owner' if transaction.transactionType == 'Sell' else 'Landlord',
+                                'PropertyTitle': prop_title,
+                                'NewStatus': db_status,
+                                'OldStatus': old_status,
+                                'AmountPaid': f"${amount_paid:,.2f}",
+                                'NextDueDate': due_date_str,
+                                'TransactionID': f"{transaction.transactionID:05d}"
+                            },
+                            fallback_subject=f"Deal Status Update: {prop_title} (#TRX-{transaction.transactionID:05d})",
+                            fallback_body=f"Hello {owner_user.fullName}, your property deal for {prop_title} status has transitioned to: {db_status}.",
+                            email_type="TransactionStatusUpdated",
+                            user_id=user_id
+                        )
+
+                    # 3. If Closed / Completed, automatically dispatch official PDF receipt to customer
+                    if db_status == 'Closed':
+                        EmailService.send_transaction_receipt(transaction, user_id=user_id)
+                except Exception as mail_err:
+                    print(f"[Warning] Failed to send transaction status update emails: {mail_err}")
+
             return {'success': True}
         except Exception as e:
             db.session.rollback()

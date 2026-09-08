@@ -456,6 +456,33 @@ def edit_transaction_submit(trans_id):
     return redirect(url_for('transactions.transactions_ledger'))
 
 
+@transactions_bp.route('/control-panel/transactions/<int:trans_id>/send_receipt_email', methods=['POST'])
+def send_receipt_email(trans_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    from app.models.operations import Transaction
+    from app.services.email_service import EmailService
+
+    transaction = Transaction.query.get(trans_id)
+    if not transaction:
+        return jsonify({'success': False, 'error': 'Transaction not found.'}), 404
+
+    data = request.get_json(silent=True) or {}
+    custom_recipient = data.get('email')
+
+    res = EmailService.send_transaction_receipt(
+        transaction,
+        recipient_email=custom_recipient,
+        user_id=session.get('user_id')
+    )
+
+    if res.get('success'):
+        return jsonify({'success': True, 'message': 'Official PDF receipt emailed successfully!'}), 200
+    else:
+        return jsonify({'success': False, 'error': res.get('error', 'Failed to send receipt email.')}), 500
+
+
 # --- EMPLOYEES SALARIES (TREASURY) ---
 
 @transactions_bp.route('/control-panel/salaries')

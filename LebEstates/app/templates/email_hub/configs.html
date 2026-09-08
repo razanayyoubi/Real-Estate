@@ -19,10 +19,16 @@
                 <h2 class="hub-title">Email Configurations</h2>
                 <p class="hub-subtitle">Map system notifications to specific templates, customize sender emails, and edit overrides.</p>
             </div>
-            <button class="btn btn-secondary" onclick="openSenderModal()">
-                <span class="material-symbols-outlined">add_circle</span>
-                Add Sender Profile
-            </button>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button class="btn btn-outline" id="btnRunReminders" onclick="triggerBackgroundReminders()">
+                    <span class="material-symbols-outlined">schedule_send</span>
+                    Run Reminders Cycle
+                </button>
+                <button class="btn btn-secondary" onclick="openSenderModal()">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Add Sender Profile
+                </button>
+            </div>
         </div>
     </div>
 
@@ -226,6 +232,40 @@ function toggleSenderActive(senderId) {
                 alert('Sender status updated successfully!');
             }
         });
+}
+
+function triggerBackgroundReminders() {
+    const btn = document.getElementById('btnRunReminders');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined">sync</span> Processing...';
+    }
+    fetch('/control-panel/email-hub/reminders/run-now', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">schedule_send</span> Run Reminders Cycle';
+        }
+        if (data.success) {
+            alert(data.message + '\n\nResults:\n' + JSON.stringify(data.results, null, 2));
+            location.reload();
+        } else {
+            alert('Error running reminders: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">schedule_send</span> Run Reminders Cycle';
+        }
+        alert('Network error executing reminders: ' + err);
+    });
 }
 </script>
 {% endblock %}

@@ -46,13 +46,15 @@ class VisitService:
             )
             db.session.commit()
             
-            # Send notifications (wrapped to prevent errors from breaking main action)
+            # Send notifications & emails (wrapped to prevent errors from breaking main action)
             try:
                 from app.services.notification_service import NotificationService
+                from app.services.email_service import EmailService
                 from app.models.property import Property
                 
                 prop = Property.query.get(property_id)
                 prop_title = prop.title if prop else "Property"
+                prop_addr = prop.address if prop and prop.address else (prop.location if prop else "Lebanon")
                 
                 # 1. Notify Customer
                 NotificationService.create_notification(
@@ -60,6 +62,26 @@ class VisitService:
                     message=f"Your visit request for property '{prop_title}' on {visit_date} at {visit_time} has been scheduled successfully.",
                     action_url="/dashboard"
                 )
+
+                # Send Visit Request Scheduled Email
+                cust_user = customer.user
+                if cust_user and cust_user.email:
+                    EmailService.send_templated_email(
+                        recipient=cust_user.email,
+                        feature_key='VisitScheduled',
+                        default_template_key='VISIT-BOOKED-V1',
+                        placeholders={
+                            'CustomerName': cust_user.fullName,
+                            'PropertyTitle': prop_title,
+                            'VisitDate': str(visit_date),
+                            'VisitTime': str(visit_time),
+                            'Address': prop_addr
+                        },
+                        fallback_subject=f"Property Visit Confirmed: {prop_title}",
+                        fallback_body=f"Hello {cust_user.fullName}, your visit request for {prop_title} on {visit_date} at {visit_time} has been confirmed.",
+                        email_type="VisitScheduled",
+                        user_id=user_id
+                    )
             except Exception as notif_err:
                 print(f"[Warning] Failed to send visit scheduling notifications: {str(notif_err)}")
 
@@ -147,16 +169,36 @@ class VisitService:
             )
             db.session.commit()
             
-            # Send notifications (wrapped)
+            # Send notifications & emails (wrapped)
             try:
                 from app.services.notification_service import NotificationService
-                cust_user_id = visit.customer.userID if (visit.customer and visit.customer.user) else None
-                if cust_user_id:
+                from app.services.email_service import EmailService
+                cust_user = visit.customer.user if (visit.customer and visit.customer.user) else None
+                if cust_user:
                     NotificationService.create_notification(
-                        user_id=cust_user_id,
+                        user_id=cust_user.userID,
                         message=f"The status of your visit request for property '{prop_title}' on {visit.visitDate} has been updated to: {new_status}.",
                         action_url="/dashboard"
                     )
+
+                    if cust_user.email:
+                        time_str = visit.visitTime.strftime('%I:%M %p') if visit.visitTime else ""
+                        EmailService.send_templated_email(
+                            recipient=cust_user.email,
+                            feature_key='VisitStatusChanged',
+                            default_template_key='CUST-VISIT-UPDATE',
+                            placeholders={
+                                'CustomerName': cust_user.fullName,
+                                'PropertyTitle': prop_title,
+                                'VisitStatus': new_status,
+                                'VisitDate': str(visit.visitDate),
+                                'VisitTime': time_str
+                            },
+                            fallback_subject=f"Visit Status Updated: {prop_title} ({new_status})",
+                            fallback_body=f"Hello {cust_user.fullName}, the status of your visit for '{prop_title}' has been updated to: {new_status}.",
+                            email_type="VisitStatusChanged",
+                            user_id=cust_user.userID
+                        )
             except Exception as notif_err:
                 print(f"[Warning] Failed to send status update notification: {str(notif_err)}")
 
@@ -184,7 +226,11 @@ class VisitService:
 
             from app.models.users import AuditLog
             prop_title = visit.property_obj.title if visit.property_obj else f"ID {visit.propertyID}"
+            prop_addr = visit.property_obj.address if (visit.property_obj and visit.property_obj.address) else (visit.property_obj.location if visit.property_obj else "Lebanon")
             emp_name = employee.user.fullName if (employee and employee.user) else f"ID {employee_id}"
+            emp_email = employee.user.email if (employee and employee.user) else ""
+            emp_phone = employee.user.phoneNumber if (employee and employee.user) else ""
+
             AuditLog.log_action(
                 action='EDIT',
                 table_name='visit',
@@ -193,26 +239,69 @@ class VisitService:
             )
             db.session.commit()
             
-            # Send notifications (wrapped)
+            # Send notifications & emails (wrapped)
             try:
                 from app.services.notification_service import NotificationService
+                from app.services.email_service import EmailService
                 
+                cust_user = visit.customer.user if (visit.customer and visit.customer.user) else None
+                time_str = visit.visitTime.strftime('%I:%M %p') if visit.visitTime else ""
+
                 # 1. Notify Employee
-                if employee:
+                if employee and employee.user:
                     NotificationService.create_notification(
                         user_id=employee.userID,
                         message=f"You have been assigned as the consultant for a visit to property '{prop_title}' on {visit.visitDate} at {visit.visitTime}.",
                         action_url="/control-panel/visits"
                     )
+
+                    if employee.user.email:
+                        EmailService.send_templated_email(
+                            recipient=employee.user.email,
+                            feature_key='VisitConsultantAssignedEmployee',
+                            default_template_key='VISIT-AGENT-EMP-V1',
+                            placeholders={
+                                'EmployeeName': emp_name,
+                                'CustomerName': cust_user.fullName if cust_user else "Client",
+                                'CustomerPhone': cust_user.phoneNumber if cust_user else "N/A",
+                                'PropertyTitle': prop_title,
+                                'VisitDate': str(visit.visitDate),
+                                'VisitTime': time_str,
+                                'Address': prop_addr
+                            },
+                            fallback_subject=f"Viewing Assigned to You: {prop_title} ({visit.visitDate})",
+                            fallback_body=f"Hello {emp_name}, you have been assigned to conduct a property viewing for '{prop_title}' on {visit.visitDate} at {time_str}.",
+                            email_type="VisitConsultantAssignedEmployee",
+                            user_id=employee.userID
+                        )
                 
                 # 2. Notify Customer
-                cust_user_id = visit.customer.userID if (visit.customer and visit.customer.user) else None
-                if cust_user_id:
+                if cust_user:
                     NotificationService.create_notification(
-                        user_id=cust_user_id,
+                        user_id=cust_user.userID,
                         message=f"A consultant ({emp_name}) has been assigned to guide you through your visit for property '{prop_title}' on {visit.visitDate} at {visit.visitTime}.",
                         action_url="/dashboard"
                     )
+
+                    if cust_user.email:
+                        EmailService.send_templated_email(
+                            recipient=cust_user.email,
+                            feature_key='VisitConsultantAssignedCustomer',
+                            default_template_key='VISIT-AGENT-CUST-V1',
+                            placeholders={
+                                'CustomerName': cust_user.fullName,
+                                'ConsultantName': emp_name,
+                                'ConsultantPhone': emp_phone or 'N/A',
+                                'ConsultantEmail': emp_email or 'N/A',
+                                'PropertyTitle': prop_title,
+                                'VisitDate': str(visit.visitDate),
+                                'VisitTime': time_str
+                            },
+                            fallback_subject=f"Agent Assigned to your Viewing: {prop_title}",
+                            fallback_body=f"Hello {cust_user.fullName}, {emp_name} has been assigned as your viewing consultant for '{prop_title}' on {visit.visitDate} at {time_str}.",
+                            email_type="VisitConsultantAssignedCustomer",
+                            user_id=cust_user.userID
+                        )
             except Exception as notif_err:
                 print(f"[Warning] Failed to send consultant assignment notifications: {str(notif_err)}")
 

@@ -198,9 +198,10 @@ class PropertyService:
             )
             db.session.commit()
             
-            # Send notifications (wrapped to prevent SMTP/DB errors from failing listing submission)
+            # Send notifications & emails (wrapped to prevent SMTP/DB errors from failing listing submission)
             try:
                 from app.services.notification_service import NotificationService
+                from app.services.email_service import EmailService
                 from app.models.users import Users, Role
                 
                 # 1. Notify creator
@@ -209,6 +210,26 @@ class PropertyService:
                     message=f"Your property listing '{title}' has been successfully submitted! Status: {'Published' if is_employee else 'Pending'}.",
                     action_url="/control-panel/properties" if is_employee else "/dashboard"
                 )
+
+                # Send Property Listing Submitted email if submitted by customer
+                if not is_employee and not is_draft and user.email:
+                    EmailService.send_templated_email(
+                        recipient=user.email,
+                        feature_key='PropertySubmitted',
+                        default_template_key='PROP-SUBMITTED-V1',
+                        placeholders={
+                            'CustomerName': user.fullName,
+                            'PropertyTitle': title,
+                            'PropertyType': property_type,
+                            'Location': region,
+                            'Price': f"${price_val:,.2f}",
+                            'Status': 'Pending Approval'
+                        },
+                        fallback_subject=f"Property Listing Submitted: {title}",
+                        fallback_body=f"Hello {user.fullName}, your property listing for '{title}' has been submitted and is pending review.",
+                        email_type="PropertySubmitted",
+                        user_id=user.userID
+                    )
                 
                 # 2. Notify admin/employee staff if listing is pending
                 if not is_employee:
@@ -439,13 +460,36 @@ class PropertyService:
         # Notify the submitter
         try:
             from app.services.notification_service import NotificationService
+            from app.services.email_service import EmailService
+            from app.models.users import Users
+            
             NotificationService.create_notification(
                 user_id=prop.createdBy,
                 message=f"Your property listing '{prop.title}' has been approved by our staff and is now published!",
                 action_url="/properties"
             )
+
+            creator_user = Users.query.get(prop.createdBy)
+            if creator_user and creator_user.email:
+                prop_url = "http://127.0.0.1:5000/properties"
+                EmailService.send_templated_email(
+                    recipient=creator_user.email,
+                    feature_key='PropertyApproved',
+                    default_template_key='PROP-APPROVED-V1',
+                    placeholders={
+                        'CustomerName': creator_user.fullName,
+                        'PropertyTitle': prop.title,
+                        'Price': f"${float(prop.price):,.2f}",
+                        'Location': prop.location or 'Lebanon',
+                        'PropertyUrl': prop_url
+                    },
+                    fallback_subject=f"Your Property Listing is Now Live: {prop.title}",
+                    fallback_body=f"Hello {creator_user.fullName}, your listing for '{prop.title}' is now published and live on LebEstates.",
+                    email_type="PropertyApproved",
+                    user_id=prop.createdBy
+                )
         except Exception as notif_err:
-            print(f"[Warning] Failed to send approval notification: {str(notif_err)}")
+            print(f"[Warning] Failed to send approval notification/email: {str(notif_err)}")
 
         return {'success': True, 'message': 'Property approved successfully.'}
 
@@ -471,13 +515,35 @@ class PropertyService:
         # Notify the submitter
         try:
             from app.services.notification_service import NotificationService
+            from app.services.email_service import EmailService
+            from app.models.users import Users
+
             NotificationService.create_notification(
                 user_id=prop.createdBy,
                 message=f"Your property listing '{prop.title}' has been rejected by our staff.",
                 action_url="/dashboard"
             )
+
+            creator_user = Users.query.get(prop.createdBy)
+            if creator_user and creator_user.email:
+                support_url = "http://127.0.0.1:5000/support"
+                EmailService.send_templated_email(
+                    recipient=creator_user.email,
+                    feature_key='PropertyRejected',
+                    default_template_key='PROP-REJECTED-V1',
+                    placeholders={
+                        'CustomerName': creator_user.fullName,
+                        'PropertyTitle': prop.title,
+                        'Reason': 'Listing did not meet quality verification or documentation standards.',
+                        'SupportUrl': support_url
+                    },
+                    fallback_subject=f"Update regarding your listing: {prop.title}",
+                    fallback_body=f"Hello {creator_user.fullName}, your listing for '{prop.title}' was reviewed and could not be approved at this time.",
+                    email_type="PropertyRejected",
+                    user_id=prop.createdBy
+                )
         except Exception as notif_err:
-            print(f"[Warning] Failed to send rejection notification: {str(notif_err)}")
+            print(f"[Warning] Failed to send rejection notification/email: {str(notif_err)}")
 
         return {'success': True, 'message': 'Property rejected successfully.'}
 

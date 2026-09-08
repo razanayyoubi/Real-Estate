@@ -14,7 +14,7 @@ class Config:
     # Mailjet Credentials & Sender Info
     MAILJET_API_KEY = os.getenv('MAILJET_API_KEY')
     MAILJET_SECRET_KEY = os.getenv('MAILJET_SECRET_KEY')
-    MAILJET_SENDER_EMAIL = os.getenv('MAILJET_SENDER_EMAIL', 'no-reply@lebestates.com')
+    MAILJET_SENDER_EMAIL = os.getenv('MAILJET_SENDER_EMAIL', 'mohamadayoubi050@gmail.com')
     MAILJET_SENDER_NAME = os.getenv('MAILJET_SENDER_NAME', 'LebEstates')
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
