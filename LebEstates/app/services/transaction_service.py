@@ -9,9 +9,10 @@ from app.models.users import AuditLog
 
 class TransactionService:
     @staticmethod
-    def get_ledger_data(filters=None):
+    def get_ledger_data(filters=None, page=None, per_page=10, offset=None):
         """
         Fetch transactions with optional server-side filtering and ledger statistics.
+        Supports offset/page pagination for AJAX or template rendering.
         """
         query = Transaction.query
 
@@ -21,6 +22,7 @@ class TransactionService:
                 from sqlalchemy import or_
                 query = query.outerjoin(Property, Transaction.propertyID == Property.propertyID).outerjoin(Customer, Transaction.customerID == Customer.customerID).filter(or_(
                     Property.title.ilike(f'%{q}%'),
+                    Property.location.ilike(f'%{q}%'),
                     Customer.notes.ilike(f'%{q}%'),
                     Transaction.transactionType.ilike(f'%{q}%'),
                     Transaction.paymentStatus.ilike(f'%{q}%')
@@ -34,7 +36,29 @@ class TransactionService:
             if status and status.lower() != 'all':
                 query = query.filter(Transaction.paymentStatus.ilike(status))
 
-        transactions = query.order_by(Transaction.transactionDate.desc()).all()
+            customer_id = filters.get('customer_id')
+            if customer_id and str(customer_id).lower() != 'all':
+                try:
+                    query = query.filter(Transaction.customerID == int(customer_id))
+                except (ValueError, TypeError):
+                    pass
+
+            property_id = filters.get('property_id')
+            if property_id and str(property_id).lower() != 'all':
+                try:
+                    query = query.filter(Transaction.propertyID == int(property_id))
+                except (ValueError, TypeError):
+                    pass
+
+        query = query.order_by(Transaction.transactionDate.desc())
+        total_filtered = query.count()
+
+        if page is not None or offset is not None:
+            if offset is None:
+                offset = (max(1, int(page)) - 1) * per_page
+            transactions = query.offset(offset).limit(per_page).all()
+        else:
+            transactions = query.all()
 
         gross_volume = db.session.query(func.sum(Transaction.finalPrice)).filter_by(paymentStatus='Closed').scalar() or 0.0
         total_commission = db.session.query(func.sum(Transaction.commissionAmount)).filter_by(paymentStatus='Closed').scalar() or 0.0
@@ -63,10 +87,114 @@ class TransactionService:
 
         return {
             'transactions': transactions,
+            'total_count': total_filtered,
             'stats': stats,
             'properties': properties,
             'customers': customers,
             'employees': employees
+        }
+
+    @staticmethod
+    def generate_custom_report_data(filters=None):
+        """
+        Generate financial summary and transaction list for custom report PDF printing.
+        """
+        import calendar
+        query = Transaction.query
+
+        from_date_str = filters.get('from_date', '').strip() if filters else ''
+        to_date_str = filters.get('to_date', '').strip() if filters else ''
+        t_type = filters.get('type', 'All').strip() if filters else 'All'
+        status = filters.get('status', 'All').strip() if filters else 'All'
+        customer_ids = filters.get('customer_ids') or filters.get('customer_id') if filters else None
+        property_id = filters.get('property_id') if filters else None
+
+        if from_date_str:
+            try:
+                if len(from_date_str) == 7:
+                    from_date = datetime.strptime(from_date_str, '%Y-%m').date().replace(day=1)
+                else:
+                    from_date = datetime.strptime(from_date_str, '%Y-%m-%d').date()
+                query = query.filter(Transaction.transactionDate >= from_date)
+            except ValueError:
+                pass
+
+        if to_date_str:
+            try:
+                if len(to_date_str) == 7:
+                    dt = datetime.strptime(to_date_str, '%Y-%m')
+                    _, last_day = calendar.monthrange(dt.year, dt.month)
+                    to_date = dt.replace(day=last_day).date()
+                else:
+                    to_date = datetime.strptime(to_date_str, '%Y-%m-%d').date()
+                query = query.filter(Transaction.transactionDate <= to_date)
+            except ValueError:
+                pass
+
+        if t_type and t_type.lower() != 'all':
+            query = query.filter(Transaction.transactionType.ilike(t_type))
+
+        if status and status.lower() != 'all':
+            query = query.filter(Transaction.paymentStatus.ilike(status))
+
+        customer_names = []
+        if customer_ids and str(customer_ids).lower() != 'all':
+            if isinstance(customer_ids, str):
+                c_list = [c.strip() for c in customer_ids.split(',') if c.strip().isdigit()]
+            elif isinstance(customer_ids, (list, tuple)):
+                c_list = [str(c).strip() for c in customer_ids if str(c).strip().isdigit()]
+            else:
+                c_list = []
+            
+            if c_list:
+                c_ids_int = [int(c) for c in c_list]
+                query = query.filter(Transaction.customerID.in_(c_ids_int))
+                selected_custs = Customer.query.filter(Customer.customerID.in_(c_ids_int)).all()
+                customer_names = [c.user.fullName for c in selected_custs if c.user]
+
+        if property_id and str(property_id).lower() != 'all':
+            try:
+                query = query.filter(Transaction.propertyID == int(property_id))
+            except (ValueError, TypeError):
+                pass
+
+        transactions = query.order_by(Transaction.transactionDate.desc()).all()
+
+        total_volume = sum(float(t.finalPrice or 0.0) for t in transactions)
+        total_commission = sum(float(t.commissionAmount or 0.0) for t in transactions)
+        sales_deals = [t for t in transactions if t.transactionType == 'Sell']
+        rent_deals = [t for t in transactions if t.transactionType == 'Rent']
+        closed_deals = [t for t in transactions if t.paymentStatus == 'Closed']
+
+        sales_volume = sum(float(t.finalPrice or 0.0) for t in sales_deals)
+        rent_volume = sum(float(t.finalPrice or 0.0) for t in rent_deals)
+        sales_commission = sum(float(t.commissionAmount or 0.0) for t in sales_deals)
+        rent_commission = sum(float(t.commissionAmount or 0.0) for t in rent_deals)
+
+        selected_property = Property.query.get(int(property_id)) if property_id and str(property_id).isdigit() else None
+
+        customer_display = ', '.join(customer_names) if customer_names else 'All Clients'
+
+        return {
+            'transactions': transactions,
+            'count': len(transactions),
+            'total_volume': total_volume,
+            'total_commission': total_commission,
+            'sales_count': len(sales_deals),
+            'rent_count': len(rent_deals),
+            'closed_count': len(closed_deals),
+            'sales_volume': sales_volume,
+            'rent_volume': rent_volume,
+            'sales_commission': sales_commission,
+            'rent_commission': rent_commission,
+            'filters': {
+                'from_date': from_date_str,
+                'to_date': to_date_str,
+                'type': t_type,
+                'status': status,
+                'customer_name': customer_display,
+                'property_title': selected_property.title if selected_property else 'All Properties'
+            }
         }
 
     @staticmethod

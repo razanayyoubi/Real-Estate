@@ -1,6 +1,8 @@
 from app.models.base import db
 from app.models.expenses import OfficeExpense
+from app.models.operations import Transaction
 from app.models.users import AuditLog
+from sqlalchemy import func
 from datetime import datetime
 
 class ExpenseService:
@@ -33,7 +35,21 @@ class ExpenseService:
         paid_amount = sum(e.amount for e in all_unfiltered if e.status == 'Paid')
         pending_amount = sum(e.amount for e in all_unfiltered if e.status != 'Paid')
         
-        categories = ['Office Rent', 'Utilities', 'Marketing', 'Software Subscriptions', 'Legal & Professional', 'Maintenance', 'Miscellaneous']
+        # Financial Impact & Net Revenue Calculations
+        gross_agency_revenue = db.session.query(func.sum(Transaction.commissionAmount)).filter_by(paymentStatus='Closed').scalar() or 0.0
+        net_operating_profit = float(gross_agency_revenue) - float(paid_amount)
+        
+        categories = [
+            'Office Rent',
+            'Internet & Telecommunications',
+            'Utilities & Electricity',
+            'Office Maintenance & Repairs',
+            'Marketing & Ads',
+            'Software Subscriptions',
+            'Legal & Professional',
+            'Office Supplies',
+            'Miscellaneous'
+        ]
         category_totals = {c: sum(e.amount for e in all_unfiltered if e.category == c) for c in categories}
         
         return {
@@ -41,6 +57,8 @@ class ExpenseService:
             'total_amount': total_amount,
             'paid_amount': paid_amount,
             'pending_amount': pending_amount,
+            'gross_agency_revenue': gross_agency_revenue,
+            'net_operating_profit': net_operating_profit,
             'categories': categories,
             'category_totals': category_totals
         }

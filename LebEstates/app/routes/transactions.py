@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from app.services.auth_service import AuthService
 from app.services.transaction_service import TransactionService
@@ -28,25 +29,193 @@ def transactions_ledger():
     filters = {
         'server_q': request.args.get('server_q', ''),
         'type': request.args.get('type', 'All'),
-        'status': request.args.get('status', 'All')
+        'status': request.args.get('status', 'All'),
+        'customer_id': request.args.get('customer_id', 'All'),
+        'property_id': request.args.get('property_id', 'All')
     }
 
     data = TransactionService.get_ledger_data(filters)
     user = AuthService.get_user_by_id(session['user_id'])
     
-    from app.services.commission_service import CommissionService
-    expenses = CommissionService.get_commissions_dashboard_data()['expenses']
+    from app.models.hr import Employee
+    user_employee = Employee.query.filter_by(userID=session['user_id']).first()
+    if not user_employee:
+        from datetime import date
+        from app.models.base import db
+        user_employee = Employee(userID=session['user_id'], position='Agent', hireDate=date.today())
+        db.session.add(user_employee)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            user_employee = Employee.query.filter_by(userID=session['user_id']).first()
 
     return render_template(
         'transactions_ledger.html',
         user=user,
+        user_employee=user_employee,
         transactions=data['transactions'],
+        total_count=data['total_count'],
         stats=data['stats'],
         properties=data['properties'],
         customers=data['customers'],
         employees=data['employees'],
-        expenses=expenses,
         filters=filters
+    )
+
+@transactions_bp.route('/control-panel/transactions/ledger/data')
+def transactions_ledger_data():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
+        return jsonify({'success': False, 'error': 'Unauthorized access.'}), 403
+
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))
+        offset = request.args.get('offset')
+        if offset is not None:
+            offset = int(offset)
+
+        filters = {
+            'server_q': request.args.get('server_q', ''),
+            'type': request.args.get('type', 'All'),
+            'status': request.args.get('status', 'All'),
+            'customer_id': request.args.get('customer_id', 'All'),
+            'property_id': request.args.get('property_id', 'All')
+        }
+
+        data = TransactionService.get_ledger_data(filters, page=page, per_page=per_page, offset=offset)
+
+        serialized = []
+        for t in data['transactions']:
+            main_image = None
+            if t.property_obj and t.property_obj.images:
+                for img in t.property_obj.images:
+                    if getattr(img, 'isMainImage', False):
+                        main_image = img.imageURL
+                        break
+                if not main_image and len(t.property_obj.images) > 0:
+                    main_image = t.property_obj.images[0].imageURL
+            if not main_image:
+                main_image = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80"
+
+            status_display = 'Pending' if t.paymentStatus == 'Escrow' else 'In progress' if t.paymentStatus == 'Legal' else 'Completed' if t.paymentStatus == 'Closed' else 'Cancelled'
+
+            serialized.append({
+                'transactionID': t.transactionID,
+                'transactionType': t.transactionType,
+                'paymentStatus': t.paymentStatus,
+                'statusDisplay': status_display,
+                'date': t.transactionDate.strftime('%Y-%m-%d') if t.transactionDate else '',
+                'finalPrice': float(t.finalPrice or 0.0),
+                'commissionAmount': float(t.commissionAmount or 0.0),
+                'commissionRate': float(t.commissionRate or 0.0),
+                'paymentMethod': t.paymentMethod or 'Bank Wire / Escrow',
+                'property': {
+                    'id': t.propertyID,
+                    'title': t.property_obj.title if t.property_obj else 'Unknown Property',
+                    'location': t.property_obj.location if t.property_obj else 'Lebanon',
+                    'image': main_image
+                },
+                'customer': {
+                    'id': t.customerID,
+                    'name': t.customer.user.fullName if (t.customer and t.customer.user) else 'Unknown Client'
+                },
+                'employee': {
+                    'id': t.employeeID,
+                    'name': t.employee.user.fullName if (t.employee and t.employee.user) else 'Unassigned'
+                }
+            })
+
+        return jsonify({
+            'success': True,
+            'transactions': serialized,
+            'total_count': data['total_count'],
+            'page': page,
+            'per_page': per_page,
+            'stats': data['stats']
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@transactions_bp.route('/control-panel/transactions/api/search-properties')
+def api_search_properties():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    q = request.args.get('q', '').strip()
+    from app.models.properties import Property
+    query = Property.query
+    if q:
+        if q.isdigit():
+            query = query.filter((Property.propertyID == int(q)) | Property.title.ilike(f'%{q}%') | Property.location.ilike(f'%{q}%'))
+        else:
+            query = query.filter(Property.title.ilike(f'%{q}%') | Property.location.ilike(f'%{q}%'))
+
+    properties = query.limit(20).all()
+    results = []
+    for p in properties:
+        results.append({
+            'id': p.propertyID,
+            'title': p.title or '',
+            'price': float(p.price or 0.0),
+            'listingType': p.listingType or 'Sell',
+            'location': p.location or ''
+        })
+
+    return jsonify({'success': True, 'properties': results})
+
+@transactions_bp.route('/control-panel/transactions/api/search-customers')
+def api_search_customers():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    q = request.args.get('q', '').strip()
+    from app.models.stakeholders import Customer
+    from app.models.users import Users
+    query = Customer.query.join(Users, Customer.userID == Users.userID)
+    if q:
+        if q.isdigit():
+            query = query.filter((Customer.customerID == int(q)) | Users.fullName.ilike(f'%{q}%') | Users.email.ilike(f'%{q}%') | Users.phoneNumber.ilike(f'%{q}%'))
+        else:
+            query = query.filter(Users.fullName.ilike(f'%{q}%') | Users.email.ilike(f'%{q}%') | Users.phoneNumber.ilike(f'%{q}%'))
+
+    customers = query.limit(20).all()
+    results = []
+    for c in customers:
+        results.append({
+            'id': c.customerID,
+            'name': c.user.fullName if (c.user and c.user.fullName) else f'Client #{c.customerID}',
+            'email': c.user.email if (c.user and c.user.email) else '',
+            'phone': c.user.phoneNumber if (c.user and c.user.phoneNumber) else '',
+            'username': (c.user.email.split('@')[0]) if (c.user and c.user.email) else ''
+        })
+
+    return jsonify({'success': True, 'customers': results})
+
+@transactions_bp.route('/control-panel/transactions/report/generate')
+def transactions_report_generate():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee', 'accountant']:
+        return redirect(url_for('auth.login_page'))
+
+    cust_ids = request.args.getlist('customer_ids') or request.args.get('customer_ids') or request.args.get('customer_id') or 'All'
+    filters = {
+        'from_date': request.args.get('from_date', ''),
+        'to_date': request.args.get('to_date', ''),
+        'type': request.args.get('type', 'All'),
+        'status': request.args.get('status', 'All'),
+        'customer_ids': cust_ids,
+        'property_id': request.args.get('property_id', 'All')
+    }
+
+    report_data = TransactionService.generate_custom_report_data(filters)
+    user = AuthService.get_user_by_id(session['user_id'])
+
+    return render_template(
+        'transactions_report_print.html',
+        user=user,
+        report=report_data,
+        now=datetime.now()
     )
 
 @transactions_bp.route('/control-panel/transactions/revenue-dashboard')

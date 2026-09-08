@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (action === 'salaries') {
                 // Navigate to the treasury salaries page
                 window.location.href = '/control-panel/salaries';
+            } else if (action === 'expenses') {
+                // Navigate to the office expenses page
+                window.location.href = '/control-panel/expenses';
             } else if (action === 'toast' && message) {
                 // Show construction toast alert
                 showToast(message);

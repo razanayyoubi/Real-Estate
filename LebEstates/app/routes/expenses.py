@@ -30,6 +30,8 @@ def index():
         total_amount=data['total_amount'],
         paid_amount=data['paid_amount'],
         pending_amount=data['pending_amount'],
+        gross_agency_revenue=data['gross_agency_revenue'],
+        net_operating_profit=data['net_operating_profit'],
         categories=data['categories'],
         category_totals=data['category_totals'],
         filters=filters

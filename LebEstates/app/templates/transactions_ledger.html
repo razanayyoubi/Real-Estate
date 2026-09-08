@@ -8,6 +8,31 @@
 
 {% block head_scripts %}
 <script defer src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+<script>
+    window.allProperties = [
+        {% for p in properties %}
+        {
+            id: {{ p.propertyID }},
+            title: {{ (p.title or '')|tojson }},
+            price: {{ (p.price or 0.0)|float }},
+            listingType: {{ (p.listingType or 'Sell')|tojson }},
+            location: {{ (p.location or '')|tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    window.allCustomers = [
+        {% for c in customers %}
+        {
+            id: {{ c.customerID }},
+            name: {{ (c.user.fullName if (c.user and c.user.fullName) else ('Client #' ~ c.customerID))|tojson }},
+            email: {{ (c.user.email if (c.user and c.user.email) else '')|tojson }},
+            phone: {{ (c.user.phoneNumber if (c.user and c.user.phoneNumber) else '')|tojson }},
+            username: {{ ((c.user.email.split('@')[0]) if (c.user and c.user.email) else '')|tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+</script>
 {% endblock %}
 
 {% block content %}
@@ -24,7 +49,7 @@
                 <p class="hub-subtitle">View and manage all property sales and rental transactions within the LebEstates ecosystem.</p>
             </div>
             <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
-                <button class="btn btn-secondary" onclick="window.print()" style="padding: 8px 16px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <button class="btn btn-secondary" onclick="toggleModal('report-filter-modal')" style="padding: 8px 16px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                     <span class="material-symbols-outlined">picture_as_pdf</span>
                     <span>Print Report</span>
                 </button>
@@ -243,68 +268,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Agency Operations Ledger Section -->
-    <div class="table-section operations-ledger-section" style="margin-top: 40px; margin-bottom: 40px;">
-        <div class="table-card unified-table-container">
-            <div class="ledger-header" style="margin-bottom: 20px; padding: 20px 24px 0 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: none;">
-                <div class="header-details">
-                    <h3 style="font-family: var(--font-headline); font-size: 20px; font-weight: 700; color: var(--primary);">Agency Operations Ledger</h3>
-                    <p class="ledger-subtitle" style="font-size: 13px; color: var(--on-surface-variant); margin-top: 4px;">Reconcile office expenses, marketing spend, and operational payroll.</p>
-                </div>
-                <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
-                    <div class="input-icon-wrapper" style="width: 250px;">
-                        <span class="material-symbols-outlined input-icon">search</span>
-                        <input type="text" id="expense-search-input" class="filter-input" placeholder="Search expense..." onkeyup="filterExpenses()" style="height: 38px; padding-top: 0; padding-bottom: 0;">
-                    </div>
-                    <!-- Button beside table to add transaction -->
-                    <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')" style="background-color: var(--secondary); color: var(--on-secondary); padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; height: 38px; box-shadow: none;">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
-                        <span>New Transaction</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="table-responsive">
-                <table class="transactions-table unified-table" id="expenses-ledger-table" style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Expense ID</th>
-                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Expense Item</th>
-                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Category</th>
-                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container); text-align: right;">Amount</th>
-                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container); text-align: center;">Status</th>
-                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); letter-spacing: 0.1em; border-bottom: 1px solid rgba(197, 198, 207, 0.3); background-color: var(--surface-container);">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="expense-table-body">
-                        {% for exp in expenses %}
-                        <tr class="trans-row-main expense-row" data-search="{{ exp.id.lower() }} {{ exp.item.lower() }} {{ exp.category.lower() }}" style="transition: background-color 0.2s ease;">
-                            <td class="td-id" style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); font-weight: 700;">#{{ exp.id }}</td>
-                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); font-weight: 600;">{{ exp.item }}</td>
-                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15);">
-                                <span class="badge" style="background-color: var(--surface-container); color: var(--on-surface-variant); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">{{ exp.category }}</span>
-                            </td>
-                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); text-align: right; color: var(--error); font-weight: 700;">{{ exp.amount_formatted }}</td>
-                            <td style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); text-align: center;">
-                                <span class="badge {{ 'badge-sold' if exp.status == 'Paid' else 'badge-rented' }}">
-                                    {{ exp.status }}
-                                </span>
-                            </td>
-                            <td class="text-muted" style="padding: 20px 24px; border-bottom: 1px solid rgba(197, 198, 207, 0.15); font-size: 13px;">{{ exp.date }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="no-records-cell" style="text-align: center; padding: 40px;">
-                                No operations expenses recorded.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </main>
 
 <!-- Modal: New Transaction -->
@@ -321,15 +284,23 @@
         </div>
         <form class="modal-form" action="{{ url_for('transactions.create_transaction') }}" method="POST">
             <div class="form-grid">
-                <!-- Property Selection -->
+                <!-- Property Autocomplete Selection -->
                 <div class="form-group col-span-2">
                     <label class="form-label">Select Property</label>
-                    <select name="propertyID" id="new-prop-select" class="form-select" required onchange="handlePropertyChange(this)">
-                        <option value="">Select a property...</option>
-                        {% for p in properties %}
-                        <option value="{{ p.propertyID }}" data-price="{{ p.price }}" data-type="{{ p.listingType }}">{{ p.title }} (${{ "{:,.2f}".format(p.price) }} - {{ p.listingType }})</option>
-                        {% endfor %}
-                    </select>
+                    <div style="position: relative;" id="new-property-autocomplete-wrapper">
+                        <input type="text" id="new-property-search-input" class="form-input" placeholder="Search property ID or name (Shows top 5)..." autocomplete="off" onclick="handlePropertySearchFocus()" onfocus="handlePropertySearchFocus()" oninput="handlePropertySearchInput(this.value)" onkeyup="handlePropertySearchInput(this.value)">
+                        <input type="hidden" name="propertyID" id="new-property-id-hidden" required>
+                        <div id="new-property-suggestions-box" class="autocomplete-dropdown-box hidden">
+                            <!-- Suggestions list rendered dynamically -->
+                        </div>
+                        <div id="new-property-selected-card" class="selected-item-badge hidden" style="margin-top: 8px; padding: 10px 14px; background: var(--surface-container-high, #f4f6f9); border-radius: 8px; border: 1px solid var(--primary); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong id="new-prop-selected-title" style="color: var(--primary); font-size: 14px;">Selected Property</strong>
+                                <p id="new-prop-selected-meta" style="font-size: 12px; color: var(--on-surface-variant); margin: 2px 0 0 0;">$0.00 - Sale</p>
+                            </div>
+                            <button type="button" class="btn btn-sm" onclick="clearSelectedProperty()" style="background: transparent; border: 1px solid var(--error, #f44336); color: var(--error, #f44336); cursor: pointer; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;">Change Property</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Type Selection -->
@@ -352,26 +323,30 @@
                     </div>
                 </div>
 
-                <!-- Client -->
+                <!-- Client Autocomplete Selection -->
                 <div class="form-group">
                     <label class="form-label">Client (Buyer/Tenant)</label>
-                    <select name="customerID" class="form-select" required>
-                        <option value="">Select a client...</option>
-                        {% for c in customers %}
-                        <option value="{{ c.customerID }}">{{ c.user.fullName }} (ID: {{ c.customerID }})</option>
-                        {% endfor %}
-                    </select>
+                    <div style="position: relative;" id="new-client-autocomplete-wrapper">
+                        <input type="text" id="new-client-search-input" class="form-input" placeholder="Search client name, email, phone, ID..." autocomplete="off" onclick="handleClientSearchFocus()" onfocus="handleClientSearchFocus()" oninput="handleClientSearchInput(this.value)" onkeyup="handleClientSearchInput(this.value)">
+                        <input type="hidden" name="customerID" id="new-client-id-hidden" required>
+                        <div id="new-client-suggestions-box" class="autocomplete-dropdown-box hidden">
+                            <!-- Suggestions list rendered dynamically -->
+                        </div>
+                        <div id="new-client-selected-card" class="selected-item-badge hidden" style="margin-top: 8px; padding: 8px 12px; background: var(--surface-container-high, #f4f6f9); border-radius: 8px; border: 1px solid var(--primary); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong id="new-client-selected-name" style="color: var(--primary); font-size: 13px;">Selected Client</strong>
+                                <p id="new-client-selected-email" style="font-size: 11px; color: var(--on-surface-variant); margin-top: 2px;">email@example.com</p>
+                            </div>
+                            <button type="button" class="btn btn-sm" onclick="clearSelectedClient()" style="background: transparent; border: 1px solid var(--error, #f44336); color: var(--error, #f44336); cursor: pointer; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Change</button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Agent -->
+                <!-- Assigned Agent (Pre-filled for logged-in user) -->
                 <div class="form-group">
-                    <label class="form-label">Assign Agent</label>
-                    <select name="employeeID" class="form-select" required>
-                        <option value="">Select an agent...</option>
-                        {% for e in employees %}
-                        <option value="{{ e.employeeID }}">{{ e.user.fullName }} ({{ e.position }})</option>
-                        {% endfor %}
-                    </select>
+                    <label class="form-label">Assigned Agent</label>
+                    <input type="hidden" name="employeeID" value="{{ user_employee.employeeID if user_employee else (employees[0].employeeID if employees else 1) }}">
+                    <input type="text" class="form-input font-bold" value="{{ user.fullName }} ({{ user_employee.position if user_employee else (user.role.roleName if user.role else 'Agent') }})" readonly style="background-color: var(--surface-container-low); pointer-events: none; opacity: 0.9; font-weight: 700;">
                 </div>
 
                 <!-- Price -->
@@ -526,7 +501,7 @@
             </div>
             
             <div class="details-footer">
-                <button class="btn btn-print-receipt" onclick="window.print()">
+                <button class="btn btn-print-receipt" id="btn-details-print-receipt" onclick="printCurrentDetailsReceipt()">
                     <span class="material-symbols-outlined">print</span>
                     <span>Print Receipt</span>
                 </button>
@@ -536,6 +511,90 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal: Custom Report Generator Partial -->
+<div class="modal-overlay hidden" id="report-filter-modal" onclick="handleOverlayClick(event, 'report-filter-modal')">
+    <div class="modal-card" style="max-width: 600px;">
+        <div class="modal-header">
+            <div class="modal-header-text">
+                <h3 class="modal-title">Custom Report Statement</h3>
+                <p class="modal-subtitle">Configure date range, deal type, and property/client filters to generate a print-ready PDF statement.</p>
+            </div>
+            <button class="btn btn-close" onclick="toggleModal('report-filter-modal')">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form class="modal-form" action="/control-panel/transactions/report/generate" method="GET" target="_blank">
+            <div class="form-grid">
+                <!-- Date From / To -->
+                <div class="form-group">
+                    <label class="form-label">From Month</label>
+                    <input type="month" name="from_date" id="report-from-date" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Till Month</label>
+                    <input type="month" name="to_date" id="report-to-date" class="form-input">
+                </div>
+
+                <!-- Transaction Type -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Transaction Type</label>
+                    <select name="type" class="form-select">
+                        <option value="All">All Transactions (Sale &amp; Rental Deals)</option>
+                        <option value="Sell">Property Sales Only</option>
+                        <option value="Rent">Property Rentals Only</option>
+                    </select>
+                </div>
+
+                <!-- Specific Customer Multi-Select Autocomplete -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Filter Clients / Tenants (Multi-Select Search)</label>
+                    <div style="position: relative;" id="report-customer-autocomplete-wrapper">
+                        <input type="text" id="report-customer-search-input" class="form-input" placeholder="Search by username, full name, email, phone nb..." autocomplete="off" onfocus="handleReportCustomerSearchFocus()" oninput="handleReportCustomerSearchInput(this.value)">
+                        <input type="hidden" name="customer_ids" id="report-customer-ids-hidden" value="All">
+                        <div id="report-customer-suggestions-box" class="autocomplete-dropdown-box hidden" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--surface-container-lowest, #ffffff); border: 1px solid var(--outline-variant, #ccc); border-radius: 12px; max-height: 220px; overflow-y: auto; z-index: 10005; margin-top: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                            <!-- Suggestions list rendered dynamically -->
+                        </div>
+                        <div id="report-customer-tags-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
+                            <!-- Selected customer chips dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specific Property -->
+                <div class="form-group">
+                    <label class="form-label">Specific Property</label>
+                    <select name="property_id" class="form-select">
+                        <option value="All">All Properties</option>
+                        {% for p in properties %}
+                        <option value="{{ p.propertyID }}">{{ p.title }} ({{ p.listingType }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Payment / Deal Status</label>
+                    <select name="status" class="form-select">
+                        <option value="All">All Statuses</option>
+                        <option value="Closed">Closed / Paid In Full</option>
+                        <option value="Escrow">Pending (Escrow)</option>
+                        <option value="Legal">In Progress (Legal)</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 24px;">
+                <button type="button" class="btn btn-cancel" onclick="toggleModal('report-filter-modal')">Cancel</button>
+                <button type="submit" class="btn btn-submit" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined">picture_as_pdf</span>
+                    Generate &amp; Print PDF
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

@@ -2219,3 +2219,7 @@ body.dark-mode .popover {
   transform: translateY(0) !important;
   pointer-events: auto !important;
 }
+
+.hidden {
+  display: none !important;
+}

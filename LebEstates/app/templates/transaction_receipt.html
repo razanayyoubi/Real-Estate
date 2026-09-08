@@ -131,6 +131,7 @@
 </head>
 <body>
     <div class="actions-bar">
+        <a href="/control-panel/transactions/ledger" style="padding: 10px 18px; border-radius: 6px; background-color: #e2e8f0; color: #1e293b; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">← Back to Ledger</a>
         <button class="btn-print" onclick="window.print()">Print / Save PDF Receipt</button>
     </div>
 
@@ -138,14 +139,14 @@
         <div class="header">
             <div class="brand">Leb<span>Estates</span></div>
             <div class="receipt-title">
-                <h2>Official Receipt</h2>
+                <h2>Official {{ 'Rental' if transaction.transactionType == 'Rent' else 'Sale' }} Receipt</h2>
                 <div class="receipt-number">#TRX-{{ transaction.transactionID }}</div>
             </div>
         </div>
 
         <div class="info-grid">
             <div class="info-box">
-                <h4>Client Details</h4>
+                <h4>{{ 'Tenant / Client Details' if transaction.transactionType == 'Rent' else 'Buyer / Client Details' }}</h4>
                 <p>{{ transaction.customer.user.fullName if (transaction.customer and transaction.customer.user) else 'N/A' }}</p>
                 <p style="font-weight: 400; color: #555;">Email: {{ transaction.customer.user.email if (transaction.customer and transaction.customer.user) else 'N/A' }}</p>
                 <p style="font-weight: 400; color: #555;">Phone: {{ transaction.customer.user.phoneNumber if (transaction.customer and transaction.customer.user) else 'N/A' }}</p>
@@ -153,8 +154,8 @@
             <div class="info-box" style="text-align: right;">
                 <h4>Transaction Details</h4>
                 <p>Date: {{ transaction.transactionDate.strftime('%B %d, %Y') }}</p>
-                <p style="font-weight: 400; color: #555;">Type: {{ 'Property Sale' if transaction.transactionType == 'Sell' else 'Property Rental' }}</p>
-                <p style="font-weight: 400; color: #555;">Agent: {{ transaction.employee.user.fullName if (transaction.employee and transaction.employee.user) else 'N/A' }}</p>
+                <p style="font-weight: 400; color: #555;">Contract Type: {{ 'Property Sale Contract' if transaction.transactionType == 'Sell' else 'Residential / Commercial Rental Lease' }}</p>
+                <p style="font-weight: 400; color: #555;">Assigned Agent: {{ transaction.employee.user.fullName if (transaction.employee and transaction.employee.user) else 'N/A' }}</p>
             </div>
         </div>
 
@@ -169,19 +170,25 @@
             <tbody>
                 <tr>
                     <td>
-                        <strong>{{ transaction.property_obj.title }}</strong><br>
-                        <small style="color: #666;">Listing ID: #LEB-{{ transaction.property_obj.propertyID }}</small>
+                        <strong>{{ transaction.property_obj.title if transaction.property_obj else 'Property' }}</strong><br>
+                        <small style="color: #666;">Listing ID: #LEB-{{ transaction.property_obj.propertyID if transaction.property_obj else transaction.propertyID }}</small>
                     </td>
-                    <td>{{ transaction.property_obj.propertyType }} • {{ transaction.property_obj.location }}</td>
-                    <td style="text-align: right; font-weight: 700;">${{ "{:,.2f}".format(transaction.finalPrice) }}</td>
+                    <td>{{ transaction.property_obj.propertyType if transaction.property_obj else '' }} • {{ transaction.property_obj.location if transaction.property_obj else '' }}</td>
+                    <td style="text-align: right; font-weight: 700;">${{ "{:,.2f}".format(transaction.finalPrice) }}{{ ' / month' if transaction.transactionType == 'Rent' else '' }}</td>
                 </tr>
                 <tr>
-                    <td>Agency Commission ({{ transaction.commissionRate }}%)</td>
-                    <td>Realized Revenue</td>
+                    <td>
+                        {% if transaction.transactionType == 'Rent' %}
+                        Agency Brokerage Fee (1 Month Rent)
+                        {% else %}
+                        Agency Commission ({{ transaction.commissionRate }}%)
+                        {% endif %}
+                    </td>
+                    <td>Realized Agency Revenue</td>
                     <td style="text-align: right; color: #735c00; font-weight: 700;">${{ "{:,.2f}".format(transaction.commissionAmount) }}</td>
                 </tr>
                 <tr class="total-row">
-                    <td colspan="2">Total Contract Value</td>
+                    <td colspan="2">{{ 'Total Monthly Rent Value' if transaction.transactionType == 'Rent' else 'Total Contract Value' }}</td>
                     <td style="text-align: right;">${{ "{:,.2f}".format(transaction.finalPrice) }}</td>
                 </tr>
             </tbody>
@@ -189,7 +196,7 @@
 
         <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; font-size: 13px; color: #555;">
             <strong>Payment Method:</strong> {{ transaction.paymentMethod or 'Bank Wire / Escrow' }} | 
-            <strong>Payment Status:</strong> {{ transaction.paymentStatus or 'Closed' }}
+            <strong>Payment Status:</strong> {{ 'Closed / Paid' if transaction.paymentStatus == 'Closed' else transaction.paymentStatus }}
         </div>
 
         <div class="footer-note">

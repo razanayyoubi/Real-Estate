@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
     resetFilters();
     animateCardsOnLoad();
 
+    // Attach client search listener
+    const clientSearchInput = document.getElementById('filter-client-search');
+    if (clientSearchInput) {
+        clientSearchInput.addEventListener('input', () => {
+            filterLedger();
+        });
+    }
+
     // 2. Setup radio card selectors selection styles
     const typeRadios = document.querySelectorAll('input[name="transactionTypeDisplay"]');
     typeRadios.forEach(radio => {
@@ -41,6 +49,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.search.includes('open_new=true')) {
         toggleModal('new-transaction-modal');
     }
+
+    // 5. Initialize Report Customer Tags UI
+    updateReportCustomerTagsUI();
+
+    // 6. Outside click handler to close dropdowns
+    document.addEventListener('click', (e) => {
+        const propWrapper = document.getElementById('new-property-autocomplete-wrapper');
+        if (propWrapper && !propWrapper.contains(e.target)) {
+            const box = document.getElementById('new-property-suggestions-box');
+            if (box) { box.classList.add('hidden'); box.style.display = 'none'; }
+        }
+        const clientWrapper = document.getElementById('new-client-autocomplete-wrapper');
+        if (clientWrapper && !clientWrapper.contains(e.target)) {
+            const box = document.getElementById('new-client-suggestions-box');
+            if (box) { box.classList.add('hidden'); box.style.display = 'none'; }
+        }
+        const reportCustWrapper = document.getElementById('report-customer-autocomplete-wrapper');
+        if (reportCustWrapper && !reportCustWrapper.contains(e.target)) {
+            const box = document.getElementById('report-customer-suggestions-box');
+            if (box) { box.classList.add('hidden'); box.style.display = 'none'; }
+        }
+    });
 });
 
 /* ===== MODAL TOGGLE & LAYOUT CONTROLS ===== */
@@ -186,12 +216,16 @@ function updateCommissionPreview() {
     commVal.textContent = `$${commission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/* ===== LIVE FILTER ENGINE ===== */
+/* ===== LIVE FILTER & PAGINATION ENGINE ===== */
 function filterLedger() {
-    const searchQuery = document.getElementById('search-ledger').value.toLowerCase().trim();
-    const typeFilter = document.getElementById('filter-type').value;
-    const paymentFilter = document.getElementById('filter-payment-status').value;
-    const dateFilter = document.getElementById('filter-date').value;
+    const searchInput = document.getElementById('filter-client-search') || document.getElementById('search-ledger');
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    const typeSelect = document.querySelector('select[name="type"]') || document.getElementById('filter-type');
+    const typeFilter = typeSelect ? typeSelect.value : 'All';
+    
+    const statusSelect = document.querySelector('select[name="status"]') || document.getElementById('filter-payment-status');
+    const paymentFilter = statusSelect ? statusSelect.value : 'All';
 
     const allRows = Array.from(document.querySelectorAll('.trans-row-main'));
     filteredRows = [];
@@ -199,50 +233,45 @@ function filterLedger() {
     allRows.forEach(row => {
         const rowType = row.getAttribute('data-type');
         const rowStatus = row.getAttribute('data-status');
-        const rowDate = row.getAttribute('data-date'); // YYYY-MM-DD
-        const searchText = row.getAttribute('data-search-text');
+        const searchText = (row.getAttribute('data-search-text') || '').toLowerCase();
 
         const matchesSearch = !searchQuery || searchText.includes(searchQuery);
         const matchesType = (typeFilter === 'All') || (rowType === typeFilter);
         const matchesPayment = (paymentFilter === 'All') || (rowStatus === paymentFilter);
-        
-        let matchesDate = true;
-        if (dateFilter && rowDate) {
-            matchesDate = (rowDate === dateFilter);
-        }
 
-        if (matchesSearch && matchesType && matchesPayment && matchesDate) {
+        if (matchesSearch && matchesType && matchesPayment) {
             filteredRows.push(row);
-            row.style.display = '';
         } else {
             row.style.display = 'none';
         }
     });
 
     const clientEmptyRow = document.getElementById('client-empty-state-row');
-    if (filteredRows.length === 0) {
-        clientEmptyRow.style.display = '';
-    } else {
-        clientEmptyRow.style.display = 'none';
+    if (clientEmptyRow) {
+        if (filteredRows.length === 0 && allRows.length > 0) {
+            clientEmptyRow.style.display = '';
+        } else {
+            clientEmptyRow.style.display = 'none';
+        }
     }
 
-    // Reset pagination to first page on filter change
     currentPage = 1;
     updatePagination();
 }
 
 function resetFilters() {
-    document.getElementById('search-ledger').value = "";
-    document.getElementById('filter-type').value = "All";
-    document.getElementById('filter-payment-status').value = "All";
-    document.getElementById('filter-date').value = "";
+    const clientInput = document.getElementById('filter-client-search');
+    if (clientInput) clientInput.value = "";
+    const serverInput = document.getElementById('filter-server-search');
+    if (serverInput) serverInput.value = "";
+    
     filterLedger();
 }
 
-/* ===== CLIENT-SIDE PAGINATION ===== */
+/* ===== CLIENT & AJAX PAGINATION ===== */
 function updatePagination() {
     const totalEntries = filteredRows.length;
-    const totalPages = Math.ceil(totalEntries / rowsPerPage);
+    const totalPages = Math.max(1, Math.ceil(totalEntries / rowsPerPage));
 
     // Hide all filtered rows first
     filteredRows.forEach(row => {
@@ -262,14 +291,17 @@ function updatePagination() {
 
     // Update info text
     const infoText = document.getElementById('pagination-info');
-    if (totalEntries === 0) {
-        infoText.textContent = "Showing 0 to 0 of 0 entries";
-    } else {
-        infoText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${totalEntries} entries`;
+    if (infoText) {
+        if (totalEntries === 0) {
+            infoText.textContent = "Showing 0 to 0 of 0 entries";
+        } else {
+            infoText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${totalEntries} entries`;
+        }
     }
 
     // Render Buttons
     const buttonsContainer = document.getElementById('pagination-buttons');
+    if (!buttonsContainer) return;
     buttonsContainer.innerHTML = "";
 
     if (totalPages <= 1) return;
@@ -311,6 +343,182 @@ function updatePagination() {
         }
     };
     buttonsContainer.appendChild(nextBtn);
+}
+
+// Function to fetch and reload ledger data via AJAX offset
+function loadTransactionsPageAjax(page = 1) {
+    const q = (document.getElementById('filter-server-search')?.value || '').trim();
+    const typeSelect = document.querySelector('select[name="type"]');
+    const type = typeSelect ? typeSelect.value : 'All';
+    const statusSelect = document.querySelector('select[name="status"]');
+    const status = statusSelect ? statusSelect.value : 'All';
+
+    const params = new URLSearchParams({
+        page: page,
+        per_page: rowsPerPage,
+        server_q: q,
+        type: type,
+        status: status
+    });
+
+    fetch(`/control-panel/transactions/ledger/data?${params.toString()}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renderTransactionsTbody(data.transactions);
+            currentPage = page;
+            renderAjaxPaginationButtons(data.total_count, page, rowsPerPage);
+            if (data.stats) {
+                animateValueUpdate('val-total-transactions', data.stats.total_transactions);
+                animateValueUpdate('val-sales-transactions', data.stats.sales_transactions);
+                animateValueUpdate('val-rental-transactions', data.stats.rental_transactions);
+                animateValueUpdate('val-paid-transactions', data.stats.paid_transactions);
+            }
+        }
+    })
+    .catch(err => console.error('Error fetching transactions via AJAX:', err));
+}
+
+function renderTransactionsTbody(transactions) {
+    const tbody = document.getElementById('ledger-table-body');
+    if (!tbody) return;
+
+    if (!transactions || transactions.length === 0) {
+        tbody.innerHTML = `
+            <tr class="no-records-row">
+                <td colspan="7" class="no-records-cell">
+                    <span class="material-symbols-outlined">info</span>
+                    <p>No transaction records found.</p>
+                </td>
+            </tr>
+        `;
+        filteredRows = [];
+        return;
+    }
+
+    let html = '';
+    transactions.forEach(t => {
+        const isSell = t.transactionType === 'Sell';
+        const typeLabel = isSell ? 'Sale' : 'Rent';
+        const badgeClass = isSell ? 'badge-sold' : 'badge-rented';
+        const badgeText = isSell ? 'Sold' : 'Rented';
+        const statusClass = `status-${t.statusDisplay.replace(/\s+/g, '').toLowerCase()}`;
+
+        html += `
+            <tr class="trans-row-main" id="row-main-${t.transactionID}"
+                data-id="${t.transactionID}"
+                data-type="${t.transactionType}"
+                data-status="${t.statusDisplay}"
+                data-date="${t.date}"
+                data-search-text="trx-${t.transactionID} ${t.property.title.toLowerCase()} ${t.property.location.toLowerCase()} ${t.customer.name.toLowerCase()} ${t.employee.name.toLowerCase()}">
+                
+                <td class="td-id" data-label="ID">TRX-${t.transactionID}</td>
+                
+                <td class="td-property" data-label="Property">
+                    <div class="property-cell-wrapper">
+                        <div class="property-image-box">
+                            <img src="${t.property.image}" alt="Property Thumbnail" loading="lazy">
+                        </div>
+                        <div class="property-info-box">
+                            <p class="property-title-text">${t.property.title}</p>
+                            <p class="property-meta-text">${typeLabel} • ${t.property.location}</p>
+                        </div>
+                    </div>
+                </td>
+
+                <td class="td-stakeholders" data-label="Stakeholders">
+                    <div class="stakeholders-cell-box">
+                        <span class="client-name-text">${t.customer.name}</span>
+                        <span class="agent-name-text">Agent: ${t.employee.name}</span>
+                    </div>
+                </td>
+
+                <td class="td-value text-right" data-label="Value">
+                    <div class="value-cell-box">
+                        <span class="value-price-text">$${t.finalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}${isSell ? '' : ' /mo'}</span>
+                        <span class="value-comm-text">Comm: $${t.commissionAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    </div>
+                </td>
+
+                <td class="td-status text-center" data-label="Status">
+                    <span class="badge ${badgeClass}">${badgeText}</span>
+                </td>
+
+                <td class="td-payment text-center" data-label="Payment">
+                    <select class="payment-select-dropdown ${statusClass}" onchange="updateTransactionStatus(${t.transactionID}, this)">
+                        <option value="Pending" ${t.paymentStatus === 'Escrow' ? 'selected' : ''}>Pending</option>
+                        <option value="In progress" ${t.paymentStatus === 'Legal' ? 'selected' : ''}>In progress</option>
+                        <option value="Completed" ${t.paymentStatus === 'Closed' ? 'selected' : ''}>Completed</option>
+                        <option value="Cancelled" ${t.paymentStatus === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                </td>
+
+                <td class="td-actions text-center" data-label="Actions">
+                    <div class="actions-cell-wrapper">
+                        <button class="btn btn-icon btn-view" onclick="loadTransactionDetails(${t.transactionID})" title="View Details">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                        <button class="btn btn-icon btn-edit" title="Edit Transaction" onclick="openEditTransactionModal(${t.transactionID})">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button class="btn btn-icon btn-print" onclick="window.open('/control-panel/transactions/${t.transactionID}/receipt', '_blank')" title="Print PDF Receipt">
+                            <span class="material-symbols-outlined">receipt_long</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+    filteredRows = Array.from(document.querySelectorAll('.trans-row-main'));
+}
+
+function renderAjaxPaginationButtons(totalEntries, page, perPage) {
+    const totalPages = Math.max(1, Math.ceil(totalEntries / perPage));
+    const infoText = document.getElementById('pagination-info');
+    if (infoText) {
+        const startIdx = (page - 1) * perPage + 1;
+        const endIdx = Math.min(page * perPage, totalEntries);
+        infoText.textContent = totalEntries > 0 ? `Showing ${startIdx} to ${endIdx} of ${totalEntries} entries` : "Showing 0 to 0 of 0 entries";
+    }
+
+    const buttonsContainer = document.getElementById('pagination-buttons');
+    if (!buttonsContainer) return;
+    buttonsContainer.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'btn-page';
+    prevBtn.textContent = 'Previous';
+    prevBtn.disabled = (page === 1);
+    prevBtn.onclick = () => loadTransactionsPageAjax(page - 1);
+    buttonsContainer.appendChild(prevBtn);
+
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `btn-page ${i === page ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => loadTransactionsPageAjax(i);
+        buttonsContainer.appendChild(pageBtn);
+    }
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn-page';
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = (page === totalPages);
+    nextBtn.onclick = () => loadTransactionsPageAjax(page + 1);
+    buttonsContainer.appendChild(nextBtn);
+}
+
+function printCurrentDetailsReceipt() {
+    const transId = document.getElementById('details-modal')?.getAttribute('data-loaded-id');
+    if (transId) {
+        window.open(`/control-panel/transactions/${transId}/receipt`, '_blank');
+    } else {
+        window.print();
+    }
 }
 
 /* ===== AJAX API CALLS ===== */
@@ -577,4 +785,430 @@ function filterExpenses() {
     } else if (existingNoRecordsRow) {
         existingNoRecordsRow.remove();
     }
+}
+
+/* ===== AUTOCOMPLETE SEARCH & SUGGESTIONS ===== */
+
+// 1. PROPERTY AUTOCOMPLETE
+let propertyDisplayLimit = 5;
+
+function handlePropertySearchFocus() {
+    renderPropertySuggestions(document.getElementById('new-property-search-input')?.value || '', propertyDisplayLimit);
+}
+
+function handlePropertySearchInput(query) {
+    propertyDisplayLimit = 5;
+    renderPropertySuggestions(query, propertyDisplayLimit);
+}
+
+function renderPropertySuggestions(query = '', limit = 5) {
+    const box = document.getElementById('new-property-suggestions-box');
+    if (!box) return;
+    box.style.display = 'block';
+    box.classList.remove('hidden');
+
+    if (!window.allProperties) window.allProperties = [];
+
+    const q = query.toLowerCase().trim();
+    const filtered = window.allProperties.filter(p => {
+        const idStr = String(p.id).toLowerCase();
+        const titleStr = (p.title || '').toLowerCase();
+        const locStr = (p.location || '').toLowerCase();
+        return !q || idStr.includes(q) || titleStr.includes(q) || locStr.includes(q);
+    });
+
+    renderPropertyBoxHTML(box, filtered, q, limit);
+
+    // Live AJAX query fetch
+    if (q.length >= 1) {
+        fetch(`/control-panel/transactions/api/search-properties?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.properties) {
+                    let updated = false;
+                    data.properties.forEach(p => {
+                        if (!window.allProperties.some(item => item.id === p.id)) {
+                            window.allProperties.push(p);
+                            updated = true;
+                        }
+                    });
+                    if (updated) {
+                        const newFiltered = window.allProperties.filter(p => {
+                            const idStr = String(p.id).toLowerCase();
+                            const titleStr = (p.title || '').toLowerCase();
+                            const locStr = (p.location || '').toLowerCase();
+                            return !q || idStr.includes(q) || titleStr.includes(q) || locStr.includes(q);
+                        });
+                        renderPropertyBoxHTML(box, newFiltered, q, limit);
+                    }
+                }
+            })
+            .catch(err => console.debug('Property AJAX search error:', err));
+    }
+}
+
+function renderPropertyBoxHTML(box, filtered, q, limit) {
+    if (filtered.length === 0) {
+        box.innerHTML = '<div style="padding: 12px; color: var(--on-surface-variant, #a0a0a0); font-size: 13px; text-align: center;">No matching properties found</div>';
+        return;
+    }
+
+    const itemsToShow = filtered.slice(0, limit);
+    let html = itemsToShow.map(p => `
+        <div class="autocomplete-item" onclick="selectProperty(${p.id})" style="padding: 10px 14px; border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.1)); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s ease;">
+            <div>
+                <span style="font-weight: 700; color: var(--on-surface, #ffffff); font-size: 13px;">[P-${p.id}] ${escapeHtml(p.title)}</span>
+                <p style="font-size: 11px; color: var(--on-surface-variant, #a0a0a0); margin: 2px 0 0 0;">${escapeHtml(p.location)} • ${p.listingType}</p>
+            </div>
+            <span style="font-weight: 700; color: var(--primary, #c5a059); font-size: 13px;">$${Number(p.price).toLocaleString('en-US')}</span>
+        </div>
+    `).join('');
+
+    if (filtered.length > limit) {
+        html += `
+            <div style="padding: 8px; text-align: center; background: var(--surface-container-high, #2a2a2a); border-top: 1px solid var(--outline-variant, rgba(255,255,255,0.1));">
+                <button type="button" onclick="loadMoreProperties(event, '${escapeHtml(q)}')" style="background: var(--primary, #c5a059); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                    Load More (${filtered.length - limit} remaining)
+                </button>
+            </div>
+        `;
+    }
+
+    box.innerHTML = html;
+}
+
+function loadMoreProperties(event, query) {
+    if (event) event.stopPropagation();
+    propertyDisplayLimit += 10;
+    renderPropertySuggestions(query, propertyDisplayLimit);
+}
+
+function selectProperty(id) {
+    const prop = window.allProperties.find(p => p.id === id);
+    if (!prop) return;
+
+    document.getElementById('new-property-id-hidden').value = prop.id;
+    
+    const searchInput = document.getElementById('new-property-search-input');
+    if (searchInput) searchInput.classList.add('hidden');
+
+    const box = document.getElementById('new-property-suggestions-box');
+    if (box) {
+        box.classList.add('hidden');
+        box.style.display = 'none';
+    }
+
+    const card = document.getElementById('new-property-selected-card');
+    document.getElementById('new-prop-selected-title').textContent = `[P-${prop.id}] ${prop.title}`;
+    document.getElementById('new-prop-selected-meta').textContent = `$${Number(prop.price).toLocaleString('en-US')} • ${prop.listingType} • ${prop.location}`;
+    if (card) {
+        card.classList.remove('hidden');
+        card.style.display = 'flex';
+    }
+
+    // Auto-fill price & type
+    const priceInput = document.getElementById('new-price-input');
+    if (priceInput) {
+        priceInput.value = prop.price;
+        priceInput.readOnly = true;
+    }
+
+    const typeVal = prop.listingType === 'Rent' ? 'Rent' : 'Sell';
+    const hiddenTypeInput = document.getElementById('new-type-hidden');
+    if (hiddenTypeInput) hiddenTypeInput.value = typeVal;
+
+    const targetRadio = document.querySelector(`input[name="transactionTypeDisplay"][value="${typeVal}"]`);
+    if (targetRadio) {
+        targetRadio.checked = true;
+        document.querySelectorAll('.radio-card-label').forEach(l => l.classList.remove('selected'));
+        const lbl = targetRadio.closest('.radio-card-label');
+        if (lbl) lbl.classList.add('selected');
+    }
+
+    const radioWrapper = document.getElementById('new-type-radio-wrapper');
+    if (radioWrapper) radioWrapper.classList.add('locked');
+
+    updateCommissionRatePreview();
+    updateCommissionPreview();
+}
+
+function clearSelectedProperty() {
+    document.getElementById('new-property-id-hidden').value = '';
+    const input = document.getElementById('new-property-search-input');
+    if (input) {
+        input.value = '';
+        input.classList.remove('hidden');
+        input.style.display = '';
+    }
+
+    const card = document.getElementById('new-property-selected-card');
+    if (card) {
+        card.classList.add('hidden');
+        card.style.display = 'none';
+    }
+
+    const priceInput = document.getElementById('new-price-input');
+    if (priceInput) {
+        priceInput.value = '';
+        priceInput.readOnly = false;
+    }
+
+    const radioWrapper = document.getElementById('new-type-radio-wrapper');
+    if (radioWrapper) radioWrapper.classList.remove('locked');
+
+    updateCommissionRatePreview();
+    updateCommissionPreview();
+    handlePropertySearchFocus();
+}
+
+// 2. CLIENT AUTOCOMPLETE (FOR NEW TRANSACTION)
+function handleClientSearchFocus() {
+    renderClientSuggestions(document.getElementById('new-client-search-input')?.value || '');
+}
+
+function handleClientSearchInput(query) {
+    renderClientSuggestions(query);
+}
+
+function renderClientSuggestions(query = '') {
+    const box = document.getElementById('new-client-suggestions-box');
+    if (!box) return;
+    box.style.display = 'block';
+    box.classList.remove('hidden');
+
+    if (!window.allCustomers) window.allCustomers = [];
+
+    const q = query.toLowerCase().trim();
+    const filtered = window.allCustomers.filter(c => {
+        const idStr = String(c.id).toLowerCase();
+        const nameStr = (c.name || '').toLowerCase();
+        const emailStr = (c.email || '').toLowerCase();
+        const phoneStr = (c.phone || '').toLowerCase();
+        const unameStr = (c.username || '').toLowerCase();
+        return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
+    });
+
+    renderClientBoxHTML(box, filtered);
+
+    // Live AJAX query fetch
+    if (q.length >= 1) {
+        fetch(`/control-panel/transactions/api/search-customers?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.customers) {
+                    let updated = false;
+                    data.customers.forEach(c => {
+                        if (!window.allCustomers.some(item => item.id === c.id)) {
+                            window.allCustomers.push(c);
+                            updated = true;
+                        }
+                    });
+                    if (updated) {
+                        const newFiltered = window.allCustomers.filter(c => {
+                            const idStr = String(c.id).toLowerCase();
+                            const nameStr = (c.name || '').toLowerCase();
+                            const emailStr = (c.email || '').toLowerCase();
+                            const phoneStr = (c.phone || '').toLowerCase();
+                            const unameStr = (c.username || '').toLowerCase();
+                            return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
+                        });
+                        renderClientBoxHTML(box, newFiltered);
+                    }
+                }
+            })
+            .catch(err => console.debug('Customer AJAX search error:', err));
+    }
+}
+
+function renderClientBoxHTML(box, filtered) {
+    if (filtered.length === 0) {
+        box.innerHTML = '<div style="padding: 12px; color: var(--on-surface-variant, #a0a0a0); font-size: 13px; text-align: center;">No matching clients found</div>';
+        return;
+    }
+
+    let html = filtered.slice(0, 10).map(c => `
+        <div class="autocomplete-item" onclick="selectClient(${c.id})" style="padding: 10px 14px; border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.1)); cursor: pointer; transition: background 0.15s ease;">
+            <div style="font-weight: 700; color: var(--on-surface, #ffffff); font-size: 13px;">${escapeHtml(c.name)} <span style="font-weight: 400; color: var(--on-surface-variant, #a0a0a0); font-size: 11px;">(ID: ${c.id})</span></div>
+            <div style="font-size: 11px; color: var(--on-surface-variant, #a0a0a0); margin-top: 2px;">${escapeHtml(c.email || 'No email')} ${c.phone ? '• ' + escapeHtml(c.phone) : ''}</div>
+        </div>
+    `).join('');
+
+    box.innerHTML = html;
+}
+
+function selectClient(id) {
+    const client = window.allCustomers.find(c => c.id === id);
+    if (!client) return;
+
+    document.getElementById('new-client-id-hidden').value = client.id;
+    
+    const searchInput = document.getElementById('new-client-search-input');
+    if (searchInput) searchInput.classList.add('hidden');
+
+    const box = document.getElementById('new-client-suggestions-box');
+    if (box) {
+        box.classList.add('hidden');
+        box.style.display = 'none';
+    }
+
+    const card = document.getElementById('new-client-selected-card');
+    document.getElementById('new-client-selected-name').textContent = `${client.name} (ID: ${client.id})`;
+    document.getElementById('new-client-selected-email').textContent = `${client.email || 'No email'} ${client.phone ? '• ' + client.phone : ''}`;
+    if (card) {
+        card.classList.remove('hidden');
+        card.style.display = 'flex';
+    }
+}
+
+function clearSelectedClient() {
+    document.getElementById('new-client-id-hidden').value = '';
+    const input = document.getElementById('new-client-search-input');
+    if (input) {
+        input.value = '';
+        input.classList.remove('hidden');
+        input.style.display = '';
+    }
+
+    const card = document.getElementById('new-client-selected-card');
+    if (card) {
+        card.classList.add('hidden');
+        card.style.display = 'none';
+    }
+
+    handleClientSearchFocus();
+}
+
+// 3. REPORT CUSTOMER MULTI-SELECT AUTOCOMPLETE
+let selectedReportCustomerIds = [];
+
+function handleReportCustomerSearchFocus() {
+    renderReportCustomerSuggestions(document.getElementById('report-customer-search-input')?.value || '');
+}
+
+function handleReportCustomerSearchInput(query) {
+    renderReportCustomerSuggestions(query);
+}
+
+function renderReportCustomerSuggestions(query = '') {
+    const box = document.getElementById('report-customer-suggestions-box');
+    if (!box) return;
+    box.style.display = 'block';
+    box.classList.remove('hidden');
+
+    if (!window.allCustomers) window.allCustomers = [];
+
+    const q = query.toLowerCase().trim();
+    const filtered = window.allCustomers.filter(c => {
+        if (selectedReportCustomerIds.includes(c.id)) return false;
+        const idStr = String(c.id).toLowerCase();
+        const nameStr = (c.name || '').toLowerCase();
+        const emailStr = (c.email || '').toLowerCase();
+        const phoneStr = (c.phone || '').toLowerCase();
+        const unameStr = (c.username || '').toLowerCase();
+        return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
+    });
+
+    renderReportCustomerBoxHTML(box, filtered);
+
+    // Live AJAX query fetch
+    if (q.length >= 1) {
+        fetch(`/control-panel/transactions/api/search-customers?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.customers) {
+                    let updated = false;
+                    data.customers.forEach(c => {
+                        if (!window.allCustomers.some(item => item.id === c.id)) {
+                            window.allCustomers.push(c);
+                            updated = true;
+                        }
+                    });
+                    if (updated) {
+                        const newFiltered = window.allCustomers.filter(c => {
+                            if (selectedReportCustomerIds.includes(c.id)) return false;
+                            const idStr = String(c.id).toLowerCase();
+                            const nameStr = (c.name || '').toLowerCase();
+                            const emailStr = (c.email || '').toLowerCase();
+                            const phoneStr = (c.phone || '').toLowerCase();
+                            const unameStr = (c.username || '').toLowerCase();
+                            return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
+                        });
+                        renderReportCustomerBoxHTML(box, newFiltered);
+                    }
+                }
+            })
+            .catch(err => console.debug('Report Customer AJAX search error:', err));
+    }
+}
+
+function renderReportCustomerBoxHTML(box, filtered) {
+    if (filtered.length === 0) {
+        box.innerHTML = '<div style="padding: 12px; color: var(--on-surface-variant, #a0a0a0); font-size: 13px; text-align: center;">No matching clients found</div>';
+        return;
+    }
+
+    let html = filtered.slice(0, 10).map(c => `
+        <div class="autocomplete-item" onclick="addReportCustomerTag(${c.id})" style="padding: 10px 14px; border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.1)); cursor: pointer; transition: background 0.15s ease;">
+            <div style="font-weight: 700; color: var(--on-surface, #ffffff); font-size: 13px;">${escapeHtml(c.name)} <span style="font-weight: 400; color: var(--on-surface-variant, #a0a0a0); font-size: 11px;">(ID: ${c.id})</span></div>
+            <div style="font-size: 11px; color: var(--on-surface-variant, #a0a0a0); margin-top: 2px;">User: ${escapeHtml(c.username || 'N/A')} • ${escapeHtml(c.email || 'No email')} ${c.phone ? '• ' + escapeHtml(c.phone) : ''}</div>
+        </div>
+    `).join('');
+
+    box.innerHTML = html;
+}
+
+function addReportCustomerTag(id) {
+    if (!selectedReportCustomerIds.includes(id)) {
+        selectedReportCustomerIds.push(id);
+        updateReportCustomerTagsUI();
+    }
+    const input = document.getElementById('report-customer-search-input');
+    if (input) input.value = '';
+    const box = document.getElementById('report-customer-suggestions-box');
+    if (box) {
+        box.classList.add('hidden');
+        box.style.display = 'none';
+    }
+}
+
+function removeReportCustomerTag(id) {
+    selectedReportCustomerIds = selectedReportCustomerIds.filter(cId => cId !== id);
+    updateReportCustomerTagsUI();
+}
+
+function updateReportCustomerTagsUI() {
+    const container = document.getElementById('report-customer-tags-container');
+    const hiddenInput = document.getElementById('report-customer-ids-hidden');
+    if (!container || !hiddenInput) return;
+
+    if (selectedReportCustomerIds.length === 0) {
+        container.innerHTML = '<span style="font-size: 12px; color: var(--on-surface-variant, #888); font-style: italic;">All clients included (No filter selected)</span>';
+        hiddenInput.value = 'All';
+        return;
+    }
+
+    hiddenInput.value = selectedReportCustomerIds.join(',');
+
+    let html = selectedReportCustomerIds.map(id => {
+        const c = window.allCustomers.find(item => item.id === id);
+        const name = c ? c.name : `Client #${id}`;
+        return `
+            <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--primary, #c5a059); color: #fff; padding: 4px 10px; border-radius: 16px; font-size: 12px; font-weight: 600;">
+                <span>${escapeHtml(name)}</span>
+                <button type="button" onclick="removeReportCustomerTag(${id})" style="background: transparent; border: none; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; line-height: 1; padding: 0 2px;">&times;</button>
+            </span>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
