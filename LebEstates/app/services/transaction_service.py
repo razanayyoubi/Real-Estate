@@ -81,7 +81,9 @@ class TransactionService:
             'paid_transactions': paid_count
         }
 
-        properties = Property.query.filter_by(status='Published').order_by(Property.title.asc()).all()
+        properties = Property.query.filter(Property.status != 'Draft').order_by(Property.title.asc()).all()
+        if not properties:
+            properties = Property.query.order_by(Property.title.asc()).all()
         customers = Customer.query.all()
         employees = Employee.query.filter_by(status='Active').all()
 

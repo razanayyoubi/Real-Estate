@@ -962,15 +962,19 @@ function clearSelectedProperty() {
 }
 
 // 2. CLIENT AUTOCOMPLETE (FOR NEW TRANSACTION)
+let clientDisplayLimit = 5;
+
 function handleClientSearchFocus() {
-    renderClientSuggestions(document.getElementById('new-client-search-input')?.value || '');
+    clientDisplayLimit = 5;
+    renderClientSuggestions(document.getElementById('new-client-search-input')?.value || '', clientDisplayLimit);
 }
 
 function handleClientSearchInput(query) {
-    renderClientSuggestions(query);
+    clientDisplayLimit = 5;
+    renderClientSuggestions(query, clientDisplayLimit);
 }
 
-function renderClientSuggestions(query = '') {
+function renderClientSuggestions(query = '', limit = 5) {
     const box = document.getElementById('new-client-suggestions-box');
     if (!box) return;
     box.style.display = 'block';
@@ -988,7 +992,7 @@ function renderClientSuggestions(query = '') {
         return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
     });
 
-    renderClientBoxHTML(box, filtered);
+    renderClientBoxHTML(box, filtered, q, limit);
 
     // Live AJAX query fetch
     if (q.length >= 1) {
@@ -1012,7 +1016,7 @@ function renderClientSuggestions(query = '') {
                             const unameStr = (c.username || '').toLowerCase();
                             return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
                         });
-                        renderClientBoxHTML(box, newFiltered);
+                        renderClientBoxHTML(box, newFiltered, q, limit);
                     }
                 }
             })
@@ -1020,20 +1024,37 @@ function renderClientSuggestions(query = '') {
     }
 }
 
-function renderClientBoxHTML(box, filtered) {
+function renderClientBoxHTML(box, filtered, q = '', limit = 5) {
     if (filtered.length === 0) {
         box.innerHTML = '<div style="padding: 12px; color: var(--on-surface-variant, #a0a0a0); font-size: 13px; text-align: center;">No matching clients found</div>';
         return;
     }
 
-    let html = filtered.slice(0, 10).map(c => `
+    const itemsToShow = filtered.slice(0, limit);
+    let html = itemsToShow.map(c => `
         <div class="autocomplete-item" onclick="selectClient(${c.id})" style="padding: 10px 14px; border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.1)); cursor: pointer; transition: background 0.15s ease;">
             <div style="font-weight: 700; color: var(--on-surface, #ffffff); font-size: 13px;">${escapeHtml(c.name)} <span style="font-weight: 400; color: var(--on-surface-variant, #a0a0a0); font-size: 11px;">(ID: ${c.id})</span></div>
             <div style="font-size: 11px; color: var(--on-surface-variant, #a0a0a0); margin-top: 2px;">${escapeHtml(c.email || 'No email')} ${c.phone ? '• ' + escapeHtml(c.phone) : ''}</div>
         </div>
     `).join('');
 
+    if (filtered.length > limit) {
+        html += `
+            <div style="padding: 8px; text-align: center; background: var(--surface-container-high, #2a2a2a); border-top: 1px solid var(--outline-variant, rgba(255,255,255,0.1));">
+                <button type="button" onclick="loadMoreClients(event, '${escapeHtml(q)}')" style="background: var(--primary, #c5a059); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                    Load More (${filtered.length - limit} remaining)
+                </button>
+            </div>
+        `;
+    }
+
     box.innerHTML = html;
+}
+
+function loadMoreClients(event, query) {
+    if (event) event.stopPropagation();
+    clientDisplayLimit += 5;
+    renderClientSuggestions(query, clientDisplayLimit);
 }
 
 function selectClient(id) {
@@ -1080,16 +1101,19 @@ function clearSelectedClient() {
 
 // 3. REPORT CUSTOMER MULTI-SELECT AUTOCOMPLETE
 let selectedReportCustomerIds = [];
+let reportCustomerDisplayLimit = 5;
 
 function handleReportCustomerSearchFocus() {
-    renderReportCustomerSuggestions(document.getElementById('report-customer-search-input')?.value || '');
+    reportCustomerDisplayLimit = 5;
+    renderReportCustomerSuggestions(document.getElementById('report-customer-search-input')?.value || '', reportCustomerDisplayLimit);
 }
 
 function handleReportCustomerSearchInput(query) {
-    renderReportCustomerSuggestions(query);
+    reportCustomerDisplayLimit = 5;
+    renderReportCustomerSuggestions(query, reportCustomerDisplayLimit);
 }
 
-function renderReportCustomerSuggestions(query = '') {
+function renderReportCustomerSuggestions(query = '', limit = 5) {
     const box = document.getElementById('report-customer-suggestions-box');
     if (!box) return;
     box.style.display = 'block';
@@ -1108,7 +1132,7 @@ function renderReportCustomerSuggestions(query = '') {
         return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
     });
 
-    renderReportCustomerBoxHTML(box, filtered);
+    renderReportCustomerBoxHTML(box, filtered, q, limit);
 
     // Live AJAX query fetch
     if (q.length >= 1) {
@@ -1133,7 +1157,7 @@ function renderReportCustomerSuggestions(query = '') {
                             const unameStr = (c.username || '').toLowerCase();
                             return !q || idStr.includes(q) || nameStr.includes(q) || emailStr.includes(q) || phoneStr.includes(q) || unameStr.includes(q);
                         });
-                        renderReportCustomerBoxHTML(box, newFiltered);
+                        renderReportCustomerBoxHTML(box, newFiltered, q, limit);
                     }
                 }
             })
@@ -1141,20 +1165,37 @@ function renderReportCustomerSuggestions(query = '') {
     }
 }
 
-function renderReportCustomerBoxHTML(box, filtered) {
+function renderReportCustomerBoxHTML(box, filtered, q = '', limit = 5) {
     if (filtered.length === 0) {
         box.innerHTML = '<div style="padding: 12px; color: var(--on-surface-variant, #a0a0a0); font-size: 13px; text-align: center;">No matching clients found</div>';
         return;
     }
 
-    let html = filtered.slice(0, 10).map(c => `
+    const itemsToShow = filtered.slice(0, limit);
+    let html = itemsToShow.map(c => `
         <div class="autocomplete-item" onclick="addReportCustomerTag(${c.id})" style="padding: 10px 14px; border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.1)); cursor: pointer; transition: background 0.15s ease;">
             <div style="font-weight: 700; color: var(--on-surface, #ffffff); font-size: 13px;">${escapeHtml(c.name)} <span style="font-weight: 400; color: var(--on-surface-variant, #a0a0a0); font-size: 11px;">(ID: ${c.id})</span></div>
             <div style="font-size: 11px; color: var(--on-surface-variant, #a0a0a0); margin-top: 2px;">User: ${escapeHtml(c.username || 'N/A')} • ${escapeHtml(c.email || 'No email')} ${c.phone ? '• ' + escapeHtml(c.phone) : ''}</div>
         </div>
     `).join('');
 
+    if (filtered.length > limit) {
+        html += `
+            <div style="padding: 8px; text-align: center; background: var(--surface-container-high, #2a2a2a); border-top: 1px solid var(--outline-variant, rgba(255,255,255,0.1));">
+                <button type="button" onclick="loadMoreReportCustomers(event, '${escapeHtml(q)}')" style="background: var(--primary, #c5a059); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                    Load More (${filtered.length - limit} remaining)
+                </button>
+            </div>
+        `;
+    }
+
     box.innerHTML = html;
+}
+
+function loadMoreReportCustomers(event, query) {
+    if (event) event.stopPropagation();
+    reportCustomerDisplayLimit += 5;
+    renderReportCustomerSuggestions(query, reportCustomerDisplayLimit);
 }
 
 function addReportCustomerTag(id) {

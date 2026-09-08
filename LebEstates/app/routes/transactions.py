@@ -144,7 +144,7 @@ def api_search_properties():
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
     q = request.args.get('q', '').strip()
-    from app.models.properties import Property
+    from app.models.property import Property
     query = Property.query
     if q:
         if q.isdigit():
