@@ -34,6 +34,16 @@ class VisitService:
                 notes=notes
             )
             db.session.add(new_visit)
+            db.session.flush()
+
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='ADD',
+                table_name='visit',
+                record_id=new_visit.visitID,
+                description=f"Scheduled property visit #{new_visit.visitID} for property ID {property_id} on {visit_date} at {visit_time}",
+                user_id=user_id
+            )
             db.session.commit()
             
             # Send notifications (wrapped to prevent errors from breaking main action)
@@ -50,14 +60,6 @@ class VisitService:
                     message=f"Your visit request for property '{prop_title}' on {visit_date} at {visit_time} has been scheduled successfully.",
                     action_url="/dashboard"
                 )
-                
-                # 2. Notify assigned Employee
-                if employee:
-                    NotificationService.create_notification(
-                        user_id=employee.userID,
-                        message=f"A new visit has been scheduled for property '{prop_title}' on {visit_date} at {visit_time}.",
-                        action_url="/control-panel/visits"
-                    )
             except Exception as notif_err:
                 print(f"[Warning] Failed to send visit scheduling notifications: {str(notif_err)}")
 
@@ -131,8 +133,18 @@ class VisitService:
             return {'success': False, 'error': 'Invalid status', 'code': 400}
 
         try:
+            old_status = visit.status
             visit.status = new_status
             visit.updatedAt = datetime.now()
+
+            from app.models.users import AuditLog
+            prop_title = visit.property_obj.title if visit.property_obj else f"ID {visit.propertyID}"
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='visit',
+                record_id=visit_id,
+                description=f"Updated status of visit #{visit_id} for '{prop_title}' from '{old_status}' to '{new_status}'"
+            )
             db.session.commit()
             
             # Send notifications (wrapped)
@@ -140,7 +152,6 @@ class VisitService:
                 from app.services.notification_service import NotificationService
                 cust_user_id = visit.customer.userID if (visit.customer and visit.customer.user) else None
                 if cust_user_id:
-                    prop_title = visit.property_obj.title if visit.property_obj else "Property"
                     NotificationService.create_notification(
                         user_id=cust_user_id,
                         message=f"The status of your visit request for property '{prop_title}' on {visit.visitDate} has been updated to: {new_status}.",
@@ -170,12 +181,21 @@ class VisitService:
         try:
             visit.employeeID = employee_id
             visit.updatedAt = datetime.now()
+
+            from app.models.users import AuditLog
+            prop_title = visit.property_obj.title if visit.property_obj else f"ID {visit.propertyID}"
+            emp_name = employee.user.fullName if (employee and employee.user) else f"ID {employee_id}"
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='visit',
+                record_id=visit_id,
+                description=f"Assigned consultant '{emp_name}' to visit #{visit_id} for property '{prop_title}'"
+            )
             db.session.commit()
             
             # Send notifications (wrapped)
             try:
                 from app.services.notification_service import NotificationService
-                prop_title = visit.property_obj.title if visit.property_obj else "Property"
                 
                 # 1. Notify Employee
                 if employee:
@@ -188,7 +208,6 @@ class VisitService:
                 # 2. Notify Customer
                 cust_user_id = visit.customer.userID if (visit.customer and visit.customer.user) else None
                 if cust_user_id:
-                    emp_name = employee.user.fullName if (employee and employee.user) else "a property specialist"
                     NotificationService.create_notification(
                         user_id=cust_user_id,
                         message=f"A consultant ({emp_name}) has been assigned to guide you through your visit for property '{prop_title}' on {visit.visitDate} at {visit.visitTime}.",

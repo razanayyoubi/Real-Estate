@@ -105,8 +105,8 @@
                     <tr class="table-row">
                         <td class="table-td body-md text-on-surface" style="font-weight: 500;" data-label="Employee ID">{{ emp.employee_id }}</td>
                         <td class="table-td" data-label="Full Name">
-                            <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-                                <div class="employee-avatar">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="employee-avatar" style="flex-shrink: 0;">
                                     <img alt="Employee Avatar" src="{{ emp.avatar_url }}">
                                 </div>
                                 <span class="body-md text-primary" style="font-weight: 600;">{{ emp.full_name }}</span>

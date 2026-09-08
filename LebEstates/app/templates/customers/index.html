@@ -105,8 +105,8 @@
                     <tr class="table-row">
                         <td class="table-td body-md text-on-surface" style="font-weight: 500;" data-label="Customer ID">{{ customer.customer_id }}</td>
                         <td class="table-td" data-label="Full Name">
-                            <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-                                <div class="customer-avatar">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="customer-avatar" style="flex-shrink: 0;">
                                     <img alt="Customer Avatar" src="{{ customer.avatar_url }}">
                                 </div>
                                 <span class="body-md text-primary" style="font-weight: 600;">{{ customer.full_name }}</span>
@@ -154,17 +154,8 @@
         
         <!-- Pagination -->
         <div class="pagination-container">
-            <span class="caption text-on-surface-variant">Showing {{ customers|length }} of {{ stats.total }} results</span>
-            <div class="pagination-controls">
-                <button class="pagination-btn" disabled>
-                    <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                <button class="pagination-btn active">1</button>
-                <button class="pagination-btn">2</button>
-                <button class="pagination-btn">3</button>
-                <button class="pagination-btn">
-                    <span class="material-symbols-outlined">chevron_right</span>
-                </button>
+            <span class="caption text-on-surface-variant" id="paginationShowingText">Showing {{ customers|length }} results</span>
+            <div class="pagination-controls" id="paginationControls">
             </div>
         </div>
     </section>
@@ -517,12 +508,13 @@
 
     function renderPagination() {
         const rows = document.querySelectorAll('.table-body .table-row');
-        const countSpan = document.querySelector('.pagination-container .caption');
-        const controlsContainer = document.querySelector('.pagination-controls');
+        const countSpan = document.getElementById('paginationShowingText') || document.querySelector('.pagination-container .caption');
+        const controlsContainer = document.getElementById('paginationControls') || document.querySelector('.pagination-controls');
 
         const totalItems = matchingRows.length;
         const totalPages = Math.ceil(totalItems / pageSize) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
 
         const startIdx = (currentPage - 1) * pageSize;
         const endIdx = Math.min(startIdx + pageSize, totalItems);
@@ -534,7 +526,9 @@
         matchingRows.slice(startIdx, endIdx).forEach(row => row.style.display = '');
 
         if (countSpan) {
-            countSpan.textContent = `Showing ${totalItems > 0 ? startIdx + 1 : 0}-${endIdx} of ${totalItems} results`;
+            countSpan.textContent = totalItems > 0 
+                ? `Showing ${startIdx + 1}-${endIdx} of ${totalItems} results`
+                : 'Showing 0 of 0 results';
         }
 
         let emptyRow = document.getElementById('empty-filter-row');
@@ -559,13 +553,16 @@
         if (controlsContainer) {
             controlsContainer.innerHTML = '';
 
+            // Previous Button
             const prevBtn = document.createElement('button');
             prevBtn.className = 'pagination-btn';
             prevBtn.disabled = currentPage === 1;
             prevBtn.innerHTML = '<span class="material-symbols-outlined">chevron_left</span>';
+            prevBtn.title = 'Previous Page';
             prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderPagination(); } };
             controlsContainer.appendChild(prevBtn);
 
+            // Numbered Page Buttons
             for (let i = 1; i <= totalPages; i++) {
                 const pageBtn = document.createElement('button');
                 pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
@@ -574,19 +571,20 @@
                 controlsContainer.appendChild(pageBtn);
             }
 
+            // Next Button
             const nextBtn = document.createElement('button');
             nextBtn.className = 'pagination-btn';
             nextBtn.disabled = currentPage >= totalPages;
             nextBtn.innerHTML = '<span class="material-symbols-outlined">chevron_right</span>';
+            nextBtn.title = 'Next Page';
             nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderPagination(); } };
             controlsContainer.appendChild(nextBtn);
         }
     }
 
     function applyFilters() {
-        const searchVal = document.getElementById('filterSearch').value.toLowerCase().trim();
-        const statusVal = document.getElementById('filterStatus').value;
-        const dateVal = document.getElementById('filterDate').value;
+        const clientSearchInput = document.getElementById('filter-client-search');
+        const searchVal = clientSearchInput ? clientSearchInput.value.toLowerCase().trim() : '';
 
         const rows = document.querySelectorAll('.table-body .table-row');
         matchingRows = [];
@@ -595,45 +593,28 @@
             if (row.id === 'empty-filter-row') return;
             if (row.cells.length === 1 && row.cells[0].colSpan === 7) return;
 
-            const idText = row.cells[0].textContent.toLowerCase();
-            const nameText = row.cells[1].querySelector('span.body-md').textContent.toLowerCase();
-            const emailText = row.cells[2].querySelector('p.body-md').textContent.toLowerCase();
-            const phoneText = row.cells[2].querySelector('p.caption').textContent.toLowerCase();
-            const locationText = row.cells[3].textContent.toLowerCase();
-            const statusText = row.cells[4].querySelector('.status-badge').textContent.trim().toLowerCase();
-            const dateText = row.cells[5].textContent.trim();
+            const idText = row.cells[0] ? row.cells[0].textContent.toLowerCase() : '';
+            const nameEl = row.cells[1] ? row.cells[1].querySelector('span.body-md') : null;
+            const nameText = nameEl ? nameEl.textContent.toLowerCase() : '';
+            const emailEl = row.cells[2] ? row.cells[2].querySelector('p.body-md') : null;
+            const emailText = emailEl ? emailEl.textContent.toLowerCase() : '';
+            const phoneEl = row.cells[2] ? row.cells[2].querySelector('p.caption') : null;
+            const phoneText = phoneEl ? phoneEl.textContent.toLowerCase() : '';
+            const locationText = row.cells[3] ? row.cells[3].textContent.toLowerCase() : '';
+            const statusBadge = row.cells[4] ? row.cells[4].querySelector('.status-badge') : null;
+            const statusText = statusBadge ? statusBadge.textContent.trim().toLowerCase() : '';
+            const dateText = row.cells[5] ? row.cells[5].textContent.trim() : '';
 
             const matchesSearch = !searchVal || 
                 idText.includes(searchVal) || 
                 nameText.includes(searchVal) || 
                 emailText.includes(searchVal) || 
                 phoneText.includes(searchVal) || 
-                locationText.includes(searchVal);
+                locationText.includes(searchVal) ||
+                statusText.includes(searchVal) ||
+                dateText.includes(searchVal);
 
-            let matchesStatus = true;
-            if (statusVal === 'Active') {
-                matchesStatus = (statusText === 'active');
-            } else if (statusVal === 'Disabled') {
-                matchesStatus = (statusText === 'disabled' || statusText === 'blacklisted');
-            }
-
-            let matchesDate = true;
-            if (dateVal !== 'Date Created' && dateText !== 'N/A') {
-                const createdDate = new Date(dateText);
-                const now = new Date();
-                const diffTime = Math.abs(now - createdDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (dateVal === 'Last 30 Days') {
-                    matchesDate = (diffDays <= 30);
-                } else if (dateVal === 'Last 6 Months') {
-                    matchesDate = (diffDays <= 180);
-                } else if (dateVal === 'Last Year') {
-                    matchesDate = (diffDays <= 365);
-                }
-            }
-
-            if (matchesSearch && matchesStatus && matchesDate) {
+            if (matchesSearch) {
                 matchingRows.push(row);
             }
         });
@@ -647,8 +628,12 @@
         if(e.target === this) closeModals();
     });
 
-    // Apply default filters on page load
+    // Apply default filters and attach live search on page load
     document.addEventListener('DOMContentLoaded', () => {
+        const clientSearchInput = document.getElementById('filter-client-search');
+        if (clientSearchInput) {
+            clientSearchInput.addEventListener('input', applyFilters);
+        }
         applyFilters();
     });
 </script>

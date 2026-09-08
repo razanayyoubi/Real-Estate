@@ -33,6 +33,16 @@ def request_consultation(user_id, data):
             scheduledTime=pref_time_str if pref_time_str else None
         )
         db.session.add(new_consultation)
+        db.session.flush()
+
+        from app.models.users import AuditLog
+        AuditLog.log_action(
+            action='ADD',
+            table_name='consultation',
+            record_id=new_consultation.consultationID,
+            description=f"Requested new consultation #{new_consultation.consultationID} (Type: '{consult_type}', Method: '{contact_method}')",
+            user_id=user_id
+        )
         db.session.commit()
         
         # Send notifications (wrapped)
@@ -144,8 +154,17 @@ class ConsultationService:
             return {'success': False, 'error': 'Invalid status', 'code': 400}
 
         try:
+            old_status = consultation.status
             consultation.status = new_status
             consultation.updatedAt = datetime.now()
+
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='consultation',
+                record_id=consultation_id,
+                description=f"Updated status of consultation #{consultation_id} ('{consultation.consultationType}') from '{old_status}' to '{new_status}'"
+            )
             db.session.commit()
             
             # Send notifications (wrapped)
@@ -187,6 +206,15 @@ class ConsultationService:
 
         try:
             consultation.updatedAt = datetime.now()
+
+            from app.models.users import AuditLog
+            emp_name = employee.user.fullName if (employee_id and employee and employee.user) else "Unassigned"
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='consultation',
+                record_id=consultation_id,
+                description=f"Assigned consultant '{emp_name}' to consultation #{consultation_id} ('{consultation.consultationType}')"
+            )
             db.session.commit()
             
             # Send notifications (wrapped)
@@ -246,6 +274,14 @@ class ConsultationService:
                 consultation.status = 'Scheduled'
 
             consultation.updatedAt = datetime.now()
+
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='consultation',
+                record_id=consultation_id,
+                description=f"Updated schedule for consultation #{consultation_id} ('{consultation.consultationType}') to {consultation.scheduledDate} {consultation.scheduledTime}"
+            )
             db.session.commit()
             
             # Send notifications (wrapped)
@@ -278,6 +314,14 @@ class ConsultationService:
         try:
             consultation.notes = notes
             consultation.updatedAt = datetime.now()
+
+            from app.models.users import AuditLog
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='consultation',
+                record_id=consultation_id,
+                description=f"Updated consultant notes for consultation #{consultation_id} ('{consultation.consultationType}')"
+            )
             db.session.commit()
             return {'success': True, 'message': 'Notes updated successfully'}
         except Exception as e:

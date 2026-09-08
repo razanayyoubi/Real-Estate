@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, session, abort
 from functools import wraps
 from app.models.base import db
-from app.models.users import Users, SupportSession, SupportMessage
+from app.models.users import Users, SupportSession, SupportMessage, AuditLog
 
 support_bp = Blueprint('support', __name__, url_prefix='/support')
 
@@ -58,6 +58,15 @@ def create_session():
             status='Open'
         )
         db.session.add(new_session)
+        db.session.flush()
+
+        AuditLog.log_action(
+            action='ADD',
+            table_name='support_sessions',
+            record_id=new_session.sessionID,
+            description=f"Created support request #{new_session.sessionID} with subject: '{subject}'",
+            user_id=user_id
+        )
         db.session.commit()
         flash('Support request created successfully! An agent will join shortly.', 'success')
         return redirect(url_for('support.customer_chat', session_id=new_session.sessionID))
@@ -117,7 +126,6 @@ def assign_session(session_id):
     try:
         chat_session.employeeID = user_id
         chat_session.status = 'Active'
-        db.session.commit()
         
         # Add automated system join message
         sys_msg = SupportMessage(
@@ -126,6 +134,14 @@ def assign_session(session_id):
             messageText="Hello! I have joined this chat support session. How can I help you today?"
         )
         db.session.add(sys_msg)
+
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='support_sessions',
+            record_id=chat_session.sessionID,
+            description=f"Agent (ID {user_id}) claimed and activated support session #{chat_session.sessionID} ('{chat_session.subject}')",
+            user_id=user_id
+        )
         db.session.commit()
         
         flash('Chat session assigned successfully!', 'success')
@@ -354,7 +370,15 @@ def chatbot_escalate():
             employeeID=None
         )
         db.session.add(new_session)
-        db.session.commit()
+        db.session.flush()
+
+        AuditLog.log_action(
+            action='ADD',
+            table_name='support_sessions',
+            record_id=new_session.sessionID,
+            description=f"Escalated AI chatbot conversation to live human support #{new_session.sessionID} ('{subject}')",
+            user_id=user_id
+        )
         
         from app.services.chatbot_service import GeminiChatbotService
         ai_user = GeminiChatbotService.get_ai_user()
@@ -405,6 +429,14 @@ def close_session(session_id):
         chat_session.status = 'Closed'
         chat_session.closedAt = datetime.now()
         chat_session.closedByUserID = user_id
+
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='support_sessions',
+            record_id=session_id,
+            description=f"Closed support session #{session_id} ('{chat_session.subject}')",
+            user_id=user_id
+        )
         db.session.commit()
         return jsonify({'success': True, 'message': 'Support session closed successfully.'})
     except Exception as e:
@@ -434,6 +466,14 @@ def rate_session(session_id):
     try:
         chat_session.rating = int(rating)
         chat_session.ratingFeedback = feedback
+
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='support_sessions',
+            record_id=session_id,
+            description=f"Customer submitted {rating}-star rating for support session #{session_id}",
+            user_id=user_id
+        )
         db.session.commit()
         return jsonify({'success': True, 'message': 'Thank you for your rating!'})
     except Exception as e:

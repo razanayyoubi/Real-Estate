@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from functools import wraps
 from app.models.base import db
 from app.models.email_hub import EmailTemplate, SenderIdentity, EmailFeatureConfig, DistributionList, DistributionListMember, DistributionListRule, EmailLog, EmailDraft
+from app.models.users import AuditLog
 from app.services.email_service import EmailService
 from app.services.distribution_list_service import DistributionListService
 
@@ -85,6 +86,13 @@ def save_configs():
                 config_obj.replyToOverride = request.form.get(f"replyto_{fid}")
                 config_obj.updatedAt = datetime.utcnow()
                 config_obj.updatedByUserID = session.get('user_id')
+        
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='email_feature_configs',
+            record_id=0,
+            description=f"Updated email feature routing configurations for {len(feature_ids)} features"
+        )
         db.session.commit()
         flash('Email features configuration saved successfully!', 'success')
     except Exception as e:
@@ -117,6 +125,14 @@ def create_sender():
             isActive=True
         )
         db.session.add(new_sender)
+        db.session.flush()
+
+        AuditLog.log_action(
+            action='ADD',
+            table_name='sender_identities',
+            record_id=new_sender.senderIdentityID,
+            description=f"Created email sender identity '{display_name}' <{from_email}>"
+        )
         db.session.commit()
         flash('Sender identity created successfully!', 'success')
     except Exception as e:
@@ -129,6 +145,13 @@ def create_sender():
 def toggle_sender(id):
     sender = SenderIdentity.query.get_or_404(id)
     sender.isActive = not sender.isActive
+
+    AuditLog.log_action(
+        action='EDIT',
+        table_name='sender_identities',
+        record_id=id,
+        description=f"{'Activated' if sender.isActive else 'Deactivated'} sender identity '{sender.fromEmail}'"
+    )
     db.session.commit()
     return jsonify({'success': True, 'isActive': sender.isActive})
 
@@ -137,6 +160,12 @@ def toggle_sender(id):
 def delete_sender(id):
     sender = SenderIdentity.query.get_or_404(id)
     try:
+        AuditLog.log_action(
+            action='DELETE',
+            table_name='sender_identities',
+            record_id=id,
+            description=f"Deleted sender identity '{sender.fromEmail}'"
+        )
         db.session.delete(sender)
         db.session.commit()
         flash('Sender identity deleted successfully.', 'success')
@@ -154,6 +183,13 @@ def default_sender(id):
         SenderIdentity.query.update({SenderIdentity.isDefault: False})
         # Set selected sender isDefault to True
         sender.isDefault = True
+
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='sender_identities',
+            record_id=id,
+            description=f"Set sender identity '{sender.fromEmail}' as default system sender"
+        )
         db.session.commit()
         flash(f'Sender identity "{sender.fromEmail}" is now the default sender.', 'success')
     except Exception as e:
@@ -200,6 +236,14 @@ def create_template():
                 updatedByUserID=session.get('user_id')
             )
             db.session.add(new_tpl)
+            db.session.flush()
+
+            AuditLog.log_action(
+                action='ADD',
+                table_name='email_templates',
+                record_id=new_tpl.templateID,
+                description=f"Created email template '{name}' (Key: {key})"
+            )
             db.session.commit()
             flash('Email template created successfully!', 'success')
             return redirect(url_for('email_hub.templates_list'))
@@ -232,6 +276,13 @@ def edit_template(key):
             template.isActive = is_active
             template.updatedByUserID = session.get('user_id')
             template.updatedAt = datetime.utcnow()
+
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='email_templates',
+                record_id=template.templateID,
+                description=f"Updated email template '{name}' (Key: {key})"
+            )
             db.session.commit()
             flash('Email template updated successfully!', 'success')
             return redirect(url_for('email_hub.templates_list'))
@@ -246,6 +297,12 @@ def edit_template(key):
 def delete_template(key):
     template = EmailTemplate.query.filter_by(templateKey=key).first_or_404()
     try:
+        AuditLog.log_action(
+            action='DELETE',
+            table_name='email_templates',
+            record_id=template.templateID,
+            description=f"Deleted email template '{template.name}' (Key: {key})"
+        )
         db.session.delete(template)
         db.session.commit()
         flash('Email template deleted successfully.', 'success')
@@ -287,6 +344,13 @@ def create_distribution_list():
             excludeBlacklistedCustomers=True
         )
         db.session.add(new_rule)
+
+        AuditLog.log_action(
+            action='ADD',
+            table_name='distribution_lists',
+            record_id=new_list.distributionListID,
+            description=f"Created distribution list '{name}'"
+        )
         db.session.commit()
         flash('Distribution list created successfully!', 'success')
     except Exception as e:
@@ -312,6 +376,12 @@ def edit_list_rules(id):
         rule.excludeBlacklistedCustomers = 'exclude_blacklisted' in request.form
         rule.manualEmailsRaw = request.form.get('manual_emails')
 
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='distribution_lists',
+            record_id=id,
+            description=f"Updated rules and configuration for distribution list '{dl_list.name}'"
+        )
         db.session.commit()
         flash('List rules and description updated successfully!', 'success')
     except Exception as e:
@@ -324,6 +394,12 @@ def edit_list_rules(id):
 def delete_distribution_list(id):
     dl = DistributionList.query.get_or_404(id)
     try:
+        AuditLog.log_action(
+            action='DELETE',
+            table_name='distribution_lists',
+            record_id=id,
+            description=f"Deleted distribution list '{dl.name}'"
+        )
         db.session.delete(dl)
         db.session.commit()
         flash('Distribution list deleted successfully.', 'success')
@@ -352,6 +428,14 @@ def add_list_member(list_id):
             isActive=True
         )
         db.session.add(new_member)
+        db.session.flush()
+
+        AuditLog.log_action(
+            action='ADD',
+            table_name='distribution_list_members',
+            record_id=new_member.memberID,
+            description=f"Added member '{email}' to distribution list ID {list_id}"
+        )
         db.session.commit()
         flash('Member added to distribution list.', 'success')
     except Exception as e:
@@ -364,6 +448,12 @@ def add_list_member(list_id):
 def delete_list_member(member_id):
     member = DistributionListMember.query.get_or_404(member_id)
     try:
+        AuditLog.log_action(
+            action='DELETE',
+            table_name='distribution_list_members',
+            record_id=member_id,
+            description=f"Removed member '{member.email}' from distribution list ID {member.distributionListID}"
+        )
         db.session.delete(member)
         db.session.commit()
         flash('Member removed from distribution list.', 'success')
@@ -431,6 +521,13 @@ def send_email_action():
             body=body,
             user_id=session.get('user_id')
         )
+        AuditLog.log_action(
+            action='ADD',
+            table_name='email_logs',
+            record_id=0,
+            description=f"Sent batch email broadcast '{subject}' to {len(recipients)} recipients ({delivered} delivered)"
+        )
+        db.session.commit()
         return jsonify({
             'success': True,
             'recipientsCount': len(recipients),
@@ -461,6 +558,13 @@ def save_draft():
             draft.recipientsRaw = recipients_raw
             draft.selectedDistributionListIDsRaw = list_ids_str
             draft.lastUpdated = datetime.utcnow()
+
+            AuditLog.log_action(
+                action='EDIT',
+                table_name='email_drafts',
+                record_id=draft_id,
+                description=f"Updated email draft #{draft_id} '{subject or 'Untitled'}'"
+            )
         else:
             draft = EmailDraft(
                 subject=subject,
@@ -470,6 +574,14 @@ def save_draft():
                 createdByUserID=session.get('user_id')
             )
             db.session.add(draft)
+            db.session.flush()
+
+            AuditLog.log_action(
+                action='ADD',
+                table_name='email_drafts',
+                record_id=draft.draftID,
+                description=f"Created email draft #{draft.draftID} '{subject or 'Untitled'}'"
+            )
         
         db.session.commit()
         return jsonify({'success': True, 'draft_id': draft.draftID})
@@ -496,6 +608,12 @@ def get_draft(id):
 def delete_draft(id):
     draft = EmailDraft.query.filter_by(draftID=id, createdByUserID=session.get('user_id')).first_or_404()
     try:
+        AuditLog.log_action(
+            action='DELETE',
+            table_name='email_drafts',
+            record_id=id,
+            description=f"Deleted email draft #{id} '{draft.subject or 'Untitled'}'"
+        )
         db.session.delete(draft)
         db.session.commit()
         return jsonify({'success': True})

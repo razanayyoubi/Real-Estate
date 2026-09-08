@@ -135,9 +135,42 @@ def create_app(config_class=Config):
         try:
             # Seed Default Roles
             from app.models.users import Users, Role
-            for rname in ['Admin', 'Employee', 'Customer']:
+            for rname in ['Admin', 'Employee', 'Customer', 'Accountant']:
                 if not Role.query.filter_by(roleName=rname).first():
                     db.session.add(Role(roleName=rname))
+            db.session.commit()
+
+            # Seed Default Users
+            import bcrypt
+            from datetime import date
+            roles = {r.roleName: r.roleID for r in Role.query.all()}
+            default_users = [
+                {'fullName': 'Admin User', 'email': 'admin@lebestates.com', 'roleName': 'Admin'},
+                {'fullName': 'Employee User', 'email': 'employee@lebestates.com', 'roleName': 'Employee'},
+                {'fullName': 'Customer User', 'email': 'customer@lebestates.com', 'roleName': 'Customer'},
+                {'fullName': 'Accountant User', 'email': 'accountant@lebestates.com', 'roleName': 'Accountant'}
+            ]
+            for u in default_users:
+                existing_user = Users.query.filter_by(email=u['email']).first()
+                if not existing_user:
+                    dummy_hash = bcrypt.hashpw('123456'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    existing_user = Users(
+                        fullName=u['fullName'],
+                        email=u['email'],
+                        passwordHash=dummy_hash,
+                        roleID=roles[u['roleName']],
+                        status='Active'
+                    )
+                    db.session.add(existing_user)
+                    db.session.flush()
+                
+                # Ensure customer / employee profile tables exist
+                if u['roleName'] == 'Customer':
+                    if not Customer.query.filter_by(userID=existing_user.userID).first():
+                        db.session.add(Customer(userID=existing_user.userID, address='Lebanon'))
+                elif u['roleName'] in ['Employee', 'Admin', 'Accountant']:
+                    if not Employee.query.filter_by(userID=existing_user.userID).first():
+                        db.session.add(Employee(userID=existing_user.userID, position=u['roleName'], hireDate=date.today(), status='Active'))
             db.session.commit()
 
             # Seed AI Assistant User
