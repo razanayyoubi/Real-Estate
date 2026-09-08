@@ -9,6 +9,29 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSyncTime();
 });
 
+function switchViewPeriod(period) {
+    const monthlyBtn = document.getElementById('view-monthly-btn');
+    const yearlyBtn = document.getElementById('view-yearly-btn');
+    if (monthlyBtn && yearlyBtn) {
+        if (period === 'monthly') {
+            monthlyBtn.classList.add('active');
+            monthlyBtn.style.background = 'var(--primary)';
+            monthlyBtn.style.color = 'white';
+            yearlyBtn.classList.remove('active');
+            yearlyBtn.style.background = 'transparent';
+            yearlyBtn.style.color = 'var(--on-surface-variant)';
+        } else {
+            yearlyBtn.classList.add('active');
+            yearlyBtn.style.background = 'var(--primary)';
+            yearlyBtn.style.color = 'white';
+            monthlyBtn.classList.remove('active');
+            monthlyBtn.style.background = 'transparent';
+            monthlyBtn.style.color = 'var(--on-surface-variant)';
+        }
+    }
+    fetchCommissionsData();
+}
+
 /**
  * Updates the "Last Synced" text indicator to the current system time
  */

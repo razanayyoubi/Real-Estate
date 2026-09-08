@@ -14,7 +14,14 @@ def consultations_list():
         session.clear()
         return redirect(url_for('auth.login_page'))
 
-    data = ConsultationService.get_consultations_list_data()
+    filters = {
+        'server_q': request.args.get('server_q', ''),
+        'status': request.args.get('status', 'All'),
+        'consultant_id': request.args.get('consultant_id', 'All'),
+        'method': request.args.get('method', 'All')
+    }
+
+    data = ConsultationService.get_consultations_list_data(filters)
 
     return render_template(
         'consultations_mgmt.html',
@@ -25,7 +32,8 @@ def consultations_list():
         scheduled_consultations=data['scheduled_consultations'],
         completion_rate=data['completion_rate'],
         employees=data['employees'],
-        recent_notes=data['recent_notes']
+        recent_notes=data['recent_notes'],
+        filters=filters
     )
 
 @consultations_bp.route('/control-panel/consultations/<int:consultation_id>/update_status', methods=['POST'])
@@ -89,3 +97,146 @@ def update_consultation_notes(consultation_id):
         return jsonify({'success': True, 'message': res.get('message')})
     else:
         return jsonify({'error': res.get('error')}), res.get('code', 500)
+
+
+@consultations_bp.route('/control-panel/consultations/create', methods=['POST'])
+def create_consultation():
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    data = request.get_json() or {}
+    customer_id = data.get('customer_id')
+    assigned_employee_id = data.get('assigned_employee_id') # can be None
+    consultation_type = data.get('consultation_type')
+    preferred_method = data.get('preferred_method')
+    message = data.get('message', '')
+    scheduled_date_str = data.get('scheduled_date')
+    scheduled_time_str = data.get('scheduled_time')
+    status = data.get('status', 'Pending')
+    notes = data.get('notes', '')
+    
+    if not customer_id or not consultation_type or not preferred_method:
+        return jsonify({'error': 'Customer, Type, and Preferred Method are required'}), 400
+        
+    scheduled_date = None
+    scheduled_time = None
+    
+    if scheduled_date_str:
+        try:
+            scheduled_date = datetime.strptime(scheduled_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format'}), 400
+    if scheduled_time_str:
+        try:
+            scheduled_time = datetime.strptime(scheduled_time_str, '%H:%M').time()
+        except ValueError:
+            return jsonify({'error': 'Invalid time format'}), 400
+            
+    if assigned_employee_id == '' or assigned_employee_id == 'Unassigned' or assigned_employee_id is None or str(assigned_employee_id).lower() == 'all':
+        emp_val = None
+    else:
+        emp_val = int(assigned_employee_id)
+        
+    from app.models.operations import Consultation
+    from app.models.users import AuditLog, db
+    
+    try:
+        consultation = Consultation(
+            customerID=int(customer_id),
+            assignedEmployeeID=emp_val,
+            consultationType=consultation_type,
+            preferredMethod=preferred_method,
+            message=message,
+            scheduledDate=scheduled_date,
+            scheduledTime=scheduled_time,
+            status=status,
+            notes=notes
+        )
+        db.session.add(consultation)
+        db.session.commit()
+        
+        AuditLog.log_action(
+            action='ADD',
+            table_name='consultation',
+            record_id=consultation.consultationID,
+            description=f"Created consultation request for Customer ID {customer_id}.",
+            user_id=session['user_id']
+        )
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Consultation created successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create consultation: {str(e)}'}), 500
+
+
+@consultations_bp.route('/control-panel/consultations/<int:consultation_id>/edit', methods=['POST'])
+def edit_consultation(consultation_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    from app.models.operations import Consultation
+    consultation = Consultation.query.get_or_404(consultation_id)
+    
+    data = request.get_json() or {}
+    customer_id = data.get('customer_id')
+    assigned_employee_id = data.get('assigned_employee_id')
+    consultation_type = data.get('consultation_type')
+    preferred_method = data.get('preferred_method')
+    message = data.get('message')
+    scheduled_date_str = data.get('scheduled_date')
+    scheduled_time_str = data.get('scheduled_time')
+    status = data.get('status')
+    notes = data.get('notes')
+    
+    if not customer_id or not consultation_type or not preferred_method:
+        return jsonify({'error': 'Customer, Type, and Preferred Method are required'}), 400
+        
+    scheduled_date = None
+    scheduled_time = None
+    
+    if scheduled_date_str:
+        try:
+            scheduled_date = datetime.strptime(scheduled_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format'}), 400
+    if scheduled_time_str:
+        try:
+            scheduled_time = datetime.strptime(scheduled_time_str, '%H:%M').time()
+        except ValueError:
+            return jsonify({'error': 'Invalid time format'}), 400
+            
+    if assigned_employee_id == '' or assigned_employee_id == 'Unassigned' or assigned_employee_id is None or str(assigned_employee_id).lower() == 'all':
+        emp_val = None
+    else:
+        emp_val = int(assigned_employee_id)
+        
+    from app.models.users import AuditLog, db
+    
+    try:
+        consultation.customerID = int(customer_id)
+        consultation.assignedEmployeeID = emp_val
+        consultation.consultationType = consultation_type
+        consultation.preferredMethod = preferred_method
+        if message is not None:
+            consultation.message = message
+        consultation.scheduledDate = scheduled_date
+        consultation.scheduledTime = scheduled_time
+        if status:
+            consultation.status = status
+        if notes is not None:
+            consultation.notes = notes
+            
+        db.session.commit()
+        
+        AuditLog.log_action(
+            action='UPDATE',
+            table_name='consultation',
+            record_id=consultation.consultationID,
+            description=f"Updated consultation details for Consultation ID {consultation.consultationID}.",
+            user_id=session['user_id']
+        )
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Consultation updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update consultation: {str(e)}'}), 500

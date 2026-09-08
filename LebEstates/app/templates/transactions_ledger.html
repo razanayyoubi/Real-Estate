@@ -23,7 +23,11 @@
                 <h2 class="hub-title">All Transactions</h2>
                 <p class="hub-subtitle">View and manage all property sales and rental transactions within the LebEstates ecosystem.</p>
             </div>
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                <button class="btn btn-secondary" onclick="window.print()" style="padding: 8px 16px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined">picture_as_pdf</span>
+                    <span>Print Report</span>
+                </button>
                 <button class="btn btn-new-transaction" onclick="toggleModal('new-transaction-modal')">
                     <span class="material-symbols-outlined">add</span>
                     <span>New Transaction</span>
@@ -33,124 +37,77 @@
     </div>
 
     <!-- Section 1: Summary Cards -->
-    <div class="stats-grid">
+    <!-- Section 1: Summary Cards (2 per row on mobile) -->
+    <div class="mgmt-stats-grid">
         <!-- Card 1: Total Transactions -->
-        <div class="stat-card border-left-blue">
-            <div class="stat-card-top">
-                <div class="stat-icon-box bg-blue-light">
-                    <span class="material-symbols-outlined text-primary-color">analytics</span>
-                </div>
-                <div class="stat-trend trend-green">
-                    <span class="material-symbols-outlined text-sm">trending_up</span>
-                    <span>12%</span>
-                </div>
-            </div>
-            <div class="stat-card-bottom">
-                <h4 class="stat-number" id="val-total-transactions">{{ "{:,}".format(stats.total_transactions) }}</h4>
-                <p class="stat-desc text-muted">Total Transactions</p>
-            </div>
+        <div class="stat-card border-primary">
+            <p class="stat-label">Total Transactions</p>
+            <h3 class="stat-value text-primary" id="val-total-transactions">{{ "{:,}".format(stats.total_transactions) }}</h3>
         </div>
 
         <!-- Card 2: Sales Transactions -->
-        <div class="stat-card border-left-gold">
-            <div class="stat-card-top">
-                <div class="stat-icon-box bg-gold-light">
-                    <span class="material-symbols-outlined text-gold-color">sell</span>
-                </div>
-                <div class="stat-trend trend-green">
-                    <span class="material-symbols-outlined text-sm">trending_up</span>
-                    <span>8%</span>
-                </div>
-            </div>
-            <div class="stat-card-bottom">
-                <h4 class="stat-number" id="val-sales-transactions">{{ "{:,}".format(stats.sales_transactions) }}</h4>
-                <p class="stat-desc text-muted">Sales Transactions</p>
-            </div>
+        <div class="stat-card border-secondary">
+            <p class="stat-label">Sales Transactions</p>
+            <h3 class="stat-value" style="color: var(--secondary);" id="val-sales-transactions">{{ "{:,}".format(stats.sales_transactions) }}</h3>
         </div>
 
         <!-- Card 3: Rental Transactions -->
-        <div class="stat-card border-left-purple">
-            <div class="stat-card-top">
-                <div class="stat-icon-box bg-purple-light">
-                    <span class="material-symbols-outlined text-purple-color">key</span>
-                </div>
-                <div class="stat-trend trend-red">
-                    <span class="material-symbols-outlined text-sm">trending_down</span>
-                    <span>3%</span>
-                </div>
-            </div>
-            <div class="stat-card-bottom">
-                <h4 class="stat-number" id="val-rental-transactions">{{ "{:,}".format(stats.rental_transactions) }}</h4>
-                <p class="stat-desc text-muted">Rental Transactions</p>
-            </div>
+        <div class="stat-card border-primary">
+            <p class="stat-label">Rental Transactions</p>
+            <h3 class="stat-value" id="val-rental-transactions">{{ "{:,}".format(stats.rental_transactions) }}</h3>
         </div>
 
         <!-- Card 4: Paid Transactions -->
-        <div class="stat-card border-left-green">
-            <div class="stat-card-top">
-                <div class="stat-icon-box bg-green-light">
-                    <span class="material-symbols-outlined text-green-color">check_circle</span>
-                </div>
-                <div class="stat-goal-tag text-muted">
-                    92% of goal
-                </div>
-            </div>
-            <div class="stat-card-bottom">
-                <h4 class="stat-number" id="val-paid-transactions">{{ "{:,}".format(stats.paid_transactions) }}</h4>
-                <p class="stat-desc text-muted">Paid Transactions</p>
-            </div>
+        <div class="stat-card border-secondary">
+            <p class="stat-label">Paid Transactions</p>
+            <h3 class="stat-value" style="color: #2e7d32;" id="val-paid-transactions">{{ "{:,}".format(stats.paid_transactions) }}</h3>
         </div>
     </div>
 
-    <!-- Section 2: Filter Bar -->
-    <div class="filter-section">
-        <div class="filter-card">
-            <div class="filter-grid">
-                <!-- Search -->
-                <div class="filter-group col-span-2">
-                    <label class="filter-label">Search Transaction</label>
-                    <div class="input-icon-wrapper">
-                        <span class="material-symbols-outlined input-icon">search</span>
-                        <input type="text" id="search-ledger" class="filter-input" placeholder="ID, Client, Property..." onkeyup="filterLedger()">
-                    </div>
-                </div>
-
-                <!-- Type -->
-                <div class="filter-group">
-                    <label class="filter-label">Transaction Type</label>
-                    <select id="filter-type" class="filter-select" onchange="filterLedger()">
-                        <option value="All">All Types</option>
-                        <option value="Sell">Sale</option>
-                        <option value="Rent">Rental</option>
-                    </select>
-                </div>
-
-                <!-- Payment Status -->
-                <div class="filter-group">
-                    <label class="filter-label">Payment Status</label>
-                    <select id="filter-payment-status" class="filter-select" onchange="filterLedger()">
-                        <option value="All">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In progress">In progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                </div>
-
-                <!-- Date Range -->
-                <div class="filter-group">
-                    <label class="filter-label">Date Range</label>
-                    <input type="date" id="filter-date" class="filter-input" onchange="filterLedger()">
-                </div>
-
-                <!-- Actions -->
-                <div class="filter-actions-group">
-                    <button class="btn btn-apply" onclick="filterLedger()">Apply</button>
-                    <button class="btn btn-reset" onclick="resetFilters()">Reset</button>
-                </div>
+    <!-- Section 2: Standardized Responsive Filter Bar -->
+    <form method="GET" action="/control-panel/transactions/ledger" class="mgmt-filter-bar" style="margin-bottom: 24px;">
+        <!-- Top Search Inputs -->
+        <div class="filter-search-grid">
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="filter-client-search" placeholder="Client-Side Live Search (Instant)..." class="filter-input-text" />
+            </div>
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon text-primary">database</span>
+                <input type="text" name="server_q" id="filter-server-search" value="{{ filters.server_q if filters else '' }}" placeholder="Server Database Search (SQL Query)..." class="filter-input-text" />
             </div>
         </div>
-    </div>
+
+        <!-- Dropdowns Grid (2 per row on mobile) -->
+        <div class="filter-dropdowns-grid">
+            <select name="type" class="filter-select">
+                <option value="All" {% if not filters or filters.type == 'All' %}selected{% endif %}>Type: All (Sell / Rent)</option>
+                <option value="Sell" {% if filters and filters.type == 'Sell' %}selected{% endif %}>Sale (Sell)</option>
+                <option value="Rent" {% if filters and filters.type == 'Rent' %}selected{% endif %}>Rental (Rent)</option>
+            </select>
+
+            <select name="status" class="filter-select">
+                <option value="All" {% if not filters or filters.status == 'All' %}selected{% endif %}>Status: All</option>
+                <option value="Pending" {% if filters and filters.status == 'Pending' %}selected{% endif %}>Pending</option>
+                <option value="In progress" {% if filters and filters.status == 'In progress' %}selected{% endif %}>In progress</option>
+                <option value="Completed" {% if filters and filters.status == 'Completed' %}selected{% endif %}>Completed</option>
+                <option value="Closed" {% if filters and filters.status == 'Closed' %}selected{% endif %}>Closed / Paid</option>
+                <option value="Cancelled" {% if filters and filters.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="filter-actions-bar">
+            <button type="submit" id="btn-server-filter" class="btn-filter-submit">
+                <span class="material-symbols-outlined">filter_alt</span>
+                Filter Transactions
+            </button>
+            <a href="/control-panel/transactions/ledger" class="btn-filter-reset">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Reset
+            </a>
+        </div>
+    </form>
 
     <!-- Section 3: Transactions Table -->
     <div class="table-section">
@@ -202,7 +159,7 @@
                                 <td class="td-property" data-label="Property">
                                     <div class="property-cell-wrapper">
                                         <div class="property-image-box">
-                                            <img src="{{ main_image }}" alt="Property Thumbnail">
+                                            <img src="{{ main_image }}" alt="Property Thumbnail" loading="lazy">
                                         </div>
                                         <div class="property-info-box">
                                             <p class="property-title-text">{{ t.property_obj.title }}</p>
@@ -250,8 +207,8 @@
                                         <button class="btn btn-icon btn-edit" title="Edit Transaction" onclick="openEditTransactionModal({{ t.transactionID }})">
                                             <span class="material-symbols-outlined">edit</span>
                                         </button>
-                                        <button class="btn btn-icon btn-print" onclick="window.print()" title="Print Receipt">
-                                            <span class="material-symbols-outlined">print</span>
+                                        <button class="btn btn-icon btn-print" onclick="window.open('/control-panel/transactions/{{ t.transactionID }}/receipt', '_blank')" title="Print PDF Receipt">
+                                            <span class="material-symbols-outlined">receipt_long</span>
                                         </button>
                                     </div>
                                 </td>

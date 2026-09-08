@@ -192,90 +192,96 @@
 
                     <form class="consult-form" id="consult-form" novalidate>
 
-                        <div class="consult-form-row">
+                        {% if current_user %}
+                        <div class="logged-in-user-banner" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; color: #10b981; display: flex; align-items: center; gap: 10px;">
+                            <span class="material-symbols-outlined">account_circle</span>
+                            <div>
+                                <strong>Logged in as {{ current_user.fullName }}</strong> ({{ current_user.email }})
+                                <div style="font-size: 0.8rem; opacity: 0.8;">Your account information is automatically linked to this request.</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="consult-form-row" {% if current_user %}style="display: none;"{% endif %}>
                             <div class="consult-form-group">
-                                <label class="consult-label" for="full-name">Full Name <span
-                                        class="consult-required">*</span></label>
-                                <input class="consult-input" type="text" id="full-name" name="full_name"
-                                    placeholder="e.g. Rania Khalil" required />
-                                <span class="consult-error-msg" id="err-full-name">Please enter your full
-                                    name.</span>
+                                <label class="consult-label" for="full-name">Full Name <span class="consult-required">*</span></label>
+                                <input class="consult-input" type="text" id="full-name" name="full_name" value="{{ current_user.fullName if current_user else '' }}" placeholder="e.g. Rania Khalil" required />
+                                <span class="consult-error-msg" id="err-full-name">Please enter your full name.</span>
                             </div>
                             <div class="consult-form-group">
-                                <label class="consult-label" for="email">Email Address <span
-                                        class="consult-required">*</span></label>
-                                <input class="consult-input" type="email" id="email" name="email"
-                                    placeholder="e.g. rania@email.com" required />
-                                <span class="consult-error-msg" id="err-email">Please enter a valid email
-                                    address.</span>
+                                <label class="consult-label" for="email">Email Address <span class="consult-required">*</span></label>
+                                <input class="consult-input" type="email" id="email" name="email" value="{{ current_user.email if current_user else '' }}" placeholder="e.g. rania@email.com" required />
+                                <span class="consult-error-msg" id="err-email">Please enter a valid email address.</span>
                             </div>
                         </div>
 
                         <div class="consult-form-row">
-                            <div class="consult-form-group">
-                                <label class="consult-label" for="phone">Phone Number <span
-                                        class="consult-required">*</span></label>
-                                <input class="consult-input" type="tel" id="phone" name="phone"
-                                    placeholder="e.g. +961 71 234 567" required />
-                                <span class="consult-error-msg" id="err-phone">Please enter your phone
-                                    number.</span>
+                            <div class="consult-form-group" {% if current_user and current_user.phoneNumber %}style="display: none;"{% endif %}>
+                                <label class="consult-label" for="phone">Phone Number <span class="consult-required">*</span></label>
+                                <input class="consult-input" type="tel" id="phone" name="phone" value="{{ current_user.phoneNumber if current_user and current_user.phoneNumber else '' }}" placeholder="e.g. +961 71 234 567" required />
+                                <span class="consult-error-msg" id="err-phone">Please enter your phone number.</span>
                             </div>
-                            <div class="consult-form-group">
-                                <label class="consult-label" for="consult-type">Consultation Type <span
-                                        class="consult-required">*</span></label>
-                                <select class="consult-input consult-select" id="consult-type" name="consult_type"
-                                    required>
-                                    <option value="" disabled selected>Select a type...</option>
-                                    <option value="buying">Buying a Property</option>
-                                    <option value="renting">Renting a Property</option>
-                                    <option value="selling">Selling a Property</option>
-                                    <option value="listing">Listing My Property</option>
-                                    <option value="investment">Investment Consultation</option>
-                                    <option value="other">Other</option>
+                            <div class="consult-form-group" style="flex: 1;">
+                                <label class="consult-label" for="consult-type">Reason Type / Category <span class="consult-required">*</span></label>
+                                <select class="consult-input consult-select" id="consult-type" name="consult_type" required>
+                                    <option value="" disabled selected>Select a category...</option>
+                                    <option value="Buying Inquiry">Buying Inquiry</option>
+                                    <option value="Selling Request">Selling Request</option>
+                                    <option value="Rental Support">Rental Support</option>
+                                    <option value="Legal / Investment Advice">Legal / Investment Advice</option>
+                                    <option value="Listing My Property">Listing My Property</option>
+                                    <option value="General Inquiry">General Inquiry</option>
                                 </select>
-                                <span class="consult-error-msg" id="err-consult-type">Please select a consultation
-                                    type.</span>
+                                <span class="consult-error-msg" id="err-consult-type">Please select a category.</span>
                             </div>
                         </div>
 
                         <div class="consult-form-group">
-                            <label class="consult-label">Preferred Contact Method <span
-                                    class="consult-required">*</span></label>
+                            <label class="consult-label">Preferred Contact Method <span class="consult-required">*</span></label>
                             <div class="consult-radio-group" id="contact-method-group">
                                 <label class="consult-radio-option">
-                                    <input type="radio" name="contact_method" value="phone" />
+                                    <input type="radio" name="contact_method" value="Phone" checked />
                                     <span class="consult-radio-box">
                                         <span class="material-symbols-outlined">call</span>
                                         Phone
                                     </span>
                                 </label>
                                 <label class="consult-radio-option">
-                                    <input type="radio" name="contact_method" value="email" />
+                                    <input type="radio" name="contact_method" value="Email" />
                                     <span class="consult-radio-box">
                                         <span class="material-symbols-outlined">mail</span>
                                         Email
                                     </span>
                                 </label>
                                 <label class="consult-radio-option">
-                                    <input type="radio" name="contact_method" value="whatsapp" />
+                                    <input type="radio" name="contact_method" value="In Person" id="radio-in-person" />
                                     <span class="consult-radio-box">
-                                        <span class="material-symbols-outlined">chat_bubble</span>
-                                        WhatsApp
+                                        <span class="material-symbols-outlined">person_pin</span>
+                                        In Person
                                     </span>
                                 </label>
                             </div>
-                            <span class="consult-error-msg" id="err-contact-method">Please select a preferred
-                                contact method.</span>
+                            <span class="consult-error-msg" id="err-contact-method">Please select a preferred contact method.</span>
                         </div>
 
-                        <div class="consult-form-row">
+                        <!-- In Person Appointment Picker (Shown when In Person is selected) -->
+                        <div class="consult-form-row" id="in-person-schedule-wrapper" style="display: none; background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;">
                             <div class="consult-form-group">
-                                <label class="consult-label" for="pref-date">Preferred Date</label>
+                                <label class="consult-label" for="pref-date">Preferred Date <span class="consult-required">*</span></label>
                                 <input class="consult-input" type="date" id="pref-date" name="pref_date" />
                             </div>
                             <div class="consult-form-group">
-                                <label class="consult-label" for="pref-time">Preferred Time</label>
-                                <input class="consult-input" type="time" id="pref-time" name="pref_time" />
+                                <label class="consult-label" for="pref-time-slot">Available Time Slot <span class="consult-required">*</span></label>
+                                <select class="consult-input consult-select" id="pref-time-slot" name="pref_time">
+                                    <option value="" disabled selected>Select available slot...</option>
+                                    <option value="09:00:00">09:00 AM - 10:00 AM</option>
+                                    <option value="10:00:00">10:00 AM - 11:00 AM</option>
+                                    <option value="11:00:00">11:00 AM - 12:00 PM</option>
+                                    <option value="13:00:00">01:00 PM - 02:00 PM</option>
+                                    <option value="14:00:00">02:00 PM - 03:00 PM</option>
+                                    <option value="15:00:00">03:00 PM - 04:00 PM</option>
+                                    <option value="16:00:00">04:00 PM - 05:00 PM</option>
+                                </select>
                             </div>
                         </div>
 

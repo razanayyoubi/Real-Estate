@@ -79,66 +79,72 @@
     <!-- Main Content Area: Property Inventory Grid -->
     <section class="mgmt-inventory-container">
         <!-- Filter Bar -->
-        <div class="mgmt-filter-bar">
-            <div class="filters-left">
-                <select id="filter-status" class="filter-select">
-                    <option value="All">Status: All</option>
-                    <option value="Published">Published (Available)</option>
-                    <option value="Pending">Pending Review</option>
-                    <option value="Sold">Sold</option>
-                    <option value="Rented">Rented</option>
-                    <option value="Rejected">Rejected</option>
+        <form method="GET" action="/control-panel/properties" class="mgmt-filter-bar">
+            <!-- Top Inputs Row: 2 Text Search Fields -->
+            <div class="filter-search-grid">
+                <!-- Input 1: Client-Side Instant Live Search -->
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" id="filter-client-search" placeholder="Client-Side Live Search (Instant)..." class="filter-input-text" />
+                </div>
+                <!-- Input 2: Server-Side Query Search -->
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon text-primary">database</span>
+                    <input type="text" name="server_q" id="filter-server-search" value="{{ filters.server_q if filters else '' }}" placeholder="Server Database Search (SQL Query)..." class="filter-input-text" />
+                </div>
+            </div>
+
+            <!-- Middle Row: 2-Column Responsive Dropdowns Grid -->
+            <div class="filter-dropdowns-grid">
+                <select name="status" class="filter-select">
+                    <option value="All" {% if not filters or filters.status == 'All' %}selected{% endif %}>Status: All</option>
+                    <option value="Published" {% if filters and filters.status == 'Published' %}selected{% endif %}>Published (Available)</option>
+                    <option value="Pending" {% if filters and filters.status == 'Pending' %}selected{% endif %}>Pending Review</option>
+                    <option value="Sold" {% if filters and filters.status == 'Sold' %}selected{% endif %}>Sold</option>
+                    <option value="Rented" {% if filters and filters.status == 'Rented' %}selected{% endif %}>Rented</option>
+                    <option value="Cancelled" {% if filters and filters.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="Refused" {% if filters and filters.status == 'Refused' %}selected{% endif %}>Refused</option>
+                    <option value="Rejected" {% if filters and filters.status == 'Rejected' %}selected{% endif %}>Rejected</option>
                 </select>
-                <select id="filter-type" class="filter-select">
-                    <option value="All">Type: All</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Villa">Villa</option>
-                    <option value="Duplex">Duplex</option>
-                    <option value="Office">Office</option>
-                    <option value="Chalet">Chalet</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Land">Land</option>
-                    <option value="Other">Other</option>
+
+                <select name="listing_type" class="filter-select">
+                    <option value="All" {% if not filters or filters.listing_type == 'All' %}selected{% endif %}>Listing: All (Sell / Rent)</option>
+                    <option value="Sell" {% if filters and filters.listing_type == 'Sell' %}selected{% endif %}>For Sale</option>
+                    <option value="Rent" {% if filters and filters.listing_type == 'Rent' %}selected{% endif %}>For Rent</option>
                 </select>
-                <select id="filter-location" class="filter-select">
-                    <option value="All">Location: All</option>
-                    <option value="Achrafieh">Achrafieh</option>
-                    <option value="Akkar">Akkar</option>
-                    <option value="Aley">Aley</option>
-                    <option value="Baabda">Baabda</option>
-                    <option value="Baalbek">Baalbek</option>
-                    <option value="Batroun">Batroun</option>
-                    <option value="Beirut">Beirut</option>
-                    <option value="Bint Jbeil">Bint Jbeil</option>
-                    <option value="Bsharri">Bsharri</option>
-                    <option value="Byblos">Byblos (Jbeil)</option>
-                    <option value="Chouf">Chouf</option>
-                    <option value="Dahye">Dahye</option>
-                    <option value="Faraya">Faraya</option>
-                    <option value="Hasbaya">Hasbaya</option>
-                    <option value="Hermel">Hermel</option>
-                    <option value="Jezzine">Jezzine</option>
-                    <option value="Keserwan">Keserwan</option>
-                    <option value="Koura">Koura</option>
-                    <option value="Marjeyoun">Marjeyoun</option>
-                    <option value="Matn">Matn</option>
-                    <option value="Miniyeh-Danniyeh">Miniyeh-Danniyeh</option>
-                    <option value="Nabatieh">Nabatieh</option>
-                    <option value="North">North</option>
-                    <option value="Rashaya">Rashaya</option>
-                    <option value="Saida">Sidon (Saida)</option>
-                    <option value="South">South</option>
-                    <option value="Sour">Tyre (Sour)</option>
-                    <option value="Tripoli">Tripoli</option>
-                    <option value="West Bekaa">West Bekaa</option>
-                    <option value="Zahle">Zahle</option>
-                    <option value="Zgharta">Zgharta</option>
+
+                <select name="property_type" class="filter-select">
+                    <option value="All" {% if not filters or filters.property_type == 'All' %}selected{% endif %}>Type: All</option>
+                    <option value="Apartment" {% if filters and filters.property_type == 'Apartment' %}selected{% endif %}>Apartment</option>
+                    <option value="Villa" {% if filters and filters.property_type == 'Villa' %}selected{% endif %}>Villa</option>
+                    <option value="Duplex" {% if filters and filters.property_type == 'Duplex' %}selected{% endif %}>Duplex</option>
+                    <option value="Office" {% if filters and filters.property_type == 'Office' %}selected{% endif %}>Office</option>
+                    <option value="Chalet" {% if filters and filters.property_type == 'Chalet' %}selected{% endif %}>Chalet</option>
+                    <option value="Commercial" {% if filters and filters.property_type == 'Commercial' %}selected{% endif %}>Commercial</option>
+                    <option value="Land" {% if filters and filters.property_type == 'Land' %}selected{% endif %}>Land</option>
+                    <option value="Other" {% if filters and filters.property_type == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+
+                <select name="location" class="filter-select">
+                    <option value="All" {% if not filters or filters.location == 'All' %}selected{% endif %}>Location: All</option>
+                    {% for loc in ['Achrafieh', 'Akkar', 'Aley', 'Baabda', 'Baalbek', 'Batroun', 'Beirut', 'Bint Jbeil', 'Bsharri', 'Byblos', 'Chouf', 'Dahye', 'Faraya', 'Hasbaya', 'Hermel', 'Jezzine', 'Keserwan', 'Koura', 'Marjeyoun', 'Matn', 'Miniyeh-Danniyeh', 'Nabatieh', 'North', 'Rashaya', 'Saida', 'South', 'Sour', 'Tripoli', 'West Bekaa', 'Zahle', 'Zgharta'] %}
+                    <option value="{{ loc }}" {% if filters and filters.location == loc %}selected{% endif %}>{{ loc }}</option>
+                    {% endfor %}
                 </select>
             </div>
-            <div class="filters-right">
-                <span class="filter-search-info">Dynamic Portfolio Audit</span>
+
+            <!-- Bottom Row: Filter Action Buttons -->
+            <div class="filter-actions-bar">
+                <button type="submit" id="btn-server-filter" class="btn-filter-submit">
+                    <span class="material-symbols-outlined">filter_alt</span>
+                    Filter Properties
+                </button>
+                <a href="/control-panel/properties" class="btn-filter-reset">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    Reset
+                </a>
             </div>
-        </div>
+        </form>
 
         <!-- Table Container -->
         <div class="mgmt-table-wrapper custom-scrollbar unified-table-container">
@@ -147,6 +153,7 @@
                     <tr>
                         <th class="col-id">Property ID</th>
                         <th class="col-title">Title & Image</th>
+                        <th class="col-owner">Owner / Buyer</th>
                         <th class="col-type">Type</th>
                         <th class="col-location">Location</th>
                         <th class="col-price">Price</th>
@@ -173,18 +180,44 @@
                         <td class="col-title">
                             <div class="title-cell-wrapper">
                                 {% if prop.images %}
-                                <img class="table-thumb" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" />
+                                <img class="table-thumb" src="{{ prop.images[0].imageURL }}" alt="{{ prop.title }}" loading="lazy" />
                                 {% else %}
                                 <div class="table-thumb-placeholder">
                                     <span class="material-symbols-outlined">image</span>
                                 </div>
                                 {% endif %}
                                 <div class="title-cell-text">
-                                    <div class="property-title-text">{{ prop.title }}</div>
+                                    <div class="property-title-text">{{ prop.title }} <span class="badge-listing-type" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1);">{{ prop.listingType }}</span></div>
                                     <div class="property-date-text">Created: {{ prop.createdAt.strftime('%d %b %Y') }}
                                     </div>
                                 </div>
                             </div>
+                        </td>
+                        <td class="col-owner">
+                            {% if prop.owner and prop.owner.user %}
+                            <div style="cursor: pointer;" onclick="openCustomerModal({{ prop.ownerID }})" title="View Owner Profile">
+                                <span class="font-bold text-primary" style="font-weight: 600; color: var(--primary);">
+                                    <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">person</span>
+                                    {{ prop.owner.user.fullName }}
+                                </span>
+                                <div style="font-size: 11px; color: var(--outline);">Owner</div>
+                            </div>
+                            {% else %}
+                            <span style="color: var(--outline);">N/A</span>
+                            {% endif %}
+                            
+                            {% if prop.status == 'Sold' and prop.transactions %}
+                            {% set trans = prop.transactions[0] %}
+                            {% if trans.customer and trans.customer.user %}
+                            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1); cursor: pointer;" onclick="openCustomerModal({{ trans.customerID }})" title="View Buyer Profile">
+                                <span style="font-weight: 600; color: #4caf50;">
+                                    <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">shopping_cart</span>
+                                    {{ trans.customer.user.fullName }}
+                                </span>
+                                <div style="font-size: 11px; color: var(--outline);">Buyer</div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
                         </td>
                         <td class="col-type">{{ prop.propertyType }}</td>
                         <td class="col-location">
@@ -195,16 +228,15 @@
                         </td>
                         <td class="col-price font-bold">${{ "{:,.0f}".format(prop.price) }}</td>
                         <td class="col-status" id="row-status-{{ prop.propertyID }}">
-                            <select class="status-dropdown status-{{ prop.status.lower() }}"
+                            <select class="status-dropdown status-{% if prop.status %}{{ prop.status.lower() }}{% else %}pending{% endif %}"
                                 data-id="{{ prop.propertyID }}">
-                                <option value="Pending" {% if prop.status=='Pending' %}selected{% endif %}>Pending
-                                </option>
-                                <option value="Published" {% if prop.status=='Published' %}selected{% endif %}>Published
-                                </option>
+                                <option value="Pending" {% if prop.status=='Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Published" {% if prop.status=='Published' %}selected{% endif %}>Published</option>
+                                <option value="Draft" {% if prop.status=='Draft' %}selected{% endif %}>Draft</option>
                                 <option value="Sold" {% if prop.status=='Sold' %}selected{% endif %}>Sold</option>
-                                <option value="Rented" {% if prop.status=='Rented' %}selected{% endif %}>Rented</option>
-                                <option value="Rejected" {% if prop.status=='Rejected' %}selected{% endif %}>Rejected
-                                </option>
+                                <option value="Cancelled" {% if prop.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+                                <option value="Refused" {% if prop.status=='Refused' %}selected{% endif %}>Refused</option>
+                                <option value="Rejected" {% if prop.status=='Rejected' %}selected{% endif %}>Rejected</option>
                             </select>
                         </td>
                         <td class="col-actions text-right">

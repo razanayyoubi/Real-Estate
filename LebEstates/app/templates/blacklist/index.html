@@ -26,71 +26,61 @@
         </div>
     </div>
 
-    <!-- Statistics Row -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div>
-                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Total Blacklisted</p>
-                <h3 class="headline-md text-primary">{{ stats.total }}</h3>
-            </div>
-            <div class="stat-card-header">
-                <span></span>
-                <span class="material-symbols-outlined stat-icon primary">group_off</span>
-            </div>
+    <!-- Standardized Responsive Statistics Row (2 per row on mobile) -->
+    <section class="mgmt-stats-grid">
+        <div class="stat-card border-primary">
+            <p class="stat-label">Total Blacklisted</p>
+            <h3 class="stat-value text-primary">{{ stats.total }}</h3>
         </div>
-        <div class="stat-card error">
-            <div>
-                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Active Blocks</p>
-                <h3 class="headline-md text-primary" style="color: var(--error);">{{ stats.active }}</h3>
-            </div>
-            <div class="stat-card-header">
-                <span></span>
-                <span class="material-symbols-outlined stat-icon error">block</span>
-            </div>
+        <div class="stat-card border-error">
+            <p class="stat-label">Active Blocks</p>
+            <h3 class="stat-value" style="color: #c62828;">{{ stats.active }}</h3>
         </div>
-        <div class="stat-card secondary">
-            <div>
-                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Resolved Cases</p>
-                <h3 class="headline-md text-primary" style="color: var(--secondary);">{{ stats.resolved }}</h3>
-            </div>
-            <div class="stat-card-header">
-                <span></span>
-                <span class="material-symbols-outlined stat-icon secondary">verified_user</span>
-            </div>
+        <div class="stat-card border-secondary">
+            <p class="stat-label">Resolved Cases</p>
+            <h3 class="stat-value" style="color: var(--secondary);">{{ stats.resolved }}</h3>
         </div>
-        <div class="stat-card outline">
-            <div>
-                <p class="text-on-surface-variant label-md" style="margin-bottom: 8px;">Monthly Restrictions</p>
-                <h3 class="headline-md text-primary">{{ stats.monthly }}</h3>
-            </div>
-            <div class="stat-card-header">
-                <span></span>
-                <span class="material-symbols-outlined stat-icon outline">trending_up</span>
-            </div>
+        <div class="stat-card border-primary">
+            <p class="stat-label">Monthly Restrictions</p>
+            <h3 class="stat-value text-primary">{{ stats.monthly }}</h3>
         </div>
-    </div>
+    </section>
 
-    <!-- Filters & Search -->
-    <div class="filter-section">
-        <div class="filter-left">
-            <div class="search-wrapper">
+    <!-- Standardized Responsive Filter Bar -->
+    <form method="GET" action="/control-panel/blacklist/" class="mgmt-filter-bar" style="margin-bottom: 24px;">
+        <!-- Top Search Inputs -->
+        <div class="filter-search-grid">
+            <div class="search-input-wrapper">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input class="search-input" id="filterSearch" placeholder="Search by User ID, Name, or Reason..." type="text" onkeyup="applyClientFilters()"/>
+                <input type="text" id="filter-client-search" placeholder="Client-Side Live Search (Instant)..." class="filter-input-text" />
             </div>
-            <select class="filter-select" id="filterStatus" onchange="applyClientFilters()">
-                <option value="All">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Resolved">Resolved</option>
-            </select>
-            <button class="btn-filter-advanced">
-                <span class="material-symbols-outlined">filter_list</span>
-                Advanced Filters
-            </button>
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon text-primary">database</span>
+                <input type="text" name="server_q" id="filter-server-search" value="{{ request.args.get('server_q', '') }}" placeholder="Server Database Search (SQL Query)..." class="filter-input-text" />
+            </div>
         </div>
-        <button class="btn-refresh" onclick="window.location.reload();" title="Refresh Table">
-            <span class="material-symbols-outlined">refresh</span>
-        </button>
-    </div>
+
+        <!-- Dropdowns Grid (2 per row on mobile) -->
+        <div class="filter-dropdowns-grid">
+            <select name="status" class="filter-select">
+                <option value="All" {% if not request.args.get('status') or request.args.get('status') == 'All' %}selected{% endif %}>Status: All</option>
+                <option value="Active" {% if request.args.get('status') == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Resolved" {% if request.args.get('status') == 'Resolved' %}selected{% endif %}>Resolved</option>
+            </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="filter-actions-bar">
+            <button type="submit" id="btn-server-filter" class="btn-filter-submit">
+                <span class="material-symbols-outlined">filter_alt</span>
+                Filter Blacklist
+            </button>
+            <a href="/control-panel/blacklist/" class="btn-filter-reset">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Reset
+            </a>
+        </div>
+    </form>
 
     <!-- Data Table -->
     <div class="table-container unified-table-container">
@@ -278,12 +268,15 @@
                 </div>
                 <div class="form-grid">
                     <div>
-                        <label class="form-label">Restriction Level</label>
+                        <label class="form-label">Category of Restriction</label>
                         <select name="level" class="form-input">
-                            <option value="Warning">Warning</option>
-                            <option value="Temporary Suspension">Temporary Suspension</option>
-                            <option value="Permanent Ban" selected>Permanent Ban</option>
-                            <option value="IP Restriction">IP Restriction</option>
+                            <option value="Unpaid Fees">Unpaid Commission / Fees</option>
+                            <option value="Fraudulent Listing">Fraudulent Listing</option>
+                            <option value="Identity Failure">Identity Verification Failure</option>
+                            <option value="Abusive Behavior">Abusive Behavior</option>
+                            <option value="Policy Violation" selected>Policy Violation</option>
+                            <option value="Security Threat">Security Threat</option>
+                            <option value="Other">Other Category</option>
                         </select>
                     </div>
                     <div>

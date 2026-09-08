@@ -6,10 +6,10 @@ class Visit(db.Model):
     visitID = db.Column(db.Integer, primary_key=True)
     propertyID = db.Column(db.Integer, db.ForeignKey('property.propertyID'), nullable=False)
     customerID = db.Column(db.Integer, db.ForeignKey('customer.customerID'), nullable=False)
-    employeeID = db.Column(db.Integer, db.ForeignKey('employee.employeeID'), nullable=False)
+    employeeID = db.Column(db.Integer, db.ForeignKey('employee.employeeID'), nullable=True)
     visitDate = db.Column(db.Date, nullable=False)
     visitTime = db.Column(db.Time, nullable=False)
-    status = db.Column(db.Enum('Scheduled', 'Completed', 'Cancelled', name='visit_status'), default='Scheduled')
+    status = db.Column(db.String(50), default='Pending') # Pending, Scheduled, Completed, Cancelled
     notes = db.Column(db.Text)
     createdAt = db.Column(db.DateTime, default=datetime.now)
     updatedAt = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)

@@ -25,75 +25,65 @@
         </div>
     </div>
 
-    <!-- Stats Row -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper primary">
-                    <span class="material-symbols-outlined text-primary">groups</span>
-                </div>
-                <span class="stat-badge success">+12%</span>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Total Customers</h4>
-            <p class="headline-md text-primary">{{ stats.total }}</p>
+    <!-- Standardized Responsive Stats Row (2 per row on mobile) -->
+    <section class="mgmt-stats-grid">
+        <div class="stat-card border-primary">
+            <p class="stat-label">Total Customers</p>
+            <h3 class="stat-value text-primary">{{ stats.total }}</h3>
         </div>
         
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper secondary">
-                    <span class="material-symbols-outlined text-secondary">person_check</span>
-                </div>
-                <span class="stat-badge success">+5%</span>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Active Customers</h4>
-            <p class="headline-md text-primary">{{ stats.active }}</p>
+        <div class="stat-card border-secondary">
+            <p class="stat-label">Active Customers</p>
+            <h3 class="stat-value" style="color: #2e7d32;">{{ stats.active }}</h3>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper error">
-                    <span class="material-symbols-outlined text-error">person_off</span>
-                </div>
-                <span class="stat-badge error">-2%</span>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Disabled Customers</h4>
-            <p class="headline-md text-primary">{{ stats.disabled }}</p>
+        <div class="stat-card border-error">
+            <p class="stat-label">Disabled Customers</p>
+            <h3 class="stat-value" style="color: #c62828;">{{ stats.disabled }}</h3>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon-wrapper primary">
-                    <span class="material-symbols-outlined text-primary">new_releases</span>
-                </div>
-                <span class="stat-badge success">+{{ stats.new_this_month }}</span>
-            </div>
-            <h4 class="caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">New This Month</h4>
-            <p class="headline-md text-primary">{{ stats.new_this_month }}</p>
-        </div>
-    </div>
-
-    <!-- Filter Section -->
-    <section class="filter-section">
-        <div class="filter-row">
-            <div class="search-wrapper">
-                <span class="material-symbols-outlined search-icon">search</span>
-                <input class="search-input" id="filterSearch" placeholder="Search by name, email, or ID..." type="text" onkeyup="applyFilters()">
-            </div>
-            <div class="filter-actions">
-                <select class="filter-select" id="filterStatus" onchange="applyFilters()">
-                    <option>All Status</option>
-                    <option selected>Active</option>
-                    <option>Disabled</option>
-                </select>
-                <select class="filter-select" id="filterDate" onchange="applyFilters()">
-                    <option>Date Created</option>
-                    <option>Last 30 Days</option>
-                    <option>Last 6 Months</option>
-                    <option>Last Year</option>
-                </select>
-            </div>
+        <div class="stat-card border-primary">
+            <p class="stat-label">New This Month</p>
+            <h3 class="stat-value text-primary">{{ stats.new_this_month }}</h3>
         </div>
     </section>
+
+    <!-- Standardized Responsive Filter Bar -->
+    <form method="GET" action="/customers/" class="mgmt-filter-bar" style="margin-bottom: 24px;">
+        <!-- Top Search Inputs -->
+        <div class="filter-search-grid">
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="filter-client-search" placeholder="Client-Side Live Search (Instant)..." class="filter-input-text" />
+            </div>
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon text-primary">database</span>
+                <input type="text" name="server_q" id="filter-server-search" value="{{ filters.server_q if filters else '' }}" placeholder="Server Database Search (SQL Query)..." class="filter-input-text" />
+            </div>
+        </div>
+
+        <!-- Dropdowns Grid (2 per row on mobile) -->
+        <div class="filter-dropdowns-grid">
+            <select name="status" class="filter-select">
+                <option value="All" {% if not filters or filters.status == 'All' %}selected{% endif %}>Status: All</option>
+                <option value="Active" {% if filters and filters.status == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Disabled" {% if filters and filters.status == 'Disabled' %}selected{% endif %}>Disabled</option>
+                <option value="Blacklisted" {% if filters and filters.status == 'Blacklisted' %}selected{% endif %}>Blacklisted</option>
+            </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="filter-actions-bar">
+            <button type="submit" id="btn-server-filter" class="btn-filter-submit">
+                <span class="material-symbols-outlined">filter_alt</span>
+                Filter Customers
+            </button>
+            <a href="/customers/" class="btn-filter-reset">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Reset
+            </a>
+        </div>
+    </form>
 
     <!-- Data Table -->
     <section class="table-container unified-table-container">
@@ -520,14 +510,86 @@
         });
     }
 
-    // Client-side filtering logic
+    // Dynamic Pagination & Client-side filtering logic
+    let currentPage = 1;
+    const pageSize = 10;
+    let matchingRows = [];
+
+    function renderPagination() {
+        const rows = document.querySelectorAll('.table-body .table-row');
+        const countSpan = document.querySelector('.pagination-container .caption');
+        const controlsContainer = document.querySelector('.pagination-controls');
+
+        const totalItems = matchingRows.length;
+        const totalPages = Math.ceil(totalItems / pageSize) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, totalItems);
+
+        rows.forEach(row => {
+            if (row.id !== 'empty-filter-row') row.style.display = 'none';
+        });
+
+        matchingRows.slice(startIdx, endIdx).forEach(row => row.style.display = '');
+
+        if (countSpan) {
+            countSpan.textContent = `Showing ${totalItems > 0 ? startIdx + 1 : 0}-${endIdx} of ${totalItems} results`;
+        }
+
+        let emptyRow = document.getElementById('empty-filter-row');
+        if (totalItems === 0) {
+            if (!emptyRow) {
+                emptyRow = document.createElement('tr');
+                emptyRow.id = 'empty-filter-row';
+                emptyRow.className = 'table-row';
+                emptyRow.innerHTML = `
+                    <td class="table-td" colspan="7" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
+                        No matching customers found.
+                    </td>
+                `;
+                document.querySelector('.table-body').appendChild(emptyRow);
+            } else {
+                emptyRow.style.display = '';
+            }
+        } else if (emptyRow) {
+            emptyRow.style.display = 'none';
+        }
+
+        if (controlsContainer) {
+            controlsContainer.innerHTML = '';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'pagination-btn';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.innerHTML = '<span class="material-symbols-outlined">chevron_left</span>';
+            prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderPagination(); } };
+            controlsContainer.appendChild(prevBtn);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => { currentPage = i; renderPagination(); };
+                controlsContainer.appendChild(pageBtn);
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'pagination-btn';
+            nextBtn.disabled = currentPage >= totalPages;
+            nextBtn.innerHTML = '<span class="material-symbols-outlined">chevron_right</span>';
+            nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderPagination(); } };
+            controlsContainer.appendChild(nextBtn);
+        }
+    }
+
     function applyFilters() {
         const searchVal = document.getElementById('filterSearch').value.toLowerCase().trim();
         const statusVal = document.getElementById('filterStatus').value;
         const dateVal = document.getElementById('filterDate').value;
 
         const rows = document.querySelectorAll('.table-body .table-row');
-        let visibleCount = 0;
+        matchingRows = [];
 
         rows.forEach(row => {
             if (row.id === 'empty-filter-row') return;
@@ -541,7 +603,6 @@
             const statusText = row.cells[4].querySelector('.status-badge').textContent.trim().toLowerCase();
             const dateText = row.cells[5].textContent.trim();
 
-            // 1. Search Filter
             const matchesSearch = !searchVal || 
                 idText.includes(searchVal) || 
                 nameText.includes(searchVal) || 
@@ -549,7 +610,6 @@
                 phoneText.includes(searchVal) || 
                 locationText.includes(searchVal);
 
-            // 2. Status Filter
             let matchesStatus = true;
             if (statusVal === 'Active') {
                 matchesStatus = (statusText === 'active');
@@ -557,7 +617,6 @@
                 matchesStatus = (statusText === 'disabled' || statusText === 'blacklisted');
             }
 
-            // 3. Date Created Filter
             let matchesDate = true;
             if (dateVal !== 'Date Created' && dateText !== 'N/A') {
                 const createdDate = new Date(dateText);
@@ -575,38 +634,12 @@
             }
 
             if (matchesSearch && matchesStatus && matchesDate) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+                matchingRows.push(row);
             }
         });
 
-        // Update showing count text
-        const countSpan = document.querySelector('.pagination-container .caption');
-        if (countSpan) {
-            countSpan.textContent = `Showing ${visibleCount} of ${rows.length} results`;
-        }
-
-        // Handle empty search results placeholder row
-        let emptyRow = document.getElementById('empty-filter-row');
-        if (visibleCount === 0) {
-            if (!emptyRow) {
-                emptyRow = document.createElement('tr');
-                emptyRow.id = 'empty-filter-row';
-                emptyRow.className = 'table-row';
-                emptyRow.innerHTML = `
-                    <td class="table-td" colspan="7" style="text-align: center; color: var(--on-surface-variant); padding: 48px;">
-                        No matching customers found.
-                    </td>
-                `;
-                document.querySelector('.table-body').appendChild(emptyRow);
-            } else {
-                emptyRow.style.display = '';
-            }
-        } else if (emptyRow) {
-            emptyRow.style.display = 'none';
-        }
+        currentPage = 1;
+        renderPagination();
     }
 
     // Close on overlay click

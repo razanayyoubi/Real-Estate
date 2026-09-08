@@ -554,22 +554,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save Draft click handler
     if (draftBtn) {
         draftBtn.addEventListener('click', () => {
-            alert('Draft Saved Successfully (Simulated)!');
+            if (!inputTitle.value.trim()) {
+                showError('title', 'Please provide at least a title to save a draft.');
+                return;
+            }
+            submitPropertyForm(true);
         });
     }
 
     /* ─────────────────────────────────────────────────────────
        6. AJAX SUBMISSION
     ───────────────────────────────────────────────────────── */
-    const submitPropertyForm = () => {
+    const submitPropertyForm = (isDraft = false) => {
         // Disable buttons and show saving indicator
         nextBtn.disabled = true;
-        nextBtn.innerHTML = `Saving Listing... <span class="material-symbols-outlined animate-spin" style="animation: spin 1.5s linear infinite;">sync</span>`;
+        if (isDraft) {
+            draftBtn.disabled = true;
+            draftBtn.innerHTML = `Saving Draft... <span class="material-symbols-outlined animate-spin" style="animation: spin 1.5s linear infinite;">sync</span>`;
+        } else {
+            nextBtn.innerHTML = `Saving Listing... <span class="material-symbols-outlined animate-spin" style="animation: spin 1.5s linear infinite;">sync</span>`;
+        }
         if (prevBtn) prevBtn.disabled = true;
-        if (draftBtn) draftBtn.disabled = true;
 
         // Build FormData
         const formData = new FormData(propertyForm);
+
+        if (isDraft) {
+            formData.append('is_draft', 'true');
+        }
 
         // Remove the default photos list from input file since we upload our custom array
         formData.delete('photos');
@@ -587,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.status === 201) {
                 alert(res.body.message);
                 // Redirect user based on role
-                window.location.href = isEmployee ? '/dashboard' : '/';
+                window.location.href = isEmployee ? '/control-panel/properties' : '/dashboard';
             } else {
                 alert(res.body.error || 'Failed to submit the listing. Please check the fields.');
                 resetLoadingState();
@@ -604,7 +616,100 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetLoadingState = () => {
         nextBtn.disabled = false;
         if (prevBtn) prevBtn.disabled = false;
-        if (draftBtn) draftBtn.disabled = false;
+        if (draftBtn) {
+            draftBtn.disabled = false;
+            draftBtn.innerHTML = 'Save as Draft';
+        }
         updateSteps();
     };
 });
+
+/* Global Draft Resume / Discard Functions */
+function resumeDraft() {
+    const modal = document.getElementById('draftPromptModal');
+    if (modal) modal.style.display = 'none';
+
+    if (!window.USER_DRAFT) return;
+    const d = window.USER_DRAFT;
+
+    const draftIdInput = document.getElementById('input-draft-id');
+    if (draftIdInput) draftIdInput.value = d.propertyID;
+
+    const titleInput = document.getElementById('input-title');
+    if (titleInput) titleInput.value = d.title || '';
+
+    const descInput = document.getElementById('input-description');
+    if (descInput) descInput.value = d.description || '';
+
+    const priceInput = document.getElementById('input-price');
+    if (priceInput) priceInput.value = d.price || '';
+
+    const areaInput = document.getElementById('input-area');
+    if (areaInput) areaInput.value = d.area || '';
+
+    const roomsInput = document.getElementById('input-rooms');
+    if (roomsInput) roomsInput.value = d.rooms || '';
+
+    const bathsInput = document.getElementById('input-baths');
+    if (bathsInput) bathsInput.value = d.bathrooms || '';
+
+    const floorInput = document.getElementById('input-floor');
+    if (floorInput) floorInput.value = d.floorNumber || '';
+
+    const regionInput = document.getElementById('input-region');
+    if (regionInput) regionInput.value = d.location || '';
+
+    const addressInput = document.getElementById('input-address');
+    if (addressInput) addressInput.value = d.address || '';
+
+    const ownerInput = document.getElementById('input-owner');
+    if (ownerInput && d.ownerID) ownerInput.value = d.ownerID;
+
+    if (d.listingType) {
+        const radio = document.querySelector(`input[name="listing_type"][value="${d.listingType}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    if (d.propertyType) {
+        const hiddenType = document.getElementById('input-property-type');
+        if (hiddenType) hiddenType.value = d.propertyType;
+    }
+
+    // Trigger input events to update live preview
+    if (titleInput) titleInput.dispatchEvent(new Event('input'));
+    if (priceInput) priceInput.dispatchEvent(new Event('input'));
+    if (areaInput) areaInput.dispatchEvent(new Event('input'));
+    if (regionInput) regionInput.dispatchEvent(new Event('change'));
+}
+
+function discardDraft() {
+    showConfirmModal({
+        title: 'Discard Saved Draft?',
+        message: 'Are you sure you want to permanently discard your saved property draft? This action cannot be undone.',
+        confirmText: 'Discard Draft',
+        confirmBg: '#ba1a1a',
+        icon: 'delete',
+        iconBg: '#ffebee',
+        iconColor: '#c62828',
+        onConfirm: () => {
+            fetch('/properties/api/discard-draft', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const modal = document.getElementById('draftPromptModal');
+                if (modal) modal.style.display = 'none';
+
+                const draftIdInput = document.getElementById('input-draft-id');
+                if (draftIdInput) draftIdInput.value = '';
+
+                const form = document.getElementById('property-form');
+                if (form) form.reset();
+
+                window.USER_DRAFT = null;
+            })
+            .catch(err => console.error(err));
+        }
+    });
+}

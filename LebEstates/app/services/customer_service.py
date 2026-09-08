@@ -2,10 +2,26 @@ from app.models.customer import Customer
 from app.models.users import Users
 from app.models.base import db
 
-def get_all_customers():
-    """Retrieve all customers with their associated user data."""
-    # Query all customers joining with Users to get full name, email, status, etc.
-    customers = db.session.query(Customer, Users).join(Users, Customer.userID == Users.userID).all()
+def get_all_customers(filters=None):
+    """Retrieve all customers with optional server-side filtering and associated user data."""
+    query = db.session.query(Customer, Users).join(Users, Customer.userID == Users.userID)
+    
+    if filters:
+        q = filters.get('server_q', '').strip()
+        if q:
+            from sqlalchemy import or_
+            query = query.filter(or_(
+                Users.fullName.ilike(f'%{q}%'),
+                Users.email.ilike(f'%{q}%'),
+                Users.phoneNumber.ilike(f'%{q}%'),
+                Customer.address.ilike(f'%{q}%')
+            ))
+
+        status = filters.get('status', 'All').strip()
+        if status and status.lower() != 'all':
+            query = query.filter(Users.status.ilike(status))
+
+    customers = query.all()
     
     # Format the data for the template
     result = []
@@ -18,7 +34,7 @@ def get_all_customers():
             'location': customer.address,
             'status': user.status, # e.g. Active, Inactive, Blacklisted
             'created_at': customer.createdAt.strftime("%b %d, %Y") if customer.createdAt else "N/A",
-            'avatar_url': f"https://ui-avatars.com/api/?name={user.fullName.replace(' ', '+')}&background=random", # Placeholder for avatar
+            'avatar_url': user.avatar_url if hasattr(user, 'avatar_url') and user.avatar_url else f"https://ui-avatars.com/api/?name={user.fullName.replace(' ', '+')}&background=random",
             'raw_customer': customer,
             'raw_user': user
         })

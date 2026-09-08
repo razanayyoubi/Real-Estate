@@ -273,7 +273,10 @@
                                     <span class="recent-prop-title">{{ t.property_title }}</span>
                                 </div>
                             </td>
-                            <td>{{ t.client_name }}</td>
+                            <td style="cursor: pointer; font-weight: 600; color: var(--primary);" {% if t.customer_id %}onclick="openCustomerModal({{ t.customer_id }})" title="Click to view customer profile"{% endif %}>
+                                <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">account_circle</span>
+                                {{ t.client_name }}
+                            </td>
                             <td>{{ t.agent_name }}</td>
                             <td style="text-align: right; font-weight: 700; color: var(--primary);">{{ t.final_price_formatted }}</td>
                             <td style="text-align: right; font-weight: 700; color: var(--secondary);">{{ t.commission_formatted }}</td>

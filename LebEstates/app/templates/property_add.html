@@ -88,7 +88,8 @@
             <div class="layout-main-content">
                 <form id="property-form" enctype="multipart/form-data" novalidate>
 
-                    <!-- Hidden property type field -->
+                    <!-- Hidden draft ID and property type fields -->
+                    <input type="hidden" id="input-draft-id" name="draft_id" value="{% if user_draft %}{{ user_draft.propertyID }}{% endif %}" />
                     <input type="hidden" id="input-property-type" name="property_type" value="Villa" />
 
                     <!-- Step 1: General Info -->
@@ -369,9 +370,34 @@
         </div>
     </div>
 </main>
+
+{% if user_draft %}
+<div class="modal-overlay active" id="draftPromptModal" style="display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 999999; align-items: center; justify-content: center;">
+    <div class="modal-card" style="background: var(--surface-container-lowest, #ffffff); border-radius: 16px; padding: 32px; max-width: 480px; width: 100%; text-align: center; border: 1px solid var(--outline-variant);">
+        <div style="width: 56px; height: 56px; background: #e3f2fd; color: #1976d2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+            <span class="material-symbols-outlined" style="font-size: 28px;">edit_document</span>
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: var(--primary);">Unfinished Draft Found</h3>
+        <p style="margin: 0 0 24px 0; font-size: 14px; color: var(--on-surface-variant);">You have a saved property draft: <strong>"{{ user_draft.title }}"</strong>. Would you like to resume completing your draft or start a new listing?</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button type="button" onclick="resumeDraft()" style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-weight: 700; cursor: pointer;">
+                Resume Editing Saved Draft
+            </button>
+            <button type="button" onclick="discardDraft()" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--outline-variant); background: transparent; color: var(--on-surface-variant); font-weight: 600; cursor: pointer;">
+                Discard Draft &amp; Start New Listing
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
+{% if user_draft %}
+<script>
+    window.USER_DRAFT = {{ user_draft | tojson }};
+</script>
+{% endif %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="/static/js/property_add.js"></script>

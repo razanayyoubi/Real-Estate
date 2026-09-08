@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Receipt #TRX-{{ transaction.transactionID }} | LebEstates</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1a1a1a;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .receipt-card {
+            max-width: 750px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 40px;
+            border: 1px solid #e0e0e0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00081e;
+            padding-bottom: 24px;
+            margin-bottom: 32px;
+        }
+        .brand {
+            font-size: 26px;
+            font-weight: 800;
+            color: #00081e;
+            letter-spacing: -0.5px;
+        }
+        .brand span {
+            color: #d4af37;
+        }
+        .receipt-title {
+            text-align: right;
+        }
+        .receipt-title h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #735c00;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .receipt-number {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 1px;
+        }
+        .info-box p {
+            margin: 4px 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 32px;
+        }
+        .details-table th {
+            background-color: #f8f9fa;
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .details-table td {
+            padding: 16px;
+            border-bottom: 1px solid #eeeeee;
+            font-size: 14px;
+        }
+        .total-row {
+            background-color: #fcfbfa;
+        }
+        .total-row td {
+            font-weight: 800;
+            font-size: 18px;
+            color: #00081e;
+        }
+        .footer-note {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 40px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 20px;
+        }
+        .actions-bar {
+            max-width: 750px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .btn-print {
+            padding: 10px 20px;
+            border-radius: 6px;
+            background-color: #00081e;
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+        @media print {
+            .actions-bar { display: none; }
+            body { background: white; padding: 0; }
+            .receipt-card { box-shadow: none; border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="actions-bar">
+        <button class="btn-print" onclick="window.print()">Print / Save PDF Receipt</button>
+    </div>
+
+    <div class="receipt-card">
+        <div class="header">
+            <div class="brand">Leb<span>Estates</span></div>
+            <div class="receipt-title">
+                <h2>Official Receipt</h2>
+                <div class="receipt-number">#TRX-{{ transaction.transactionID }}</div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <h4>Client Details</h4>
+                <p>{{ transaction.customer.user.fullName if (transaction.customer and transaction.customer.user) else 'N/A' }}</p>
+                <p style="font-weight: 400; color: #555;">Email: {{ transaction.customer.user.email if (transaction.customer and transaction.customer.user) else 'N/A' }}</p>
+                <p style="font-weight: 400; color: #555;">Phone: {{ transaction.customer.user.phoneNumber if (transaction.customer and transaction.customer.user) else 'N/A' }}</p>
+            </div>
+            <div class="info-box" style="text-align: right;">
+                <h4>Transaction Details</h4>
+                <p>Date: {{ transaction.transactionDate.strftime('%B %d, %Y') }}</p>
+                <p style="font-weight: 400; color: #555;">Type: {{ 'Property Sale' if transaction.transactionType == 'Sell' else 'Property Rental' }}</p>
+                <p style="font-weight: 400; color: #555;">Agent: {{ transaction.employee.user.fullName if (transaction.employee and transaction.employee.user) else 'N/A' }}</p>
+            </div>
+        </div>
+
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th>Property Details</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <strong>{{ transaction.property_obj.title }}</strong><br>
+                        <small style="color: #666;">Listing ID: #LEB-{{ transaction.property_obj.propertyID }}</small>
+                    </td>
+                    <td>{{ transaction.property_obj.propertyType }} • {{ transaction.property_obj.location }}</td>
+                    <td style="text-align: right; font-weight: 700;">${{ "{:,.2f}".format(transaction.finalPrice) }}</td>
+                </tr>
+                <tr>
+                    <td>Agency Commission ({{ transaction.commissionRate }}%)</td>
+                    <td>Realized Revenue</td>
+                    <td style="text-align: right; color: #735c00; font-weight: 700;">${{ "{:,.2f}".format(transaction.commissionAmount) }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="2">Total Contract Value</td>
+                    <td style="text-align: right;">${{ "{:,.2f}".format(transaction.finalPrice) }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; font-size: 13px; color: #555;">
+            <strong>Payment Method:</strong> {{ transaction.paymentMethod or 'Bank Wire / Escrow' }} | 
+            <strong>Payment Status:</strong> {{ transaction.paymentStatus or 'Closed' }}
+        </div>
+
+        <div class="footer-note">
+            <p>Thank you for choosing LebEstates. This is a computer-generated official receipt.</p>
+            <p>© {{ transaction.transactionDate.strftime('%Y') }} LebEstates Prestige Real Estate CRM</p>
+        </div>
+    </div>
+</body>
+</html>

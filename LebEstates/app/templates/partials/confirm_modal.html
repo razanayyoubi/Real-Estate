@@ -1,0 +1,107 @@
+<!-- Global Reusable Confirmation & Custom Notification System -->
+<div class="modal-overlay" id="global-confirm-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 999999; align-items: center; justify-content: center; padding: 20px;">
+    <div class="modal-card" style="background: var(--surface-container-lowest, #ffffff); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); border: 1px solid var(--outline-variant, #c5c6cf); width: 100%; max-width: 460px; padding: 28px; box-sizing: border-box; text-align: center;">
+        <div id="confirm-modal-icon-wrapper" style="width: 56px; height: 56px; background: #fff3e0; color: #e65100; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+            <span class="material-symbols-outlined" id="confirm-modal-icon" style="font-size: 28px;">help_outline</span>
+        </div>
+        <h3 id="confirm-modal-title" style="margin: 0 0 8px 0; font-family: var(--font-headline, sans-serif); font-size: 20px; font-weight: 800; color: var(--primary, #00081e);">Are you sure?</h3>
+        <p id="confirm-modal-message" style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: var(--on-surface-variant, #666);">Do you really want to proceed with this action?</p>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" id="confirm-modal-cancel-btn" style="flex: 1; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--outline-variant, #c5c6cf); background: transparent; color: var(--on-surface-variant, #44464e); font-weight: 600; cursor: pointer; font-size: 14px;">
+                Cancel
+            </button>
+            <button type="button" id="confirm-modal-ok-btn" style="flex: 1; padding: 10px 18px; border-radius: 8px; border: none; background: var(--error, #ba1a1a); color: #ffffff; font-weight: 700; cursor: pointer; font-size: 14px;">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.showConfirmModal = function({
+    title = 'Are you sure?',
+    message = 'Do you really want to proceed with this action?',
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    icon = 'help_outline',
+    iconBg = '#fff3e0',
+    iconColor = '#e65100',
+    confirmBg = '#ba1a1a',
+    confirmColor = '#ffffff',
+    onConfirm = null,
+    onCancel = null
+}) {
+    const modal = document.getElementById('global-confirm-modal');
+    const titleEl = document.getElementById('confirm-modal-title');
+    const msgEl = document.getElementById('confirm-modal-message');
+    const iconEl = document.getElementById('confirm-modal-icon');
+    const iconWrap = document.getElementById('confirm-modal-icon-wrapper');
+    const okBtn = document.getElementById('confirm-modal-ok-btn');
+    const cancelBtn = document.getElementById('confirm-modal-cancel-btn');
+
+    if (!modal) return;
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    iconEl.textContent = icon;
+    iconWrap.style.background = iconBg;
+    iconWrap.style.color = iconColor;
+
+    okBtn.textContent = confirmText;
+    okBtn.style.background = confirmBg;
+    okBtn.style.color = confirmColor;
+
+    cancelBtn.textContent = cancelText;
+
+    modal.style.display = 'flex';
+
+    // Handler clone to clean past event listeners
+    const newOk = okBtn.cloneNode(true);
+    const newCancel = cancelBtn.cloneNode(true);
+
+    okBtn.parentNode.replaceChild(newOk, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    newOk.addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (typeof onConfirm === 'function') onConfirm();
+    });
+
+    newCancel.addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (typeof onCancel === 'function') onCancel();
+    });
+};
+
+/* Replace native confirm with custom promise-based modal */
+const originalConfirm = window.confirm;
+window.confirm = function(message) {
+    // If called synchronously in code expecting a boolean result, return true if confirmed via custom trigger
+    window.showConfirmModal({
+        title: 'Confirmation Required',
+        message: message,
+        confirmText: 'Yes, Proceed',
+        cancelText: 'Cancel'
+    });
+    return false; // Prevent blocking browser UI
+};
+
+/* Replace native alert with custom toast */
+window.alert = function(message) {
+    if (window.showToast) {
+        window.showToast(message, 'info');
+    } else {
+        window.showConfirmModal({
+            title: 'Notice',
+            message: message,
+            confirmText: 'OK',
+            cancelText: 'Close',
+            icon: 'info',
+            iconBg: '#e3f2fd',
+            iconColor: '#1976d2',
+            confirmBg: '#00081e'
+        });
+    }
+};
+</script>

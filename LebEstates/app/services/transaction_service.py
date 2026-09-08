@@ -9,11 +9,32 @@ from app.models.users import AuditLog
 
 class TransactionService:
     @staticmethod
-    def get_ledger_data():
+    def get_ledger_data(filters=None):
         """
-        Fetch all transactions and ledger statistics, along with helper lists.
+        Fetch transactions with optional server-side filtering and ledger statistics.
         """
-        transactions = Transaction.query.order_by(Transaction.transactionDate.desc()).all()
+        query = Transaction.query
+
+        if filters:
+            q = filters.get('server_q', '').strip()
+            if q:
+                from sqlalchemy import or_
+                query = query.outerjoin(Property, Transaction.propertyID == Property.propertyID).outerjoin(Customer, Transaction.customerID == Customer.customerID).filter(or_(
+                    Property.title.ilike(f'%{q}%'),
+                    Customer.notes.ilike(f'%{q}%'),
+                    Transaction.transactionType.ilike(f'%{q}%'),
+                    Transaction.paymentStatus.ilike(f'%{q}%')
+                ))
+
+            t_type = filters.get('type', 'All').strip()
+            if t_type and t_type.lower() != 'all':
+                query = query.filter(Transaction.transactionType.ilike(t_type))
+
+            status = filters.get('status', 'All').strip()
+            if status and status.lower() != 'all':
+                query = query.filter(Transaction.paymentStatus.ilike(status))
+
+        transactions = query.order_by(Transaction.transactionDate.desc()).all()
 
         gross_volume = db.session.query(func.sum(Transaction.finalPrice)).filter_by(paymentStatus='Closed').scalar() or 0.0
         total_commission = db.session.query(func.sum(Transaction.commissionAmount)).filter_by(paymentStatus='Closed').scalar() or 0.0
@@ -330,18 +351,31 @@ class TransactionService:
             if not property_obj:
                 return {'success': False, 'error': 'Property not found'}
 
+            buyer_rate_setting = CommissionSetting.query.filter_by(commissionType='buyer_rate').first()
+            seller_rate_setting = CommissionSetting.query.filter_by(commissionType='seller_rate').first()
+            rent_rule_setting = CommissionSetting.query.filter_by(commissionType='rent_rule').first()
+            agent_split_setting = CommissionSetting.query.filter_by(commissionType='agent_split').first()
+
+            buyer_rate = float(buyer_rate_setting.ratePercentage) if buyer_rate_setting else 2.5
+            seller_rate = float(seller_rate_setting.ratePercentage) if seller_rate_setting else 2.5
+            rent_rule = float(rent_rule_setting.ratePercentage) if rent_rule_setting else 1.0
+            agent_split = float(agent_split_setting.ratePercentage) if agent_split_setting else 30.0
+
             if transaction_type == 'Sell':
-                commission_rate = 5.0
-                commission_amount = final_price * 0.05
+                commission_rate = buyer_rate + seller_rate
+                commission_amount = final_price * (commission_rate / 100.0)
             else:
-                commission_rate = 100.0
-                commission_amount = final_price
+                if rent_rule == 5.0:
+                    commission_amount = (final_price * 12) * 0.05
+                    commission_rate = 60.0
+                elif rent_rule == 10.0:
+                    commission_amount = (final_price * 12) * 0.10
+                    commission_rate = 120.0
+                else:
+                    commission_amount = final_price
+                    commission_rate = 100.0
 
             owner_id = property_obj.ownerID
-
-            # Fetch current global agent split setting
-            agent_split_setting = CommissionSetting.query.filter_by(commissionType='agent_split').first()
-            agent_split = float(agent_split_setting.ratePercentage) if agent_split_setting else 30.0
 
             new_trans = Transaction(
                 propertyID=int(property_id),
@@ -548,13 +582,24 @@ class TransactionService:
             trend_revenue.append(monthly_rev)
             trend_volume.append(monthly_vol)
 
-            # Retrieve pre-fetched salaries using dictionary mapping
+            # Query Office Expense items
+            from app.models.expenses import OfficeExpense
+            office_exp_total = db.session.query(func.sum(OfficeExpense.amount)).filter(
+                func.year(OfficeExpense.expenseDate) == year,
+                func.month(OfficeExpense.expenseDate) == month
+            ).scalar() or 0.0
+
+            # Calculate recurring expenses projection
+            recurring_exp_total = db.session.query(func.sum(OfficeExpense.amount)).filter(
+                OfficeExpense.isRecurring == True
+            ).scalar() or 0.0
+
             salary_month_str = f"{year:04d}-{month:02d}"
             monthly_salaries = salary_map.get(salary_month_str, 0.0)
 
-            monthly_exp = monthly_salaries + (monthly_rev * 0.15)
+            monthly_exp = monthly_salaries + float(office_exp_total) + float(recurring_exp_total) + (monthly_rev * 0.10)
             if monthly_exp == 0.0 and monthly_rev > 0:
-                monthly_exp = monthly_rev * 0.25
+                monthly_exp = monthly_rev * 0.20
 
             trend_expenses.append(monthly_exp)
             trend_profit.append(monthly_rev - monthly_exp)
@@ -695,6 +740,7 @@ class TransactionService:
 
             recent_transactions.append({
                 'id': f"TX-{t.transactionID}",
+                'customer_id': t.customerID if t.customer else None,
                 'property_title': t.property_obj.title,
                 'property_type': t.property_obj.propertyType,
                 'listing_type': t.transactionType,

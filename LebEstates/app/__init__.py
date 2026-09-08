@@ -61,6 +61,9 @@ def create_app(config_class=Config):
     from app.routes.support import support_bp
     app.register_blueprint(support_bp)
 
+    from app.routes.expenses import expenses_bp
+    app.register_blueprint(expenses_bp)
+
     # Global session checker middleware
     from flask import session, redirect, url_for, request
     from datetime import datetime
@@ -110,6 +113,12 @@ def create_app(config_class=Config):
 
     # Auto-migration & Database seeding
     with app.app_context():
+        # Ensure all tables are created first
+        try:
+            db.create_all()
+        except Exception as create_err:
+            app.logger.error(f"Database creation failed: {create_err}")
+
         # Auto-migration for 2FA backup codes column
         try:
             db.session.execute(db.text("SELECT twoFactorBackupCodes FROM users LIMIT 1"))
@@ -123,12 +132,15 @@ def create_app(config_class=Config):
                 db.session.rollback()
                 app.logger.error(f"Database migration failed: {migrate_err}")
 
-        # Ensure all tables are created (including new Email Hub tables)
         try:
-            db.create_all()
+            # Seed Default Roles
+            from app.models.users import Users, Role
+            for rname in ['Admin', 'Employee', 'Customer']:
+                if not Role.query.filter_by(roleName=rname).first():
+                    db.session.add(Role(roleName=rname))
+            db.session.commit()
 
             # Seed AI Assistant User
-            from app.models.users import Users, Role
             ai_user = Users.query.filter_by(email='ai@lebestates.com').first()
             if not ai_user:
                 employee_role = Role.query.filter_by(roleName='Employee').first()

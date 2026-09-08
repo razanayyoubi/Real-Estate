@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Office Operating Expenses | LebEstates Admin{% endblock %}
+
+{% block styles %}
+<style>
+.expenses-container {
+    padding: var(--margin-desktop, 32px);
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+.stat-card {
+    background-color: var(--surface-container-lowest, #1e1e1e);
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid var(--outline-variant, rgba(255,255,255,0.1));
+}
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary, #d4af37);
+    margin: 0;
+}
+.stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--on-surface-variant, #a0a0a0);
+    margin: 0 0 4px 0;
+}
+.table-container {
+    background-color: var(--surface-container-lowest, #1e1e1e);
+    border-radius: 12px;
+    border: 1px solid var(--outline-variant, rgba(255,255,255,0.1));
+    overflow: hidden;
+}
+.filter-bar {
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--outline-variant, rgba(255,255,255,0.1));
+}
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+.modal-overlay.active { display: flex; }
+.modal-card {
+    background: var(--surface-container-lowest, #1e1e1e);
+    border: 1px solid var(--outline-variant, rgba(255,255,255,0.1));
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    padding: 28px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="expenses-container">
+    <div class="hub-header">
+        <div class="hub-header-top">
+            <span class="hub-header-line"></span>
+            <span class="hub-header-tag">Financial Management</span>
+        </div>
+        <div class="hub-header-main-flex" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <div class="hub-header-details">
+                <h2 class="hub-title" style="font-size: 28px; font-weight: 700; color: var(--primary);">Office Operating Expenses</h2>
+                <p class="hub-subtitle" style="color: var(--on-surface-variant); font-size: 14px;">Track, manage, and reconcile administrative and operational overheads.</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; background: var(--primary); color: #000; font-weight: 700; border: none; cursor: pointer;">
+                <span class="material-symbols-outlined">add</span>
+                Record Expense
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <!-- Standardized Responsive Stats Grid (2 per row on mobile) -->
+    <section class="mgmt-stats-grid" style="margin-top: 32px; margin-bottom: 24px;">
+        <div class="stat-card border-primary">
+            <p class="stat-label">Total Expenses</p>
+            <h3 class="stat-value text-primary">${{ "{:,.2f}".format(total_amount) }}</h3>
+        </div>
+        <div class="stat-card border-secondary">
+            <p class="stat-label">Paid Expenses</p>
+            <h3 class="stat-value" style="color: #2e7d32;">${{ "{:,.2f}".format(paid_amount) }}</h3>
+        </div>
+        <div class="stat-card border-error">
+            <p class="stat-label">Pending Expenses</p>
+            <h3 class="stat-value" style="color: #e65100;">${{ "{:,.2f}".format(pending_amount) }}</h3>
+        </div>
+    </section>
+
+    <!-- Table Container -->
+    <div class="table-container unified-table-container">
+        <!-- Standardized Responsive Filter Bar -->
+        <form method="GET" action="/control-panel/expenses" class="mgmt-filter-bar">
+            <!-- Top Search Inputs -->
+            <div class="filter-search-grid">
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" id="filter-client-search" placeholder="Client-Side Live Search (Instant)..." class="filter-input-text" />
+                </div>
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon text-primary">database</span>
+                    <input type="text" name="server_q" id="filter-server-search" value="{{ filters.server_q if filters else '' }}" placeholder="Server Database Search (SQL Query)..." class="filter-input-text" />
+                </div>
+            </div>
+
+            <!-- Dropdowns Grid (2 per row on mobile) -->
+            <div class="filter-dropdowns-grid">
+                <select name="category" class="filter-select">
+                    <option value="All" {% if not filters or filters.category == 'All' %}selected{% endif %}>Category: All</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if filters and filters.category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="status" class="filter-select">
+                    <option value="All" {% if not filters or filters.status == 'All' %}selected{% endif %}>Status: All</option>
+                    <option value="Paid" {% if filters and filters.status == 'Paid' %}selected{% endif %}>Paid</option>
+                    <option value="Pending" {% if filters and filters.status == 'Pending' %}selected{% endif %}>Pending</option>
+                </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="filter-actions-bar">
+                <button type="submit" id="btn-server-filter" class="btn-filter-submit">
+                    <span class="material-symbols-outlined">filter_alt</span>
+                    Filter Expenses
+                </button>
+                <a href="/control-panel/expenses" class="btn-filter-reset">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    Reset
+                </a>
+            </div>
+        </form>
+
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="unified-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--surface-container-low); border-bottom: 1px solid var(--outline-variant);">
+                        <th style="padding: 16px 20px; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); text-align: left;">ID</th>
+                        <th style="padding: 16px 20px; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); text-align: left;">Expense Item</th>
+                        <th style="padding: 16px 20px; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); text-align: left;">Category</th>
+                        <th style="padding: 16px 20px; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); text-align: right;">Amount</th>
+                        <th style="padding: 16px 20px; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); text-align: center;">Status</th>
+                        <th style="padding: 16px 20px; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); text-align: left;">Date</th>
+                        <th style="padding: 16px 20px; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="expenses-tbody">
+                    {% for exp in expenses %}
+                    <tr class="expense-row" data-search="{{ exp.title.lower() }} {{ exp.category.lower() }}" data-category="{{ exp.category }}" data-status="{{ exp.status }}" style="border-bottom: 1px solid var(--outline-variant);">
+                        <td style="padding: 16px 20px; font-weight: 600;">#EXP-{{ exp.expenseID }}</td>
+                        <td style="padding: 16px 20px; font-weight: 600; color: var(--primary);">
+                            {{ exp.title }}
+                            {% if exp.notes %}
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--on-surface-variant); font-weight: 400;">{{ exp.notes }}</p>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 16px 20px;">
+                            <span style="background: var(--surface-container-high); padding: 4px 10px; border-radius: 6px; font-size: 12px;">{{ exp.category }}</span>
+                        </td>
+                        <td style="padding: 16px 20px; text-align: right; font-weight: 700; color: var(--primary);">${{ "{:,.2f}".format(exp.amount) }}</td>
+                        <td style="padding: 16px 20px; text-align: center;">
+                            <span class="status-badge status-{{ exp.status.lower() }}" style="padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; background: {% if exp.status == 'Paid' %}#e8f5e9{% else %}#fff3e0{% endif %}; color: {% if exp.status == 'Paid' %}#2e7d32{% else %}#e65100{% endif %};">
+                                {{ exp.status }}
+                            </span>
+                        </td>
+                        <td style="padding: 16px 20px; font-size: 13px; color: var(--on-surface-variant);">{{ exp.expenseDate.strftime('%b %d, %Y') }}</td>
+                        <td style="padding: 16px 20px; text-align: right;">
+                            <button onclick="openEditModal({{ exp.expenseID }}, '{{ exp.title }}', '{{ exp.category }}', {{ exp.amount }}, '{{ exp.expenseDate.strftime('%Y-%m-%d') }}', '{{ exp.status }}', '{{ exp.notes or '' }}')" style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 4px;">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button onclick="deleteExpense({{ exp.expenseID }})" style="background: none; border: none; color: var(--error, #f44336); cursor: pointer; padding: 4px;">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 48px; color: var(--on-surface-variant);">No office expenses recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="expenseModal">
+    <div class="modal-card">
+        <h3 id="modal-title-text" style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: var(--primary);">Record Office Expense</h3>
+        <form id="expenseForm" onsubmit="event.preventDefault(); submitExpense();">
+            <input type="hidden" id="expense-id">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); margin-bottom: 6px;">Expense Title</label>
+                    <input type="text" id="expense-title" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); margin-bottom: 6px;">Category</label>
+                    <select id="expense-category" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface);">
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); margin-bottom: 6px;">Amount ($)</label>
+                        <input type="number" step="0.01" id="expense-amount" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); margin-bottom: 6px;">Expense Date</label>
+                        <input type="date" id="expense-date" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface);">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); margin-bottom: 6px;">Status</label>
+                        <select id="expense-status" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface);">
+                            <option value="Paid">Paid</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); margin-bottom: 6px;">Recurrence</label>
+                        <div style="display: flex; align-items: center; gap: 8px; height: 40px;">
+                            <input type="checkbox" id="expense-is-recurring">
+                            <select id="expense-recurrence-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface);">
+                                <option value="Monthly">Monthly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; text-transform: uppercase; color: var(--on-surface-variant); margin-bottom: 6px;">Notes (Optional)</label>
+                    <textarea id="expense-notes" rows="2" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface);"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+                    <button type="button" onclick="closeModal()" style="padding: 10px 18px; border-radius: 8px; border: 1px solid var(--outline-variant); background: transparent; color: var(--on-surface); cursor: pointer;">Cancel</button>
+                    <button type="submit" style="padding: 10px 18px; border-radius: 8px; border: none; background: var(--primary); color: #000; font-weight: 700; cursor: pointer;">Save Expense</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openAddModal() {
+    document.getElementById('expense-id').value = '';
+    document.getElementById('modal-title-text').textContent = 'Record Office Expense';
+    document.getElementById('expenseForm').reset();
+    document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('expenseModal').classList.add('active');
+}
+
+function openEditModal(id, title, category, amount, dateStr, status, notes) {
+    document.getElementById('expense-id').value = id;
+    document.getElementById('modal-title-text').textContent = 'Edit Office Expense';
+    document.getElementById('expense-title').value = title;
+    document.getElementById('expense-category').value = category;
+    document.getElementById('expense-amount').value = amount;
+    document.getElementById('expense-date').value = dateStr;
+    document.getElementById('expense-status').value = status;
+    document.getElementById('expense-notes').value = notes;
+    document.getElementById('expenseModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('expenseModal').classList.remove('active');
+}
+
+function submitExpense() {
+    const id = document.getElementById('expense-id').value;
+    const payload = {
+        title: document.getElementById('expense-title').value,
+        category: document.getElementById('expense-category').value,
+        amount: document.getElementById('expense-amount').value,
+        expense_date: document.getElementById('expense-date').value,
+        status: document.getElementById('expense-status').value,
+        is_recurring: document.getElementById('expense-is-recurring').checked,
+        recurrence_type: document.getElementById('expense-recurrence-type').value,
+        notes: document.getElementById('expense-notes').value
+    };
+
+    const url = id ? `/control-panel/expenses/edit/${id}` : '/control-panel/expenses/add';
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to save expense');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Network error');
+    });
+}
+
+function deleteExpense(id) {
+    showConfirmModal({
+        title: 'Delete Expense Record?',
+        message: 'Are you sure you want to permanently delete this office expense record?',
+        confirmText: 'Delete Expense',
+        confirmBg: '#ba1a1a',
+        icon: 'delete',
+        iconBg: '#ffebee',
+        iconColor: '#c62828',
+        onConfirm: () => {
+            fetch(`/control-panel/expenses/delete/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    if (window.showToast) showToast(data.error || 'Failed to delete expense', 'error');
+                }
+            })
+            .catch(err => console.error(err));
+        }
+    });
+}
+
+function applyExpenseFilters() {
+    const q = document.getElementById('search-expenses').value.toLowerCase().trim();
+    const cat = document.getElementById('filter-category').value;
+    const status = document.getElementById('filter-status').value;
+
+    document.querySelectorAll('.expense-row').forEach(row => {
+        const searchVal = row.dataset.search || '';
+        const catVal = row.dataset.category || '';
+        const statusVal = row.dataset.status || '';
+
+        const mSearch = !q || searchVal.includes(q);
+        const mCat = cat === 'All' || catVal === cat;
+        const mStatus = status === 'All' || statusVal === status;
+
+        if (mSearch && mCat && mStatus) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}
