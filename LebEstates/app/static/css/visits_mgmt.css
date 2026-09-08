@@ -1259,3 +1259,42 @@
     text-align: center !important;
   }
 }
+
+/* Searchable Consultant Dropdown Card Styling for Visits */
+.select-dropdown-menu {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 36px rgba(0, 8, 30, 0.22), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.select-dropdown-menu .dropdown-search-input {
+  background-color: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.select-dropdown-menu .dropdown-option-item {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  padding: 8px 10px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  transition: background 0.15s ease !important;
+}
+
+.select-dropdown-menu .dropdown-option-item:hover {
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.select-dropdown-menu .dropdown-option-item.conflicted {
+  background-color: #fce8e6 !important;
+  color: #c5221f !important;
+}
+
+.select-dropdown-menu .btn-view-more-options {
+  background-color: #f1f5f9 !important;
+  border: 1px dashed #cbd5e1 !important;
+  color: #1e293b !important;
+}

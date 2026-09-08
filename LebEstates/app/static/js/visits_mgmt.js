@@ -199,6 +199,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isHidden = menu.classList.toggle('hidden');
             if (!isHidden) {
+                // Fixed positioning over table so card is 100% visible and not clipped
+                const rect = trigger.getBoundingClientRect();
+                menu.style.position = 'fixed';
+                menu.style.zIndex = '999999';
+                menu.style.width = '230px';
+
+                const menuHeight = 220;
+                let top = rect.top - menuHeight - 6;
+                if (top < 10) {
+                    top = rect.bottom + 6;
+                }
+                let left = rect.left;
+                if (left + 230 > window.innerWidth - 16) {
+                    left = window.innerWidth - 246;
+                }
+
+                menu.style.top = top + 'px';
+                menu.style.left = left + 'px';
+
                 searchInput.value = '';
                 filterItems(optionsList, '');
                 searchInput.focus();
@@ -297,24 +316,126 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function filterItems(container, filterText) {
+    function filterItems(container, filterText, showAll = false) {
         const text = filterText.toLowerCase();
-        container.querySelectorAll('.dropdown-option-item').forEach(item => {
+        const allItems = Array.from(container.querySelectorAll('.dropdown-option-item'));
+        
+        let matching = allItems.filter(item => {
             const label = item.textContent.toLowerCase();
-            if (label.includes(text)) {
-                item.style.display = '';
-            } else {
-                item.style.display = 'none';
-            }
+            return label.includes(text);
         });
+
+        // Hide all options first
+        allItems.forEach(item => item.style.display = 'none');
+
+        // Limit visible items to 4 unless showAll is true
+        const visibleItems = showAll ? matching : matching.slice(0, 4);
+        visibleItems.forEach(item => item.style.display = 'block');
+
+        // Manage "View More" button
+        let viewMoreBtn = container.querySelector('.btn-view-more-options');
+        if (!viewMoreBtn) {
+            viewMoreBtn = document.createElement('div');
+            viewMoreBtn.className = 'btn-view-more-options';
+            viewMoreBtn.style.cssText = 'padding: 6px; font-size: 11px; font-weight: 700; color: #1e293b; text-align: center; cursor: pointer; background: #f1f5f9; border-radius: 6px; margin-top: 4px; border: 1px dashed #cbd5e1;';
+            container.appendChild(viewMoreBtn);
+        }
+
+        const remaining = matching.length - 4;
+        if (!showAll && remaining > 0) {
+            viewMoreBtn.style.display = 'block';
+            viewMoreBtn.textContent = `View more (${remaining} options)`;
+            viewMoreBtn.onclick = (e) => {
+                e.stopPropagation();
+                filterItems(container, filterText, true);
+            };
+        } else {
+            viewMoreBtn.style.display = 'none';
+        }
     }
 
-    // Close searchable selects if clicking outside
+    // Global Hover Popover Portal
+    (function() {
+        let portal = document.getElementById('globalPopoverPortal');
+        if (!portal) {
+            portal = document.createElement('div');
+            portal.id = 'globalPopoverPortal';
+            portal.className = 'global-popover-portal';
+            document.body.appendChild(portal);
+        }
+
+        let hideTimeout = null;
+
+        document.addEventListener('mouseover', function(e) {
+            const triggerCell = e.target.closest('.popover-trigger-cell');
+            if (!triggerCell) return;
+
+            const template = triggerCell.querySelector('.popover-template');
+            if (!template) return;
+
+            clearTimeout(hideTimeout);
+
+            portal.innerHTML = template.innerHTML;
+
+            const rect = triggerCell.getBoundingClientRect();
+            const portalWidth = 320;
+
+            portal.style.display = 'block';
+            portal.style.visibility = 'hidden';
+            
+            let left = rect.left;
+            if (left + portalWidth > window.innerWidth - 16) {
+                left = window.innerWidth - portalWidth - 16;
+            }
+            left = Math.max(16, left);
+
+            const portalHeight = portal.offsetHeight || 220;
+
+            let top = rect.top - portalHeight - 8;
+            if (top < 12) {
+                top = rect.bottom + 8;
+            }
+
+            portal.style.top = top + 'px';
+            portal.style.left = left + 'px';
+            portal.style.visibility = 'visible';
+            portal.classList.add('active');
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const triggerCell = e.target.closest('.popover-trigger-cell');
+            if (triggerCell) {
+                const related = e.relatedTarget;
+                if (related && (triggerCell.contains(related) || portal.contains(related))) {
+                    return;
+                }
+                hideTimeout = setTimeout(() => {
+                    portal.classList.remove('active');
+                }, 150);
+            }
+        });
+
+        portal.addEventListener('mouseenter', function() {
+            clearTimeout(hideTimeout);
+        });
+
+        portal.addEventListener('mouseleave', function() {
+            hideTimeout = setTimeout(() => {
+                portal.classList.remove('active');
+            }, 150);
+        });
+    })();
+
+    // Close searchable selects & menus if clicking or scrolling outside
     document.addEventListener('click', () => {
         document.querySelectorAll('.searchable-consultant-select .select-dropdown-menu').forEach(m => {
             m.classList.add('hidden');
         });
     });
+
+    window.addEventListener('scroll', () => {
+        document.querySelectorAll('.searchable-consultant-select .select-dropdown-menu').forEach(m => m.classList.add('hidden'));
+    }, true);
 
     // 4. Details Modal Interaction
     const detailsModal = document.getElementById('visit-details-modal');
@@ -337,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             
+            const id = btn.dataset.id;
             const propName = btn.dataset.propName;
             const propId = btn.dataset.propId;
             const custName = btn.dataset.custName;
@@ -346,6 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const consultant = btn.dataset.consultant;
             const status = btn.dataset.status;
             const notes = btn.dataset.notes;
+
+            const subtitle = document.getElementById('modal-visit-id-subtitle');
+            if (subtitle) subtitle.textContent = `Visit Record #${id}`;
 
             document.getElementById('modal-prop-name').textContent = propName;
             document.getElementById('modal-prop-id').textContent = propId;
