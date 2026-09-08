@@ -47,6 +47,38 @@ def consultation():
         clients_served=clients_served
     )
 
+@main_bp.route('/api/consultation/search-customers')
+def search_customers_for_consultation():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    from app.models.users import Users, Role
+    user = Users.query.get(session['user_id'])
+    if not user or not user.role or user.role.roleName.lower() not in ['admin', 'employee', 'supervisor']:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    q = request.args.get('q', '').strip()
+    from app.models.customer import Customer
+
+    query = Customer.query.join(Users, Customer.userID == Users.userID).join(Role, Users.roleID == Role.roleID).filter(Role.roleName.ilike('customer'))
+    if q:
+        if q.isdigit():
+            query = query.filter((Customer.customerID == int(q)) | Users.fullName.ilike(f'%{q}%') | Users.email.ilike(f'%{q}%') | Users.phoneNumber.ilike(f'%{q}%'))
+        else:
+            query = query.filter(Users.fullName.ilike(f'%{q}%') | Users.email.ilike(f'%{q}%') | Users.phoneNumber.ilike(f'%{q}%'))
+
+    customers = query.limit(50).all()
+    results = []
+    for c in customers:
+        results.append({
+            'id': c.customerID,
+            'name': c.user.fullName if (c.user and c.user.fullName) else f'Client #{c.customerID}',
+            'email': c.user.email if (c.user and c.user.email) else '',
+            'phone': c.user.phoneNumber if (c.user and c.user.phoneNumber) else '',
+            'location': c.address or ''
+        })
+    return jsonify({'success': True, 'customers': results})
+
 @main_bp.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:

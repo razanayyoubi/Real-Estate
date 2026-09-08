@@ -171,7 +171,7 @@
                         data-consultant="{{ cons.assignedEmployeeID or 'Unassigned' }}"
                         data-method="{{ cons.preferredMethod or 'Not Selected' }}"
                         data-search="{{ cons.customer.user.fullName.lower() if cons.customer and cons.customer.user else '' }} {{ cons.customer.user.email.lower() if cons.customer and cons.customer.user else '' }} {{ cons.consultationType.lower() }} {{ cons.preferredMethod.lower() if cons.preferredMethod else '' }}">
-                        <td>
+                        <td class="popover-trigger-cell" style="position: relative;">
                             <div class="customer-details">
                                 <p class="customer-name" style="cursor: pointer; font-weight: 600; color: var(--primary);" onclick="openCustomerModal({{ cons.customerID }})" title="Click to view customer details">
                                     <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">account_circle</span>
@@ -179,6 +179,34 @@
                                 </p>
                                 <p class="customer-email">{{ cons.customer.user.email if cons.customer and cons.customer.user else '' }}</p>
                             </div>
+                            <!-- Customer Hover Popover Template -->
+                            <template class="popover-template">
+                                <div class="popover-header">
+                                    <div>
+                                        <h4 class="popover-title">{{ cons.customer.user.fullName if cons.customer and cons.customer.user else 'Customer' }}</h4>
+                                        <p class="popover-subtitle">ID: #CUST-{{ cons.customerID }}</p>
+                                    </div>
+                                    <span class="popover-badge {{ 'active' if cons.customer and cons.customer.user and cons.customer.user.status == 'Active' else 'blacklisted' }}">{{ cons.customer.user.status | upper if cons.customer and cons.customer.user else 'ACTIVE' }}</span>
+                                </div>
+                                <div class="popover-grid">
+                                    <div class="popover-row">
+                                        <span class="popover-label">Email:</span>
+                                        <span class="popover-value">{{ cons.customer.user.email if cons.customer and cons.customer.user else 'N/A' }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Phone:</span>
+                                        <span class="popover-value">{{ cons.customer.user.phoneNumber if cons.customer and cons.customer.user else 'N/A' }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Location:</span>
+                                        <span class="popover-value">{{ cons.customer.preferredLocation or 'Not specified' }}</span>
+                                    </div>
+                                    <div class="popover-row">
+                                        <span class="popover-label">Joined:</span>
+                                        <span class="popover-value">{{ cons.customer.user.createdAt.strftime('%b %d, %Y') if cons.customer and cons.customer.user and cons.customer.user.createdAt else 'N/A' }}</span>
+                                    </div>
+                                </div>
+                            </template>
                         </td>
                         <td>
                             <p class="consultation-type">{{ cons.consultationType }}</p>
@@ -209,12 +237,12 @@
                                         <span class="selected-text">{{ cons.employee.user.fullName if cons.employee and cons.employee.user else 'Unassigned' }}</span>
                                         <span class="material-symbols-outlined" style="font-size: 16px;">arrow_drop_down</span>
                                     </button>
-                                    <div class="select-dropdown-menu hidden" style="position: absolute; bottom: 100%; left: 0; z-index: 10000; background: var(--surface-container-lowest, #ffffff); border: 1px solid var(--outline-variant); border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 8px; margin-bottom: 4px;">
-                                        <input type="text" class="dropdown-search-input" placeholder="Search consultant..." style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--outline-variant); background: var(--surface-container-low); color: var(--on-surface); font-size: 12px; margin-bottom: 8px;" />
+                                    <div class="select-dropdown-menu hidden" style="position: absolute; bottom: 100%; left: 0; z-index: 10000; background: #ffffff !important; background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 12px; width: 230px; box-shadow: 0 16px 36px rgba(0, 8, 30, 0.22); padding: 10px; margin-bottom: 4px;">
+                                        <input type="text" class="dropdown-search-input" placeholder="Search consultant..." style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 12px; margin-bottom: 8px; outline: none;" />
                                         <div class="dropdown-options-list" style="max-height: 160px; overflow-y: auto;">
-                                            <div class="dropdown-option-item" data-value="Unassigned" style="padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--primary);">Unassigned</div>
+                                            <div class="dropdown-option-item" data-value="Unassigned" style="padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #0f172a; background: #ffffff;">Unassigned</div>
                                             {% for emp in employees %}
-                                            <div class="dropdown-option-item" data-value="{{ emp.employeeID }}" data-name="{{ emp.user.fullName }}" style="padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--primary);">{{ emp.user.fullName }}</div>
+                                            <div class="dropdown-option-item" data-value="{{ emp.employeeID }}" data-name="{{ emp.user.fullName }}" style="padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #0f172a; background: #ffffff;">{{ emp.user.fullName }}</div>
                                             {% endfor %}
                                         </div>
                                     </div>

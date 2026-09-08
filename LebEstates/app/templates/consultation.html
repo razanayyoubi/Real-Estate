@@ -196,10 +196,32 @@
                         <div class="logged-in-user-banner" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; color: #10b981; display: flex; align-items: center; gap: 10px;">
                             <span class="material-symbols-outlined">account_circle</span>
                             <div>
-                                <strong>Logged in as {{ current_user.fullName }}</strong> ({{ current_user.email }})
-                                <div style="font-size: 0.8rem; opacity: 0.8;">Your account information is automatically linked to this request.</div>
+                                <strong>Logged in as {{ current_user.fullName }}</strong> ({{ current_user.role.roleName if current_user.role else 'User' }})
+                                <div style="font-size: 0.8rem; opacity: 0.8;">
+                                    {% if current_user.role and current_user.role.roleName.lower() in ['admin', 'employee', 'supervisor'] %}
+                                    Staff Mode: Please select a customer below to schedule a consultation on their behalf.
+                                    {% else %}
+                                    Your account information is automatically linked to this request.
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
+
+                        {% if current_user.role and current_user.role.roleName.lower() in ['admin', 'employee', 'supervisor'] %}
+                        <div class="staff-customer-picker-container" style="background: rgba(255,255,255,0.03); border: 1px solid var(--outline-variant, rgba(255,255,255,0.1)); padding: 16px; border-radius: 12px; margin-bottom: 20px; position: relative;">
+                            <label class="consult-label" style="font-weight: 700; color: var(--primary);">Select Customer for Consultation *</label>
+                            <div style="position: relative; margin-top: 6px;">
+                                <input type="text" id="staff-customer-search" class="consult-input" placeholder="Type customer name, phone number, or email..." autocomplete="off" style="width: 100%;" />
+                                <input type="hidden" id="staff-selected-customer-id" name="on_behalf_customer_id" />
+                                <div id="staff-customer-suggestions" class="suggestions-dropdown hidden" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 10000; background: var(--surface-container-lowest, #ffffff); border: 1px solid var(--outline-variant); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 200px; overflow-y: auto; padding: 4px; margin-top: 4px;"></div>
+                            </div>
+                            <div id="staff-customer-preview" class="hidden" style="margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+                                <span class="preview-text"></span>
+                                <button type="button" id="btn-clear-staff-customer" style="background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center;"><span class="material-symbols-outlined" style="font-size: 16px;">close</span></button>
+                            </div>
+                            <span class="consult-error-msg" id="err-staff-customer">Please search and select a valid customer.</span>
+                        </div>
+                        {% endif %}
                         {% endif %}
 
                         <div class="consult-form-row" {% if current_user %}style="display: none;"{% endif %}>
@@ -216,9 +238,9 @@
                         </div>
 
                         <div class="consult-form-row">
-                            <div class="consult-form-group" {% if current_user and current_user.phoneNumber %}style="display: none;"{% endif %}>
+                            <div class="consult-form-group" {% if current_user %}style="display: none;"{% endif %}>
                                 <label class="consult-label" for="phone">Phone Number <span class="consult-required">*</span></label>
-                                <input class="consult-input" type="tel" id="phone" name="phone" value="{{ current_user.phoneNumber if current_user and current_user.phoneNumber else '' }}" placeholder="e.g. +961 71 234 567" required />
+                                <input class="consult-input" type="tel" id="phone" name="phone" value="{{ current_user.phoneNumber if current_user and current_user.phoneNumber else '' }}" placeholder="e.g. +961 71 234 567" />
                                 <span class="consult-error-msg" id="err-phone">Please enter your phone number.</span>
                             </div>
                             <div class="consult-form-group" style="flex: 1;">

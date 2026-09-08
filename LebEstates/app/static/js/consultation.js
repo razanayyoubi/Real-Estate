@@ -168,9 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let valid = true;
 
+        const isVisible = (el) => el && (el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0) && window.getComputedStyle(el).display !== 'none' && !el.closest('[style*="display: none"]');
+
         // Full Name
         const name = document.getElementById('full-name');
-        if (!name || !name.value.trim()) {
+        if (isVisible(name) && (!name || !name.value.trim())) {
             showError('full-name', 'err-full-name', true);
             valid = false;
         } else {
@@ -179,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Email
         const email = document.getElementById('email');
-        if (!email || !isValidEmail(email.value)) {
+        if (isVisible(email) && (!email || !isValidEmail(email.value))) {
             showError('email', 'err-email', true);
             valid = false;
         } else {
@@ -188,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Phone
         const phone = document.getElementById('phone');
-        if (!phone || !phone.value.trim()) {
+        if (isVisible(phone) && (!phone || !phone.value.trim())) {
             showError('phone', 'err-phone', true);
             valid = false;
         } else {
@@ -212,6 +214,18 @@ document.addEventListener('DOMContentLoaded', () => {
             valid = false;
         } else {
             if (contactMethodError) contactMethodError.classList.remove('visible');
+        }
+
+        // Staff Mode Customer Selection Check
+        const staffHiddenId = document.getElementById('staff-selected-customer-id');
+        const errStaffCust = document.getElementById('err-staff-customer');
+        if (staffHiddenId) {
+            if (!staffHiddenId.value) {
+                if (errStaffCust) errStaffCust.classList.add('visible');
+                valid = false;
+            } else {
+                if (errStaffCust) errStaffCust.classList.remove('visible');
+            }
         }
 
         if (!valid) {
@@ -238,7 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
             contact_method: contactMethodChosen.value,
             message: document.getElementById('message').value,
             pref_date: document.getElementById('pref-date') ? document.getElementById('pref-date').value : '',
-            pref_time: timeVal
+            pref_time: timeVal,
+            on_behalf_customer_id: staffHiddenId ? staffHiddenId.value : ''
         };
 
         fetch('/consultation', {
@@ -277,5 +292,139 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('An error occurred. Please try again.');
         });
     });
+
+    // Staff Mode Customer Search Auto-Suggest
+    const staffSearchInput = document.getElementById('staff-customer-search');
+    const staffHiddenIdEl = document.getElementById('staff-selected-customer-id');
+    const staffSuggestions = document.getElementById('staff-customer-suggestions');
+    const staffPreview = document.getElementById('staff-customer-preview');
+    const btnClearStaffCust = document.getElementById('btn-clear-staff-customer');
+
+    if (staffSearchInput && staffSuggestions) {
+        let timer = null;
+        let allFetchedCustomers = [];
+        let showAllCount = false;
+
+        function renderStaffSuggestions(customers, query = '') {
+            if (!customers || customers.length === 0) {
+                staffSuggestions.innerHTML = '<div style="padding: 10px; font-size: 12px; color: #64748b; text-align: center;">No matching customers found</div>';
+                staffSuggestions.classList.remove('hidden');
+                staffSuggestions.style.display = 'block';
+                return;
+            }
+
+            const limit = showAllCount ? customers.length : 5;
+            const visible = customers.slice(0, limit);
+            const remaining = customers.length - limit;
+
+            let html = '';
+            visible.forEach(c => {
+                html += `
+                    <div class="suggestion-item staff-cust-item" data-id="${c.id}" data-name="${c.name}" data-phone="${c.phone}" data-email="${c.email}" style="padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.15s; border-bottom: 1px solid #e2e8f0; text-align: left; background: #ffffff;">
+                        <div style="font-weight: 700; color: #0f172a;">${c.name}</div>
+                        <div style="font-size: 11px; color: #475569;">Phone: ${c.phone || 'N/A'} • Email: ${c.email || 'N/A'}</div>
+                    </div>
+                `;
+            });
+
+            if (!showAllCount && remaining > 0) {
+                html += `
+                    <div id="btn-load-more-staff-cust" style="padding: 8px; font-size: 11px; font-weight: 700; color: #1e293b; text-align: center; cursor: pointer; background: #f1f5f9; border-radius: 6px; margin-top: 4px; border: 1px dashed #cbd5e1;">
+                        Load more (${remaining} options)
+                    </div>
+                `;
+            }
+
+            staffSuggestions.innerHTML = html;
+            staffSuggestions.classList.remove('hidden');
+            staffSuggestions.style.display = 'block';
+
+            const loadMoreBtn = staffSuggestions.querySelector('#btn-load-more-staff-cust');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showAllCount = true;
+                    renderStaffSuggestions(customers, query);
+                });
+            }
+
+            staffSuggestions.querySelectorAll('.staff-cust-item').forEach(item => {
+                item.addEventListener('mouseenter', () => item.style.background = '#f8fafc');
+                item.addEventListener('mouseleave', () => item.style.background = '#ffffff');
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = item.dataset.id;
+                    const name = item.dataset.name;
+                    const phone = item.dataset.phone;
+
+                    if (staffHiddenIdEl) staffHiddenIdEl.value = id;
+                    if (staffPreview) {
+                        staffPreview.querySelector('.preview-text').textContent = `Selected Customer: ${name} (${phone || 'No Phone'})`;
+                        staffPreview.classList.remove('hidden');
+                    }
+                    staffSearchInput.classList.add('hidden');
+                    staffSuggestions.classList.add('hidden');
+                    staffSuggestions.style.display = 'none';
+                    const err = document.getElementById('err-staff-customer');
+                    if (err) err.classList.remove('visible');
+                });
+            });
+        }
+
+        function fetchAndShowCustomers(query = '') {
+            fetch(`/api/consultation/search-customers?q=${encodeURIComponent(query)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.customers) {
+                        allFetchedCustomers = data.customers;
+                        renderStaffSuggestions(allFetchedCustomers, query);
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        // Show 5 initial suggestions on focus/click
+        staffSearchInput.addEventListener('focus', () => {
+            showAllCount = false;
+            fetchAndShowCustomers(staffSearchInput.value.trim());
+        });
+
+        staffSearchInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (staffSuggestions.classList.contains('hidden')) {
+                showAllCount = false;
+                fetchAndShowCustomers(staffSearchInput.value.trim());
+            }
+        });
+
+        // Filter while typing
+        staffSearchInput.addEventListener('input', (e) => {
+            const q = e.target.value.trim();
+            showAllCount = false;
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                fetchAndShowCustomers(q);
+            }, 200);
+        });
+
+        if (btnClearStaffCust) {
+            btnClearStaffCust.addEventListener('click', () => {
+                if (staffHiddenIdEl) staffHiddenIdEl.value = '';
+                if (staffSearchInput) {
+                    staffSearchInput.value = '';
+                    staffSearchInput.classList.remove('hidden');
+                }
+                if (staffPreview) staffPreview.classList.add('hidden');
+                showAllCount = false;
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (staffSuggestions && !staffSearchInput.contains(e.target) && !staffSuggestions.contains(e.target)) {
+                staffSuggestions.classList.add('hidden');
+                staffSuggestions.style.display = 'none';
+            }
+        });
+    }
 
 });

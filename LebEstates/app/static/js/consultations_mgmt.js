@@ -100,6 +100,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isHidden = menu.classList.toggle('hidden');
             if (!isHidden) {
+                // Position fixed over table so card is 100% visible and not clipped
+                const rect = trigger.getBoundingClientRect();
+                menu.style.position = 'fixed';
+                menu.style.zIndex = '999999';
+                menu.style.width = '230px';
+
+                const menuHeight = 220;
+                let top = rect.top - menuHeight - 6;
+                if (top < 10) {
+                    top = rect.bottom + 6;
+                }
+                let left = rect.left;
+                if (left + 230 > window.innerWidth - 16) {
+                    left = window.innerWidth - 246;
+                }
+
+                menu.style.top = top + 'px';
+                menu.style.left = left + 'px';
+
                 searchInputEl.value = '';
                 filterItems(optionsList, '');
                 searchInputEl.focus();
@@ -203,16 +222,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function filterItems(container, filterText) {
+    function filterItems(container, filterText, showAll = false) {
         const text = filterText.toLowerCase();
-        container.querySelectorAll('.dropdown-option-item').forEach(item => {
+        const allItems = Array.from(container.querySelectorAll('.dropdown-option-item'));
+        
+        let matching = allItems.filter(item => {
             const label = item.textContent.toLowerCase();
-            if (label.includes(text)) {
-                item.style.display = '';
-            } else {
-                item.style.display = 'none';
-            }
+            return label.includes(text);
         });
+
+        // Hide all options first
+        allItems.forEach(item => item.style.display = 'none');
+
+        // Limit visible items to 4 unless showAll is true
+        const visibleItems = showAll ? matching : matching.slice(0, 4);
+        visibleItems.forEach(item => item.style.display = 'block');
+
+        // Manage "View More" button
+        let viewMoreBtn = container.querySelector('.btn-view-more-options');
+        if (!viewMoreBtn) {
+            viewMoreBtn = document.createElement('div');
+            viewMoreBtn.className = 'btn-view-more-options';
+            viewMoreBtn.style.cssText = 'padding: 6px; font-size: 11px; font-weight: 700; color: var(--primary); text-align: center; cursor: pointer; background: var(--surface-container-low); border-radius: 4px; margin-top: 4px; border: 1px dashed var(--outline-variant);';
+            container.appendChild(viewMoreBtn);
+        }
+
+        const remaining = matching.length - 4;
+        if (!showAll && remaining > 0) {
+            viewMoreBtn.style.display = 'block';
+            viewMoreBtn.textContent = `View more (${remaining} options)`;
+            viewMoreBtn.onclick = (e) => {
+                e.stopPropagation();
+                filterItems(container, filterText, true);
+            };
+        } else {
+            viewMoreBtn.style.display = 'none';
+        }
     }
 
     // Close searchable selects if clicking outside
@@ -221,6 +266,21 @@ document.addEventListener('DOMContentLoaded', () => {
             m.classList.add('hidden');
         });
     });
+
+    // Helper functions for modal open/close
+    function openModalEl(el) {
+        if (!el) return;
+        el.classList.remove('hidden');
+        el.classList.add('active');
+        el.style.display = 'flex';
+    }
+
+    function closeModalEl(el) {
+        if (!el) return;
+        el.classList.remove('active');
+        el.classList.add('hidden');
+        el.style.display = 'none';
+    }
 
     // 3. UPDATE STATUS (AJAX)
     const statusDropdowns = document.querySelectorAll('.status-badge');
@@ -256,9 +316,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 4. MODAL CONTROLS: SCHEDULE
-    const scheduleButtons = document.querySelectorAll('.btn-schedule');
-    scheduleButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-schedule');
+        if (btn) {
             const id = btn.getAttribute('data-id');
             const date = btn.getAttribute('data-date');
             const time = btn.getAttribute('data-time');
@@ -267,18 +327,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('scheduled-date-input').value = date || '';
             document.getElementById('scheduled-time-input').value = time ? time.substring(0, 5) : '';
 
-            if (scheduleModal) scheduleModal.classList.add('active');
-        });
+            openModalEl(scheduleModal);
+        }
     });
-
-    function closeScheduleModal() {
-        if (scheduleModal) scheduleModal.classList.remove('active');
-    }
 
     const closeScheduleBtn = document.getElementById('close-schedule-modal');
     const cancelScheduleBtn = document.getElementById('cancel-schedule-modal');
-    if (closeScheduleBtn) closeScheduleBtn.addEventListener('click', closeScheduleModal);
-    if (cancelScheduleBtn) cancelScheduleBtn.addEventListener('click', closeScheduleModal);
+    if (closeScheduleBtn) closeScheduleBtn.addEventListener('click', () => closeModalEl(scheduleModal));
+    if (cancelScheduleBtn) cancelScheduleBtn.addEventListener('click', () => closeModalEl(scheduleModal));
 
     const formSchedule = document.getElementById('form-schedule');
     if (formSchedule) {
@@ -308,9 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 5. MODAL CONTROLS: NOTES
-    const notesButtons = document.querySelectorAll('.btn-notes');
-    notesButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-notes');
+        if (btn) {
             const id = btn.getAttribute('data-id');
             const message = btn.getAttribute('data-message');
             const notes = btn.getAttribute('data-notes');
@@ -319,18 +375,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('notes-customer-msg').textContent = message || '(No initial message sent)';
             document.getElementById('notes-textarea').value = notes || '';
 
-            if (notesModal) notesModal.classList.add('active');
-        });
+            openModalEl(notesModal);
+        }
     });
-
-    function closeNotesModal() {
-        if (notesModal) notesModal.classList.remove('active');
-    }
 
     const closeNotesBtn = document.getElementById('close-notes-modal');
     const cancelNotesBtn = document.getElementById('cancel-notes-modal');
-    if (closeNotesBtn) closeNotesBtn.addEventListener('click', closeNotesModal);
-    if (cancelNotesBtn) cancelNotesBtn.addEventListener('click', closeNotesModal);
+    if (closeNotesBtn) closeNotesBtn.addEventListener('click', () => closeModalEl(notesModal));
+    if (cancelNotesBtn) cancelNotesBtn.addEventListener('click', () => closeModalEl(notesModal));
 
     const formNotes = document.getElementById('form-notes');
     if (formNotes) {
@@ -398,37 +450,169 @@ document.addEventListener('DOMContentLoaded', () => {
     const consStatusSelect = document.getElementById('schedule-cons-status');
     const consStatusGroupContainer = document.getElementById('cons-status-group-container');
 
-    // Open schedule modal
+    // Open schedule modal (Add Consultation)
     const openConsScheduleBtn = document.getElementById('btn-open-schedule-consultation');
     if (openConsScheduleBtn) {
         openConsScheduleBtn.addEventListener('click', () => {
-            consScheduleForm.reset();
-            consScheduleId.value = '';
-            consScheduleTitle.textContent = 'Schedule Consultation';
+            if (consScheduleForm) consScheduleForm.reset();
+            if (consScheduleId) consScheduleId.value = '';
+            if (consScheduleTitle) consScheduleTitle.textContent = 'Schedule Consultation';
             
             // Clear previews
             clearPreview(consCustPreview, consCustSearch, consCustIdHidden, consCustSuggestions);
             clearPreview(consEmpPreview, consEmpSearch, consEmpIdHidden, consEmpSuggestions);
 
             // Defaults
-            consAssignOptionLater.checked = true;
-            consAssignLaterWarning.style.display = 'flex';
-            consDirectAssignField.classList.add('hidden');
-            consStatusGroupContainer.classList.add('hidden');
+            if (consAssignOptionLater) consAssignOptionLater.checked = true;
+            if (consAssignLaterWarning) consAssignLaterWarning.style.display = 'flex';
+            if (consDirectAssignField) consDirectAssignField.classList.add('hidden');
+            if (consStatusGroupContainer) consStatusGroupContainer.classList.add('hidden');
 
-            consScheduleModal.classList.remove('hidden');
+            openModalEl(consScheduleModal);
         });
     }
+
+    // Edit consultation button handler
+    document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-consultation-btn');
+        if (editBtn) {
+            const id = editBtn.getAttribute('data-id');
+            const custId = editBtn.getAttribute('data-customer-id');
+            const custName = editBtn.getAttribute('data-customer-name');
+            const empId = editBtn.getAttribute('data-employee-id');
+            const empName = editBtn.getAttribute('data-employee-name');
+            const type = editBtn.getAttribute('data-consultation-type');
+            const method = editBtn.getAttribute('data-preferred-method');
+            const message = editBtn.getAttribute('data-message');
+            const scheduledDate = editBtn.getAttribute('data-scheduled-date');
+            const scheduledTime = editBtn.getAttribute('data-scheduled-time');
+            const status = editBtn.getAttribute('data-status');
+            const notes = editBtn.getAttribute('data-notes');
+
+            if (consScheduleForm) consScheduleForm.reset();
+            if (consScheduleId) consScheduleId.value = id;
+            if (consScheduleTitle) consScheduleTitle.textContent = `Edit Consultation #${id}`;
+
+            // Set Customer
+            if (consCustIdHidden) consCustIdHidden.value = custId || '';
+            if (consCustSearch) consCustSearch.value = custName || '';
+            if (consCustPreview && custName) {
+                const textEl = consCustPreview.querySelector('.text');
+                if (textEl) textEl.textContent = custName;
+                consCustPreview.classList.remove('hidden');
+                if (consCustSearch) consCustSearch.classList.add('hidden');
+            }
+
+            // Set Employee
+            if (empId && empId !== 'None' && empId !== 'Unassigned') {
+                if (consAssignOptionNow) consAssignOptionNow.checked = true;
+                if (consAssignLaterWarning) consAssignLaterWarning.style.display = 'none';
+                if (consDirectAssignField) consDirectAssignField.classList.remove('hidden');
+                if (consEmpIdHidden) consEmpIdHidden.value = empId;
+                if (consEmpSearch) consEmpSearch.value = empName || '';
+                if (consEmpPreview && empName) {
+                    const textEl = consEmpPreview.querySelector('.text');
+                    if (textEl) textEl.textContent = empName;
+                    consEmpPreview.classList.remove('hidden');
+                    if (consEmpSearch) consEmpSearch.classList.add('hidden');
+                }
+            } else {
+                if (consAssignOptionLater) consAssignOptionLater.checked = true;
+                if (consAssignLaterWarning) consAssignLaterWarning.style.display = 'flex';
+                if (consDirectAssignField) consDirectAssignField.classList.add('hidden');
+            }
+
+            if (consTypeSelect) consTypeSelect.value = type || 'Other';
+            if (consMethodSelect) consMethodSelect.value = method || 'Phone';
+            if (consDateInput) consDateInput.value = scheduledDate || '';
+            if (consTimeInput) consTimeInput.value = scheduledTime || '';
+            if (consMessageInput) consMessageInput.value = message || '';
+            if (consNotesInput) consNotesInput.value = notes || '';
+            if (consStatusSelect) consStatusSelect.value = status || 'Pending';
+            if (consStatusGroupContainer) consStatusGroupContainer.classList.remove('hidden');
+
+            openModalEl(consScheduleModal);
+        }
+    });
 
     // Close modals
     const closeConsBtn = document.getElementById('btn-close-cons-modal');
     const cancelConsBtn = document.getElementById('btn-cancel-cons-modal');
     
-    function hideConsScheduleModal() {
-        if (consScheduleModal) consScheduleModal.classList.add('hidden');
-    }
-    if (closeConsBtn) closeConsBtn.addEventListener('click', hideConsScheduleModal);
-    if (cancelConsBtn) cancelConsBtn.addEventListener('click', hideConsScheduleModal);
+    if (closeConsBtn) closeConsBtn.addEventListener('click', () => closeModalEl(consScheduleModal));
+    if (cancelConsBtn) cancelConsBtn.addEventListener('click', () => closeModalEl(consScheduleModal));
+
+    // Global Hover Popover Portal
+    (function() {
+        let portal = document.getElementById('globalPopoverPortal');
+        if (!portal) {
+            portal = document.createElement('div');
+            portal.id = 'globalPopoverPortal';
+            portal.className = 'global-popover-portal';
+            document.body.appendChild(portal);
+        }
+
+        let hideTimeout = null;
+
+        document.addEventListener('mouseover', function(e) {
+            const triggerCell = e.target.closest('.popover-trigger-cell');
+            if (!triggerCell) return;
+
+            const template = triggerCell.querySelector('.popover-template');
+            if (!template) return;
+
+            clearTimeout(hideTimeout);
+
+            portal.innerHTML = template.innerHTML;
+
+            const rect = triggerCell.getBoundingClientRect();
+            const portalWidth = 320;
+
+            portal.style.display = 'block';
+            portal.style.visibility = 'hidden';
+            
+            let left = rect.left;
+            if (left + portalWidth > window.innerWidth - 16) {
+                left = window.innerWidth - portalWidth - 16;
+            }
+            left = Math.max(16, left);
+
+            const portalHeight = portal.offsetHeight || 220;
+
+            let top = rect.top - portalHeight - 8;
+            if (top < 12) {
+                top = rect.bottom + 8;
+            }
+
+            portal.style.top = top + 'px';
+            portal.style.left = left + 'px';
+            portal.style.visibility = 'visible';
+            portal.classList.add('active');
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const triggerCell = e.target.closest('.popover-trigger-cell');
+            if (triggerCell) {
+                const related = e.relatedTarget;
+                if (related && (triggerCell.contains(related) || portal.contains(related))) {
+                    return;
+                }
+                hideTimeout = setTimeout(() => {
+                    portal.classList.remove('active');
+                }, 150);
+            }
+        });
+
+        portal.addEventListener('mouseenter', function() {
+            clearTimeout(hideTimeout);
+        });
+
+        portal.addEventListener('mouseleave', function() {
+            hideTimeout = setTimeout(() => {
+                portal.classList.remove('active');
+            }, 150);
+        });
+    })();
 
     // Radios toggling
     consAssignOptionLater.addEventListener('change', () => {
@@ -601,72 +785,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Edit consultation buttons binding
-    document.querySelectorAll('.edit-consultation-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const id = btn.dataset.id;
-            const custId = btn.dataset.customerId;
-            const custName = btn.dataset.customerName;
-            const empId = btn.dataset.employeeId;
-            const empName = btn.dataset.employeeName;
-            const date = btn.dataset.scheduledDate;
-            const time = btn.dataset.scheduledTime;
-            const type = btn.dataset.consultationType;
-            const method = btn.dataset.preferredMethod;
-            const message = btn.dataset.message;
-            const status = btn.dataset.status;
-            const notes = btn.dataset.notes;
-
-            // Prepare edit form
-            consScheduleId.value = id;
-            consScheduleTitle.textContent = `Edit Consultation #${id}`;
-
-            // Customer Preview
-            consCustIdHidden.value = custId;
-            consCustPreview.querySelector('.text').textContent = custName;
-            consCustPreview.classList.remove('hidden');
-            consCustSearch.classList.add('hidden');
-
-            // Date & Time
-            consDateInput.value = date || '';
-            consTimeInput.value = time ? time.substring(0, 5) : '';
-
-            // Type & Method
-            consTypeSelect.value = type;
-            consMethodSelect.value = method;
-
-            // Consultant Selection
-            if (empId && empId !== 'None' && empId !== '') {
-                consAssignOptionNow.checked = true;
-                consAssignLaterWarning.style.display = 'none';
-                consDirectAssignField.classList.remove('hidden');
-                
-                consEmpIdHidden.value = empId;
-                consEmpPreview.querySelector('.text').textContent = empName;
-                consEmpPreview.classList.remove('hidden');
-                consEmpSearch.classList.add('hidden');
-            } else {
-                consAssignOptionLater.checked = true;
-                consAssignLaterWarning.style.display = 'flex';
-                consDirectAssignField.classList.add('hidden');
-                clearPreview(consEmpPreview, consEmpSearch, consEmpIdHidden);
-            }
-
-            // Message & Notes
-            consMessageInput.value = message || '';
-            consNotesInput.value = notes || '';
-
-            // Status Editing
-            consStatusSelect.value = status;
-            consStatusGroupContainer.classList.remove('hidden');
-
-            consScheduleModal.classList.remove('hidden');
-        });
-    });
-
     // Helper functions
     function clearPreview(previewEl, searchEl, hiddenEl, suggestionsEl) {
         hiddenEl.value = '';
@@ -688,9 +806,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Hide suggestions when clicking outside
+    // Hide suggestions & menus when clicking or scrolling outside
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('#schedule-cons-cust-search')) consCustSuggestions.classList.add('hidden');
-        if (!e.target.closest('#schedule-cons-emp-search')) consEmpSuggestions.classList.add('hidden');
+        if (!e.target.closest('#schedule-cons-cust-search') && consCustSuggestions) consCustSuggestions.classList.add('hidden');
+        if (!e.target.closest('#schedule-cons-emp-search') && consEmpSuggestions) consEmpSuggestions.classList.add('hidden');
     });
+
+    window.addEventListener('scroll', () => {
+        document.querySelectorAll('.searchable-consultant-select .select-dropdown-menu').forEach(m => m.classList.add('hidden'));
+    }, true);
 });

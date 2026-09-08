@@ -294,15 +294,26 @@
   background: rgba(0, 8, 30, 0.05);
 }
 
+/* Filter Bar & Action Buttons */
+.mgmt-filter-bar {
+  margin-bottom: 28px !important;
+}
+
 /* Table Container */
 .table-container {
   background: var(--surface-container-lowest);
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
+  border-radius: 16px;
   box-shadow: 0px 12px 32px rgba(10, 31, 68, 0.08);
   overflow: hidden;
   width: 100%;
   max-width: 100%;
+  margin-top: 28px !important;
+  margin-bottom: 28px !important;
+}
+
+#consultations-pagination {
+  margin-top: 24px !important;
+  margin-bottom: 36px !important;
 }
 
 .table-responsive {
@@ -674,9 +685,112 @@
 }
 
 /* New schedule modal uses .hidden class toggle */
+.modal-overlay.active {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 .modal-overlay.hidden {
   display: none !important;
-  pointer-events: none;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Global Floating Hover Popover Portal Overlay */
+.global-popover-portal {
+  position: fixed;
+  z-index: 999999;
+  display: none;
+  width: 320px;
+  background-color: var(--surface-container-lowest, #ffffff);
+  border: 1px solid var(--outline-variant, #c5c6cf);
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(0, 8, 30, 0.22), 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  pointer-events: auto;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform: translateY(4px);
+  opacity: 0;
+}
+
+[data-theme="dark"] .global-popover-portal {
+  background-color: #1e1e2d;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.global-popover-portal.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.global-popover-portal .popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--outline-variant, #e0e6ed);
+}
+
+.global-popover-portal .popover-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary, #00081e);
+}
+
+.global-popover-portal .popover-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: var(--on-surface-variant, #666);
+}
+
+.global-popover-portal .popover-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.global-popover-portal .popover-badge.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.global-popover-portal .popover-badge.blacklisted {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+.global-popover-portal .popover-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.global-popover-portal .popover-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.global-popover-portal .popover-label {
+  color: var(--on-surface-variant, #666);
+  font-weight: 600;
+}
+
+.global-popover-portal .popover-value {
+  color: var(--primary, #00081e);
+  font-weight: 700;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Luxury modal card inside overlay */
@@ -722,4 +836,43 @@
 
 .suggestions-dropdown.hidden {
   display: none !important;
+}
+
+/* Searchable Consultant Dropdown Card Styling */
+.select-dropdown-menu {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 36px rgba(0, 8, 30, 0.22), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.select-dropdown-menu .dropdown-search-input {
+  background-color: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.select-dropdown-menu .dropdown-option-item {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  padding: 8px 10px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  transition: background 0.15s ease !important;
+}
+
+.select-dropdown-menu .dropdown-option-item:hover {
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.select-dropdown-menu .dropdown-option-item.conflicted {
+  background-color: #fce8e6 !important;
+  color: #c5221f !important;
+}
+
+.select-dropdown-menu .btn-view-more-options {
+  background-color: #f1f5f9 !important;
+  border: 1px dashed #cbd5e1 !important;
+  color: #1e293b !important;
 }

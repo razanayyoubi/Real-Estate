@@ -7,11 +7,26 @@ from app.models.users import Users
 
 def request_consultation(user_id, data):
     """
-    Handle requesting a consultation by a user.
+    Handle requesting a consultation by a user or staff member on behalf of a customer.
     """
-    customer = Customer.query.filter_by(userID=user_id).first()
-    if not customer:
-        return {'success': False, 'message': 'Only registered customers can request consultations.', 'code': 403}
+    from app.models.users import Users
+    user = Users.query.get(user_id)
+    on_behalf_customer_id = data.get('on_behalf_customer_id')
+
+    if user and user.role and user.role.roleName.lower() in ['admin', 'employee', 'supervisor']:
+        if on_behalf_customer_id:
+            customer = Customer.query.get(int(on_behalf_customer_id))
+            if not customer:
+                return {'success': False, 'message': 'Selected customer was not found.', 'code': 404}
+        else:
+            # Fallback if staff user is also registered as customer
+            customer = Customer.query.filter_by(userID=user_id).first()
+            if not customer:
+                return {'success': False, 'message': 'Please select a customer to create a consultation.', 'code': 400}
+    else:
+        customer = Customer.query.filter_by(userID=user_id).first()
+        if not customer:
+            return {'success': False, 'message': 'Only registered customers can request consultations.', 'code': 403}
 
     consult_type = data.get('consult_type')
     contact_method = data.get('contact_method')
@@ -76,10 +91,11 @@ def request_consultation(user_id, data):
 
 class ConsultationService:
     @staticmethod
-    def get_consultations_list_data(filters=None):
+    def get_consultations_list_data(filters=None, page=1, per_page=10):
         """
-        Fetch consultations with optional server-side filtering, stats, active employees, and recent notes.
+        Fetch consultations with server-side filtering, 10-per-page pagination, stats, active employees, and recent notes.
         """
+        import math
         query = Consultation.query
 
         if filters:
@@ -88,7 +104,7 @@ class ConsultationService:
                 from sqlalchemy import or_
                 query = query.outerjoin(Customer, Consultation.customerID == Customer.customerID).outerjoin(Users, Customer.userID == Users.userID).filter(or_(
                     Consultation.consultationType.ilike(f'%{q}%'),
-                    Consultation.contactMethod.ilike(f'%{q}%'),
+                    Consultation.preferredMethod.ilike(f'%{q}%'),
                     Users.fullName.ilike(f'%{q}%'),
                     Consultation.notes.ilike(f'%{q}%')
                 ))
@@ -100,15 +116,19 @@ class ConsultationService:
             consultant_id = filters.get('consultant_id')
             if consultant_id:
                 if str(consultant_id).lower() == 'unassigned':
-                    query = query.filter(Consultation.employeeID == None)
+                    query = query.filter(Consultation.assignedEmployeeID == None)
                 elif str(consultant_id).lower() != 'all':
-                    query = query.filter(Consultation.employeeID == int(consultant_id))
+                    query = query.filter(Consultation.assignedEmployeeID == int(consultant_id))
 
             method = filters.get('method', 'All').strip()
             if method and method.lower() != 'all':
-                query = query.filter(Consultation.contactMethod.ilike(method))
+                query = query.filter(Consultation.preferredMethod.ilike(method))
 
-        consultations = query.order_by(Consultation.createdAt.desc()).all()
+        total_filtered_count = query.count()
+        total_pages = max(1, math.ceil(total_filtered_count / per_page))
+        current_page = max(1, min(page, total_pages))
+
+        consultations = query.order_by(Consultation.createdAt.desc()).offset((current_page - 1) * per_page).limit(per_page).all()
 
         total_requests = Consultation.query.count()
         today_date = datetime.now().date()
@@ -138,7 +158,28 @@ class ConsultationService:
             'scheduled_consultations': scheduled_consultations,
             'completion_rate': completion_rate,
             'employees': employees,
-            'recent_notes': recent_notes
+            'recent_notes': recent_notes,
+            'page': current_page,
+            'per_page': per_page,
+            'total_pages': total_pages,
+            'total_filtered_count': total_filtered_count
+        }
+
+    @staticmethod
+    def get_customer_details(customer_id):
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return None
+        user = customer.user
+        total_consultations = Consultation.query.filter_by(customerID=customer_id).count()
+        return {
+            'customerID': customer.customerID,
+            'fullName': user.fullName if user else 'N/A',
+            'email': user.email if user else 'N/A',
+            'phone': user.phoneNumber if user else 'N/A',
+            'location': customer.address or 'Not specified',
+            'created_at': user.createdAt.strftime('%b %d, %Y') if (user and user.createdAt) else 'N/A',
+            'total_consultations': total_consultations
         }
 
     @staticmethod

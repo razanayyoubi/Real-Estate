@@ -14,6 +14,8 @@ def consultations_list():
         session.clear()
         return redirect(url_for('auth.login_page'))
 
+    page = request.args.get('page', 1, type=int)
+
     filters = {
         'server_q': request.args.get('server_q', ''),
         'status': request.args.get('status', 'All'),
@@ -21,7 +23,7 @@ def consultations_list():
         'method': request.args.get('method', 'All')
     }
 
-    data = ConsultationService.get_consultations_list_data(filters)
+    data = ConsultationService.get_consultations_list_data(filters, page=page, per_page=10)
 
     return render_template(
         'consultations_mgmt.html',
@@ -33,8 +35,22 @@ def consultations_list():
         completion_rate=data['completion_rate'],
         employees=data['employees'],
         recent_notes=data['recent_notes'],
-        filters=filters
+        filters=filters,
+        page=data['page'],
+        per_page=data['per_page'],
+        total_pages=data['total_pages'],
+        total_filtered_count=data['total_filtered_count']
     )
+
+@consultations_bp.route('/control-panel/customers/<int:customer_id>/details', methods=['GET'])
+def get_customer_details(customer_id):
+    if 'user_id' not in session or session.get('role_name', '').lower() not in ['admin', 'employee']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    info = ConsultationService.get_customer_details(customer_id)
+    if not info:
+        return jsonify({'error': 'Customer not found'}), 404
+    return jsonify(info)
 
 @consultations_bp.route('/control-panel/consultations/<int:consultation_id>/update_status', methods=['POST'])
 def update_consultation_status(consultation_id):
