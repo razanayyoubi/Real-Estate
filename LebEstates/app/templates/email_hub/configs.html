@@ -90,7 +90,7 @@
                             </tr>
                         </thead>
                         <tbody id="featuresTableBody">
-                            {% for feature in features %}
+                            {% for feature in automation_features %}
                             <input type="hidden" name="feature_ids" value="{{ feature.featureConfigID }}">
                             <tr class="feature-row" data-key="{{ feature.featureKey|lower }}" data-name="{{ feature.featureName|lower }}" data-category="{{ feature.category|lower }}" data-template="{{ (feature.templateKey or '')|lower }}">
                                 <td>
@@ -125,13 +125,103 @@
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No automated features registered.</td>
+                                <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No automated direct features registered.</td>
                             </tr>
                             {% endfor %}
                             <tr id="noFeaturesMatch" style="display: none;">
                                 <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">
                                     <span class="material-symbols-outlined" style="font-size: 32px; color: var(--secondary); display: block; margin-bottom: 6px;">search_off</span>
-                                    No features match your search filter.
+                                    No direct features match your search filter.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsible Section 2: Reminders - Background Services -->
+        <div class="collapsible-section">
+            <div class="collapsible-header" id="reminderHeader" onclick="toggleSection('reminderMappingBody', 'reminderToggleIcon', 'reminderHeader')">
+                <div class="collapsible-header-left">
+                    <span class="material-symbols-outlined" style="font-size: 26px; color: var(--secondary);">schedule_send</span>
+                    <div>
+                        <h3 class="hub-title" style="font-size: 18px; margin: 0;">Reminders - Background Services</h3>
+                        <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Configure template routing and sender overrides for automated daemon background tasks (visits, meetings, and payment schedules).</p>
+                    </div>
+                </div>
+                <div class="collapsible-header-right">
+                    <div class="search-input-wrapper" onclick="event.stopPropagation();">
+                        <span class="material-symbols-outlined search-input-icon">search</span>
+                        <input type="text" id="reminderSearch" class="form-control search-input-field" placeholder="Search reminders by name/key..." oninput="filterReminders()" style="width: 240px;">
+                    </div>
+                    <button type="button" class="btn btn-outline" onclick="event.stopPropagation(); triggerBackgroundReminders();" style="padding: 8px 16px; font-size: 13px;" title="Execute all background reminders right now">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">sync</span> Run Now
+                    </button>
+                    <button type="submit" class="btn btn-primary" onclick="event.stopPropagation();" style="padding: 8px 16px; font-size: 13px;">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">save</span> Save Mappings
+                    </button>
+                    <span class="material-symbols-outlined collapsible-toggle-icon" id="reminderToggleIcon">expand_more</span>
+                </div>
+            </div>
+
+            <div class="collapsible-body" id="reminderMappingBody">
+                <div class="table-container unified-table-container" style="margin-bottom: 0; border: none; border-radius: 0;">
+                    <table class="unified-table">
+                        <thead>
+                            <tr class="table-header-row">
+                                <th style="width: 70px;">Enabled</th>
+                                <th>Feature Key</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Active Template</th>
+                                <th>Sender Identity</th>
+                                <th>ReplyTo Override</th>
+                            </tr>
+                        </thead>
+                        <tbody id="remindersTableBody">
+                            {% for feature in reminder_features %}
+                            <input type="hidden" name="feature_ids" value="{{ feature.featureConfigID }}">
+                            <tr class="reminder-row" data-key="{{ feature.featureKey|lower }}" data-name="{{ feature.featureName|lower }}" data-category="{{ feature.category|lower }}" data-template="{{ (feature.templateKey or '')|lower }}">
+                                <td>
+                                    <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.2);">
+                                </td>
+                                <td><strong>{{ feature.featureKey }}</strong></td>
+                                <td>{{ feature.featureName }}</td>
+                                <td><span class="badge badge-warning" style="background: #e0f2fe; color: #0369a1;">{{ feature.category }}</span></td>
+                                <td>
+                                    <select name="template_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
+                                        <option value="">-- Use Default / Fallback --</option>
+                                        {% for template in templates %}
+                                        <option value="{{ template.templateKey }}" {% if feature.templateKey == template.templateKey %}selected{% endif %}>
+                                            {{ template.name }} ({{ template.templateKey }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="sender_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
+                                        <option value="">-- System default sender --</option>
+                                        {% for sender in senders %}
+                                        <option value="{{ sender.senderIdentityID }}" {% if feature.senderIdentityID == sender.senderIdentityID %}selected{% endif %}>
+                                            {{ sender.displayName }} &lt;{{ sender.fromEmail }}&gt;
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="email" name="replyto_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;" value="{{ feature.replyToOverride or '' }}" placeholder="Optional reply-to">
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No background reminder features registered.</td>
+                            </tr>
+                            {% endfor %}
+                            <tr id="noRemindersMatch" style="display: none;">
+                                <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">
+                                    <span class="material-symbols-outlined" style="font-size: 32px; color: var(--secondary); display: block; margin-bottom: 6px;">search_off</span>
+                                    No background reminder services match your search filter.
                                 </td>
                             </tr>
                         </tbody>
@@ -141,7 +231,7 @@
         </div>
     </form>
 
-    <!-- Collapsible Section 2: Sender Identities -->
+    <!-- Collapsible Section 3: Sender Identities -->
     <div class="collapsible-section">
         <div class="collapsible-header" id="senderHeader" onclick="toggleSection('senderIdentitiesBody', 'senderToggleIcon', 'senderHeader')">
             <div class="collapsible-header-left">
@@ -330,6 +420,31 @@ function filterFeatures() {
     });
 
     const noMatchEl = document.getElementById('noFeaturesMatch');
+    if (noMatchEl) {
+        noMatchEl.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+}
+
+function filterReminders() {
+    const query = document.getElementById('reminderSearch').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('#remindersTableBody tr.reminder-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const key = row.getAttribute('data-key') || '';
+        const name = row.getAttribute('data-name') || '';
+        const category = row.getAttribute('data-category') || '';
+        const template = row.getAttribute('data-template') || '';
+
+        if (!query || key.includes(query) || name.includes(query) || category.includes(query) || template.includes(query)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const noMatchEl = document.getElementById('noRemindersMatch');
     if (noMatchEl) {
         noMatchEl.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
     }

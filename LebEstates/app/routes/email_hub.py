@@ -99,9 +99,31 @@ def config():
     senders = SenderIdentity.query.all()
     templates = EmailTemplate.query.filter_by(isActive=True).all()
     dist_lists = DistributionList.query.all()
+
+    # Split features into real-time direct automations vs background reminders
+    reminder_categories = ['Reminders', 'Visit Reminders', 'Consultation Reminders', 'Payment Reminders']
+    automation_features = []
+    reminder_features = []
+
+    for f in features:
+        is_reminder = (
+            f.category in reminder_categories or
+            'Remind' in f.featureKey or
+            'Overdue' in f.featureKey or
+            'Feedback' in f.featureKey or
+            'Survey' in f.featureKey or
+            'Followup' in f.featureKey
+        )
+        if is_reminder:
+            reminder_features.append(f)
+        else:
+            automation_features.append(f)
+
     return render_template(
         'email_hub/configs.html',
         features=features,
+        automation_features=automation_features,
+        reminder_features=reminder_features,
         senders=senders,
         templates=templates,
         dist_lists=dist_lists,
