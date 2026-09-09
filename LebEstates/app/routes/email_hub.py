@@ -162,6 +162,181 @@ def save_configs():
         flash(f'Error saving configuration: {str(e)}', 'danger')
     return redirect(url_for('email_hub.config'))
 
+@email_hub_bp.route('/config/feature/get/<int:feature_id>', methods=['GET'])
+@admin_required
+def get_feature_config(feature_id):
+    feat = EmailFeatureConfig.query.get(feature_id)
+    if not feat:
+        return jsonify({'success': False, 'error': 'Feature not found'}), 404
+    
+    sender_name = "System default sender"
+    if feat.senderIdentityID and feat.sender_identity:
+        sender_name = f"{feat.sender_identity.displayName} <{feat.sender_identity.fromEmail}>"
+
+    template_name = "-- Use Default / Fallback --"
+    if feat.templateKey:
+        tmpl = EmailTemplate.query.filter_by(templateKey=feat.templateKey).first()
+        if tmpl:
+            template_name = f"{tmpl.name} ({tmpl.templateKey})"
+        else:
+            template_name = feat.templateKey
+
+    return jsonify({
+        'success': True,
+        'featureConfigID': feat.featureConfigID,
+        'featureKey': feat.featureKey,
+        'featureName': feat.featureName,
+        'category': feat.category,
+        'description': feat.description or '',
+        'enabled': feat.enabled,
+        'templateKey': feat.templateKey or '',
+        'templateName': template_name,
+        'senderIdentityID': feat.senderIdentityID,
+        'senderDisplayName': sender_name,
+        'replyToOverride': feat.replyToOverride or ''
+    })
+
+@email_hub_bp.route('/config/feature/update/<int:feature_id>', methods=['POST'])
+@admin_required
+def update_feature_config(feature_id):
+    feat = EmailFeatureConfig.query.get(feature_id)
+    if not feat:
+        return jsonify({'success': False, 'error': 'Feature not found'}), 404
+    
+    data = request.get_json(silent=True) or request.form
+    try:
+        # Enabled
+        if 'enabled' in data:
+            feat.enabled = bool(data.get('enabled') in [True, 'true', '1', 'on', 1])
+        
+        # Template Key
+        if 'templateKey' in data:
+            val = data.get('templateKey')
+            feat.templateKey = val.strip() if val else None
+        
+        # Sender Identity
+        if 'senderIdentityID' in data:
+            val = data.get('senderIdentityID')
+            feat.senderIdentityID = int(val) if val and str(val).isdigit() else None
+            
+        # Reply-To Override
+        if 'replyToOverride' in data:
+            val = data.get('replyToOverride')
+            feat.replyToOverride = val.strip() if val else None
+
+        # Description
+        if 'description' in data:
+            feat.description = data.get('description', '').strip()
+
+        feat.updatedAt = datetime.utcnow()
+        feat.updatedByUserID = session.get('user_id')
+        
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='email_feature_configs',
+            record_id=feat.featureConfigID,
+            description=f"Updated email feature routing configuration for '{feat.featureKey}'"
+        )
+        db.session.commit()
+        
+        sender_name = "System default sender"
+        if feat.senderIdentityID and feat.sender_identity:
+            sender_name = f"{feat.sender_identity.displayName} <{feat.sender_identity.fromEmail}>"
+
+        template_name = "Default / Fallback"
+        if feat.templateKey:
+            tmpl = EmailTemplate.query.filter_by(templateKey=feat.templateKey).first()
+            if tmpl:
+                template_name = tmpl.name
+
+        return jsonify({
+            'success': True,
+            'message': f"Configuration for '{feat.featureName}' updated successfully!",
+            'feature': {
+                'featureConfigID': feat.featureConfigID,
+                'featureKey': feat.featureKey,
+                'featureName': feat.featureName,
+                'category': feat.category,
+                'description': feat.description or '',
+                'enabled': feat.enabled,
+                'templateKey': feat.templateKey or '',
+                'templateName': template_name,
+                'senderIdentityID': feat.senderIdentityID,
+                'senderDisplayName': sender_name,
+                'replyToOverride': feat.replyToOverride or ''
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@email_hub_bp.route('/config/feature/toggle/<int:feature_id>', methods=['POST'])
+@admin_required
+def toggle_feature_config(feature_id):
+    feat = EmailFeatureConfig.query.get(feature_id)
+    if not feat:
+        return jsonify({'success': False, 'error': 'Feature not found'}), 404
+    
+    feat.enabled = not feat.enabled
+    feat.updatedAt = datetime.utcnow()
+    feat.updatedByUserID = session.get('user_id')
+    db.session.commit()
+    return jsonify({'success': True, 'enabled': feat.enabled})
+
+@email_hub_bp.route('/config/feature/test-send/<int:feature_id>', methods=['POST'])
+@admin_required
+def send_test_feature_email(feature_id):
+    feat = EmailFeatureConfig.query.get(feature_id)
+    if not feat:
+        return jsonify({'success': False, 'error': 'Feature not found'}), 404
+    
+    data = request.get_json(silent=True) or request.form
+    target_email = data.get('target_email') or session.get('email')
+    
+    if not target_email:
+        return jsonify({'success': False, 'error': 'Target email address required'}), 400
+    
+    sample_context = {
+        'CustomerName': 'VIP Preview Tester',
+        'CustomerEmail': target_email,
+        'PropertyTitle': 'Sky Penthouse Marina View',
+        'PropertyType': 'Penthouse',
+        'Price': '$1,850,000 USD',
+        'Location': 'Downtown Waterfront, Beirut',
+        'VisitDate': datetime.utcnow().strftime('%B %d, %Y'),
+        'VisitTime': '3:30 PM',
+        'Address': 'LebEstates Luxury Tower, Beirut, Lebanon',
+        'ConsultantName': 'Tariq Mansour',
+        'ConsultantPhone': '+961 1 987 654',
+        'ConsultantEmail': 'tariq.mansour@lebestates.com',
+        'OtpCode': '928374',
+        'ActionUrl': 'https://lebestates.com/auth/reset-password?token=sample_test_token',
+        'LoginUrl': 'https://lebestates.com/login',
+        'PropertyUrl': 'https://lebestates.com/properties/1',
+        'VisitStatus': 'Confirmed',
+        'Status': 'Confirmed',
+        'InvoiceNumber': 'INV-TEST-2026',
+        'AmountDue': '$5,000 USD',
+        'DueDate': datetime.utcnow().strftime('%B %d, %Y'),
+        'DaysOverdue': '7',
+        'LateFee': '$250 USD',
+        'TotalDue': '$5,250 USD'
+    }
+    
+    try:
+        success = EmailService.send_templated_email(
+            feature_key=feat.featureKey,
+            recipient_email=target_email,
+            context=sample_context,
+            subject=f"[TEST PREVIEW] {feat.featureName}"
+        )
+        if success:
+            return jsonify({'success': True, 'message': f"Sample test email for '{feat.featureName}' dispatched to {target_email}!"})
+        else:
+            return jsonify({'success': False, 'error': "Email dispatch failed. Please check mail credentials or logs."}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @email_hub_bp.route('/sender/create', methods=['POST'])
 @admin_required
 def create_sender():

@@ -242,54 +242,54 @@ def create_app(config_class=Config):
                     db.session.add(rule)
             db.session.commit()
             
-            # Seed all 27 feature configs
+            # Seed all feature configs with descriptions
             features_to_seed = [
                 # 1. Auth & Security
-                ("ForgotPassword", "Password Reset Link", "Auth", "AUTH-RESET-V1"),
-                ("Otp2FA", "Two Factor Authentication", "Auth", "AUTH-OTP-SECURE"),
-                ("WelcomeRegistration", "Welcome / Registration Confirmation", "Auth", "AUTH-WELCOME-V1"),
+                ("ForgotPassword", "Password Reset Link", "Auth", "AUTH-RESET-V1", "Sends a secure password reset link with a 1-hour expiration token when requested by a customer or staff member."),
+                ("Otp2FA", "Two Factor Authentication", "Auth", "AUTH-OTP-SECURE", "Dispatches a 6-digit one-time verification code for multi-factor authentication security during user login."),
+                ("WelcomeRegistration", "Welcome / Registration Confirmation", "Auth", "AUTH-WELCOME-V1", "Sends a welcome confirmation acknowledging account creation and verified membership status."),
                 
                 # 2. Property Listings
-                ("PropertySubmitted", "Property Listing Submitted", "Property", "PROP-SUBMITTED-V1"),
-                ("PropertyApproved", "Property Listing Approved & Live", "Property", "PROP-APPROVED-V1"),
-                ("PropertyRejected", "Property Listing Rejected", "Property", "PROP-REJECTED-V1"),
+                ("PropertySubmitted", "Property Listing Submitted", "Property", "PROP-SUBMITTED-V1", "Notifies the property owner that their submitted listing was received and is under review by our verification team."),
+                ("PropertyApproved", "Property Listing Approved & Live", "Property", "PROP-APPROVED-V1", "Alerts the property owner that their listing has passed quality review and is now publicly live on the marketplace."),
+                ("PropertyRejected", "Property Listing Rejected", "Property", "PROP-REJECTED-V1", "Notifies the property owner if their submission was declined, including specific feedback and required corrections."),
 
                 # 3. Operations: Visits & Viewings
-                ("VisitScheduled", "Visit Request Scheduled", "Operations", "VISIT-BOOKED-V1"),
-                ("VisitStatusChanged", "Visit Update / Status Changed", "Operations", "CUST-VISIT-UPDATE"),
-                ("VisitConsultantAssignedCustomer", "Visit Consultant Assigned (Customer)", "Operations", "VISIT-AGENT-CUST-V1"),
-                ("VisitConsultantAssignedEmployee", "Visit Viewing Assignment (Employee)", "Operations", "VISIT-AGENT-EMP-V1"),
+                ("VisitScheduled", "Visit Request Scheduled", "Operations", "VISIT-BOOKED-V1", "Sends an initial viewing confirmation to the customer with scheduled date, time, and property address."),
+                ("VisitStatusChanged", "Visit Update / Status Changed", "Operations", "CUST-VISIT-UPDATE", "Sends real-time updates to the customer whenever a visit is rescheduled, completed, or cancelled."),
+                ("VisitConsultantAssignedCustomer", "Visit Consultant Assigned (Customer)", "Operations", "VISIT-AGENT-CUST-V1", "Notifies the customer with contact details of the dedicated agent assigned to guide their property viewing."),
+                ("VisitConsultantAssignedEmployee", "Visit Viewing Assignment (Employee)", "Operations", "VISIT-AGENT-EMP-V1", "Sends viewing assignment details, property specifications, and client contact notes to the assigned agent."),
 
                 # 4. Visit Reminders (Background)
-                ("VisitReminder24h", "Visit Reminder (24h Before)", "Reminders", "VISIT-REMIND-24H"),
-                ("VisitReminder1h", "Visit Reminder (1h Before)", "Reminders", "VISIT-REMIND-1H"),
-                ("VisitFeedback2h", "Visit Feedback (2h Post-Visit)", "Reminders", "VISIT-FEEDBACK-2H"),
+                ("VisitReminder24h", "Visit Reminder (24h Before)", "Reminders", "VISIT-REMIND-24H", "Scheduled background task: Sends an automated reminder 24 hours before a property viewing to both client and agent."),
+                ("VisitReminder1h", "Visit Reminder (1h Before)", "Reminders", "VISIT-REMIND-1H", "Scheduled background task: Sends an urgent reminder 1 hour before a property viewing with location directions."),
+                ("VisitFeedback2h", "Visit Feedback (2h Post-Visit)", "Reminders", "VISIT-FEEDBACK-2H", "Scheduled background task: Sends an automated survey 2 hours after a viewing to collect customer feedback on the property."),
 
                 # 5. Operations: Consultations
-                ("ConsultationBooked", "Consultation Booked & Confirmed", "Operations", "CONS-BOOKED-V1"),
-                ("ConsultationStatusChanged", "Consultation Update / Status Changed", "Operations", "CONS-STATUS-V1"),
-                ("ConsultationConsultantAssignedCustomer", "Consultation Advisor Assigned (Customer)", "Operations", "CONS-AGENT-CUST-V1"),
-                ("ConsultationConsultantAssignedEmployee", "Consultation Assigned (Employee)", "Operations", "CONS-AGENT-EMP-V1"),
+                ("ConsultationBooked", "Consultation Booked & Confirmed", "Operations", "CONS-BOOKED-V1", "Confirms appointment booking for real estate advisory, property valuation, or investment consultation."),
+                ("ConsultationStatusChanged", "Consultation Update / Status Changed", "Operations", "CONS-STATUS-V1", "Notifies the customer when an advisory consultation appointment is rescheduled, completed, or cancelled."),
+                ("ConsultationConsultantAssignedCustomer", "Consultation Advisor Assigned (Customer)", "Operations", "CONS-AGENT-CUST-V1", "Sends advisor contact profile, meeting link, and preparation notes to the customer."),
+                ("ConsultationConsultantAssignedEmployee", "Consultation Assigned (Employee)", "Operations", "CONS-AGENT-EMP-V1", "Dispatches consultation briefing, client goals, and meeting agenda to the assigned advisor."),
 
                 # 6. Consultation Reminders (Background)
-                ("ConsultationReminder1h", "Consultation Reminder (1h Before)", "Reminders", "CONS-REMIND-1H"),
-                ("ConsultationSurvey1d", "Consultation CSAT Survey (1d Post-Meeting)", "Reminders", "CONS-SURVEY-1D"),
+                ("ConsultationReminder1h", "Consultation Reminder (1h Before)", "Reminders", "CONS-REMIND-1H", "Scheduled background task: Sends an automated reminder 1 hour prior to a consultation with video link or room info."),
+                ("ConsultationSurvey1d", "Consultation CSAT Survey (1d Post-Meeting)", "Reminders", "CONS-SURVEY-1D", "Scheduled background task: Dispatches a post-consultation CSAT survey 24 hours after an advisory session."),
 
                 # 7. Transactions & Payments
-                ("TransactionInitiated", "Transaction Initiated (Buyer & Landlord)", "Transactions", "TRANS-INIT-V1"),
-                ("TransactionStatusUpdated", "Transaction Status Updated (Buyer & Landlord)", "Transactions", "TRANS-STATUS-V1"),
-                ("TransactionReceipt", "Transaction Official Receipt PDF", "Transactions", "TRANS-RECEIPT-V1"),
+                ("TransactionInitiated", "Transaction Initiated (Buyer & Landlord)", "Transactions", "TRANS-INIT-V1", "Alerts both Buyer/Tenant and Landlord/Seller that a new purchase or rental transaction has commenced."),
+                ("TransactionStatusUpdated", "Transaction Status Updated (Buyer & Landlord)", "Transactions", "TRANS-STATUS-V1", "Notifies parties when a deal status advances (e.g., Pending, Escrow, Legal Verification, Closed)."),
+                ("TransactionReceipt", "Transaction Official Receipt PDF", "Transactions", "TRANS-RECEIPT-V1", "Automatically attaches and emails an official PDF payment receipt ledger upon transaction closing or payment."),
 
                 # 8. Rent / Installment Payment Reminders (Background)
-                ("PaymentReminder7d", "Payment Reminder (7 Days Before Due)", "Reminders", "PAY-REMIND-7D"),
-                ("PaymentReminder3d", "Payment Reminder (3 Days Before Due)", "Reminders", "PAY-REMIND-3D"),
-                ("PaymentOverdue1d", "Payment Overdue Notice (1 Day After Due)", "Reminders", "PAY-OVERDUE-1D"),
-                ("PaymentOverdue7d", "Late Payment Warning & Escalation (7 Days After Due)", "Reminders", "PAY-OVERDUE-7D"),
+                ("PaymentReminder7d", "Payment Reminder (7 Days Before Due)", "Reminders", "PAY-REMIND-7D", "Scheduled background task: Sends an upcoming payment notice 7 days before rent or installment due date."),
+                ("PaymentReminder3d", "Payment Reminder (3 Days Before Due)", "Reminders", "PAY-REMIND-3D", "Scheduled background task: Sends an urgent payment notice 3 days before rent or installment due date."),
+                ("PaymentOverdue1d", "Payment Overdue Notice (1 Day After Due)", "Reminders", "PAY-OVERDUE-1D", "Scheduled background task: Sends an overdue notice with late policy details 1 day after a missed due date."),
+                ("PaymentOverdue7d", "Late Payment Warning & Escalation (7 Days After Due)", "Reminders", "PAY-OVERDUE-7D", "Scheduled background task: Sends a 7-day severe overdue escalation notice with late fee penalty calculation and cc's agent."),
 
                 # 9. Customer Support
-                ("SupportTicketClosed", "Support Ticket Closed", "Support", "SUPP-CLOSED-V1")
+                ("SupportTicketClosed", "Support Ticket Closed", "Support", "SUPP-CLOSED-V1", "Notifies the customer that their support inquiry has been resolved and invites them to submit a satisfaction rating.")
             ]
-            for fkey, fname, fcat, tkey in features_to_seed:
+            for fkey, fname, fcat, tkey, fdesc in features_to_seed:
                 feat = EmailFeatureConfig.query.filter_by(featureKey=fkey).first()
                 if not feat:
                     db.session.add(EmailFeatureConfig(
@@ -297,8 +297,11 @@ def create_app(config_class=Config):
                         featureName=fname,
                         category=fcat,
                         templateKey=tkey,
+                        description=fdesc,
                         enabled=True
                     ))
+                elif not feat.description:
+                    feat.description = fdesc
             db.session.commit()
             
             # Helper for HTML email styling

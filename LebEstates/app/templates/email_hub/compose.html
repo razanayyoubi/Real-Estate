@@ -59,21 +59,65 @@
         <div class="compose-pane">
             <input type="hidden" id="draft_id" value="">
             
+            <!-- Searchable Template Selector -->
             <div class="form-group">
-                <label class="form-label" for="template_select">Load HTML Template</label>
-                <select id="template_select" class="form-control" onchange="loadTemplate(this.value)">
-                    <option value="">-- Start from scratch --</option>
-                    {% for template in templates %}
-                    <option value="{{ template.templateKey }}">{{ template.name }} ({{ template.templateKey }})</option>
-                    {% endfor %}
-                </select>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label class="form-label" style="margin-bottom: 0;">Load HTML Email Template</label>
+                    <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 11px;" onclick="clearLoadedTemplate()" title="Clear and start from a blank email">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">restart_alt</span> Blank
+                    </button>
+                </div>
+
+                <input type="hidden" id="selected_template_key" value="">
+                <div class="searchable-select" id="composeTemplateWrapper">
+                    <div class="searchable-select-trigger" id="composeTemplateTrigger" onclick="toggleComposeTemplateDropdown(event)">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-symbols-outlined" style="font-size: 18px; color: var(--secondary);">html</span>
+                            <span id="composeTemplateLabel" style="font-weight: 600;">-- Start from scratch --</span>
+                        </div>
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--on-surface-variant);">expand_more</span>
+                    </div>
+
+                    <div class="searchable-dropdown" id="composeTemplateDropdown">
+                        <div class="searchable-dropdown-header" onclick="event.stopPropagation();">
+                            <input type="text" id="composeTemplateSearchInput" class="searchable-dropdown-search" placeholder="Search 46 templates by name, key, subject, category..." oninput="filterComposeTemplates()">
+                        </div>
+                        <div class="searchable-dropdown-list custom-scrollbar" id="composeTemplateList">
+                            <!-- Option 0: Start from scratch -->
+                            <div class="searchable-dropdown-item" onclick="selectComposeTemplate('', '-- Start from scratch --', '')">
+                                <div>
+                                    <div style="font-weight: 600;">-- Start from scratch --</div>
+                                    <div class="searchable-dropdown-item-meta">Blank custom email canvas</div>
+                                </div>
+                                <span class="badge badge-primary">Blank</span>
+                            </div>
+
+                            <!-- Templates List -->
+                            {% for template in templates %}
+                            <div class="searchable-dropdown-item compose-template-item" 
+                                data-key="{{ template.templateKey|lower }}" 
+                                data-name="{{ template.name|lower }}" 
+                                data-subj="{{ template.subject|lower }}" 
+                                data-cat="{{ template.category|lower }}" 
+                                onclick="selectComposeTemplate('{{ template.templateKey }}', '{{ template.name|escape }}', '{{ template.category|escape }}')">
+                                <div>
+                                    <div style="font-weight: 600;">{{ template.name }}</div>
+                                    <div class="searchable-dropdown-item-meta">Key: <code>{{ template.templateKey }}</code> &bull; Subject: {{ template.subject }}</div>
+                                </div>
+                                <span class="badge badge-primary">{{ template.category }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            <!-- Target Distribution Lists -->
             <div class="form-group">
                 <label class="form-label" style="margin-bottom: 4px;">Target Distribution Lists</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 1px solid var(--outline-variant); border-radius: 8px; padding: 12px; background: var(--surface-container-low); max-height: 120px; overflow-y: auto;">
                     {% for dl in dist_lists %}
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
                         <input type="checkbox" name="dist_list" value="{{ dl.distributionListID }}" style="transform: scale(1.1);" onchange="updatePreview()">
                         {{ dl.name }}
                     </label>
@@ -81,19 +125,22 @@
                 </div>
             </div>
 
+            <!-- Manual Email Recipients -->
             <div class="form-group">
                 <label class="form-label" for="recipients_raw">Manual Email Recipients</label>
                 <textarea id="recipients_raw" class="form-control" placeholder="agent1@gmail.com, client2@outlook.com (separated by commas or space)" style="min-height: 60px;" oninput="updatePreview()"></textarea>
             </div>
 
+            <!-- Subject Line -->
             <div class="form-group">
                 <label class="form-label" for="subject">Subject Line</label>
                 <input type="text" id="subject" class="form-control" placeholder="Email subject heading..." oninput="updatePreview()">
             </div>
 
+            <!-- HTML Content Body -->
             <div class="form-group">
                 <label class="form-label" for="body">HTML Content Body</label>
-                <textarea id="body" class="form-control" placeholder="Type raw text or insert HTML here..." style="min-height: 220px;" oninput="updatePreview()"></textarea>
+                <textarea id="body" class="form-control custom-scrollbar" placeholder="Type raw text or insert HTML here..." style="min-height: 240px; font-family: 'Consolas', monospace; font-size: 13px;" oninput="updatePreview()"></textarea>
             </div>
         </div>
 
@@ -108,7 +155,7 @@
                 <div><strong>Subject:</strong> <span id="preview_subject" style="color: var(--on-surface);">--</span></div>
             </div>
             
-            <div class="preview-window" id="preview_body">
+            <div class="preview-window custom-scrollbar" id="preview_body" style="max-height: 480px; overflow-y: auto; overflow-x: hidden;">
                 <!-- Outgoing Email Body Preview -->
                 <em style="color: #999;">Email body preview will render here...</em>
             </div>
@@ -144,11 +191,63 @@
 const templatesMap = {
     {% for template in templates %}
     "{{ template.templateKey }}": {
+        "name": "{{ template.name|escape }}",
         "subject": "{{ template.subject|escape }}",
+        "category": "{{ template.category|escape }}",
         "body": `{{ template.body|safe }}`
     },
     {% endfor %}
 };
+
+// Searchable Dropdown for Compose Template Selection
+function toggleComposeTemplateDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('composeTemplateDropdown');
+    const isOpening = !dropdown.classList.contains('open');
+    if (isOpening) {
+        dropdown.classList.add('open');
+        const input = document.getElementById('composeTemplateSearchInput');
+        input.value = '';
+        filterComposeTemplates();
+        setTimeout(() => input.focus(), 50);
+    } else {
+        dropdown.classList.remove('open');
+    }
+}
+
+function filterComposeTemplates() {
+    const q = document.getElementById('composeTemplateSearchInput').value.trim().toLowerCase();
+    const items = document.querySelectorAll('#composeTemplateList .compose-template-item');
+    items.forEach(item => {
+        const key = item.getAttribute('data-key') || '';
+        const name = item.getAttribute('data-name') || '';
+        const subj = item.getAttribute('data-subj') || '';
+        const cat = item.getAttribute('data-cat') || '';
+        if (!q || key.includes(q) || name.includes(q) || subj.includes(q) || cat.includes(q)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function selectComposeTemplate(key, name, category) {
+    document.getElementById('selected_template_key').value = key;
+    document.getElementById('composeTemplateLabel').innerText = key ? `${name} (${key})` : '-- Start from scratch --';
+    document.getElementById('composeTemplateDropdown').classList.remove('open');
+    loadTemplate(key);
+}
+
+function clearLoadedTemplate() {
+    selectComposeTemplate('', '-- Start from scratch --', '');
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#composeTemplateWrapper')) {
+        const d = document.getElementById('composeTemplateDropdown');
+        if (d) d.classList.remove('open');
+    }
+});
 
 function loadTemplate(key) {
     if (key && templatesMap[key]) {
@@ -175,7 +274,7 @@ function updatePreview() {
         manualCount = manualRecips.split(/[,\s;\n\r]+/).filter(x => x.includes('@')).length;
     }
     
-    // Handle checked list counts (mock summary until resolve)
+    // Handle checked list counts
     const listCheckboxes = document.querySelectorAll('input[name="dist_list"]:checked');
     document.getElementById('preview_count').innerText = `${manualCount} manual + ${listCheckboxes.length} lists selected`;
 }
@@ -226,7 +325,8 @@ function loadDraft(id) {
                     cb.checked = data.distribution_lists.includes(parseInt(cb.value));
                 });
                 
-                document.getElementById('template_select').value = '';
+                document.getElementById('selected_template_key').value = '';
+                document.getElementById('composeTemplateLabel').innerText = '-- Custom Draft Loaded --';
                 updatePreview();
                 alert('Draft loaded.');
             }
@@ -289,6 +389,8 @@ function sendEmailBatch() {
             document.getElementById('recipients_raw').value = '';
             document.querySelectorAll('input[name="dist_list"]').forEach(cb => cb.checked = false);
             document.getElementById('draft_id').value = '';
+            document.getElementById('selected_template_key').value = '';
+            document.getElementById('composeTemplateLabel').innerText = '-- Start from scratch --';
             updatePreview();
         } else {
             alert('Send failed: ' + data.error);

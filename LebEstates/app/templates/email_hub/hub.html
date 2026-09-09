@@ -19,7 +19,7 @@
                 <h2 class="hub-title">Email Hub {% if not is_admin %}<span style="font-size: 18px; color: var(--secondary); font-weight: 600;">(My Outbox)</span>{% endif %}</h2>
                 <p class="hub-subtitle">
                     {% if is_admin %}
-                    Manage system automations, templates, custom lists, and monitor deliverability rates.
+                    Full transmission history across all system automations, scheduled background reminders, and staff broadcasts.
                     {% else %}
                     View your outgoing email logs, track delivery status, and compose messages.
                     {% endif %}
@@ -101,32 +101,140 @@
         </div>
     </div>
 
-    <!-- Recent Logs Section -->
-    <div class="hub-header" style="margin-bottom: 16px;">
-        <h3 class="hub-title" style="font-size: 20px;">{% if is_admin %}Recent Sending Logs{% else %}My Outgoing Email History{% endif %}</h3>
-        <p class="hub-subtitle">Review status details and error messaging for the latest outgoing transmissions.</p>
+    <!-- Recent Logs Section Header with Search and Section Filtering -->
+    <div style="background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0, 8, 30, 0.02);">
+        <div class="hub-header-main-flex" style="margin-bottom: 16px;">
+            <div>
+                <h3 class="hub-title" style="font-size: 18px; margin: 0;">{% if is_admin %}Email Transmission Logs (All System & Users){% else %}My Outgoing Email History{% endif %}</h3>
+                <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Filter historical dispatches by delivery status, trigger source, or search keyword.</p>
+            </div>
+            <div style="font-size: 13px; color: var(--on-surface-variant);">
+                Showing <strong id="visibleLogsCount">{{ recent_logs|length }}</strong> of <strong>{{ total_logs }}</strong> entries on this page
+            </div>
+        </div>
+
+        <!-- Filter Controls Bar -->
+        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+            <!-- Search Bar -->
+            <div class="search-input-wrapper" style="flex: 1; min-width: 260px;">
+                <span class="material-symbols-outlined search-input-icon">search</span>
+                <input type="text" id="logSearchInput" class="form-control search-input-field" placeholder="Search by recipient, subject, sender, feature key, status..." oninput="filterLogsTable()">
+            </div>
+
+            <!-- Status Filter Buttons -->
+            <div style="display: inline-flex; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: 8px; padding: 3px; gap: 4px;">
+                <button type="button" class="btn-filter-pill active" data-filter-type="status" data-value="all" onclick="setStatusFilter('all', this)">All</button>
+                <button type="button" class="btn-filter-pill" data-filter-type="status" data-value="sent" onclick="setStatusFilter('sent', this)">Sent</button>
+                <button type="button" class="btn-filter-pill" data-filter-type="status" data-value="failed" onclick="setStatusFilter('failed', this)">Failed</button>
+                <button type="button" class="btn-filter-pill" data-filter-type="status" data-value="pending" onclick="setStatusFilter('pending', this)">Pending</button>
+            </div>
+
+            <!-- Source / Section Filter -->
+            <div style="display: inline-flex; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: 8px; padding: 3px; gap: 4px;">
+                <button type="button" class="btn-filter-pill active" data-filter-type="source" data-value="all" onclick="setSourceFilter('all', this)">All Sources</button>
+                <button type="button" class="btn-filter-pill" data-filter-type="source" data-value="automations" onclick="setSourceFilter('automations', this)">Automations</button>
+                <button type="button" class="btn-filter-pill" data-filter-type="source" data-value="reminders" onclick="setSourceFilter('reminders', this)">Reminders</button>
+                <button type="button" class="btn-filter-pill" data-filter-type="source" data-value="broadcast" onclick="setSourceFilter('broadcast', this)">Broadcasts</button>
+            </div>
+        </div>
     </div>
 
+    <!-- Table -->
     <div class="table-container unified-table-container">
         <table class="unified-table">
             <thead>
                 <tr class="table-header-row">
-                    <th>ID</th>
-                    <th>Recipient</th>
-                    <th>Subject</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Sent At / Created At</th>
-                    <th>Actions</th>
+                    <th style="width: 80px;" class="sortable-th" onclick="sortLogsTable('id')" title="Click to sort by Log ID">
+                        <div class="th-sort-wrapper">
+                            <span>ID</span>
+                            <span class="material-symbols-outlined sort-icon" id="sort-icon-id">unfold_more</span>
+                        </div>
+                    </th>
+                    <th class="sortable-th" onclick="sortLogsTable('recip')" title="Click to sort by Recipient">
+                        <div class="th-sort-wrapper">
+                            <span>Recipient</span>
+                            <span class="material-symbols-outlined sort-icon" id="sort-icon-recip">unfold_more</span>
+                        </div>
+                    </th>
+                    <th class="sortable-th" onclick="sortLogsTable('subj')" title="Click to sort by Subject">
+                        <div class="th-sort-wrapper">
+                            <span>Subject</span>
+                            <span class="material-symbols-outlined sort-icon" id="sort-icon-subj">unfold_more</span>
+                        </div>
+                    </th>
+                    <th class="sortable-th" onclick="sortLogsTable('type')" title="Click to sort by Type/Feature">
+                        <div class="th-sort-wrapper">
+                            <span>Type / Feature</span>
+                            <span class="material-symbols-outlined sort-icon" id="sort-icon-type">unfold_more</span>
+                        </div>
+                    </th>
+                    {% if is_admin %}
+                    <th class="sortable-th" onclick="sortLogsTable('sender')" title="Click to sort by Sender/Trigger">
+                        <div class="th-sort-wrapper">
+                            <span>Sender / Trigger</span>
+                            <span class="material-symbols-outlined sort-icon" id="sort-icon-sender">unfold_more</span>
+                        </div>
+                    </th>
+                    {% endif %}
+                    <th style="width: 100px;" class="sortable-th" onclick="sortLogsTable('status')" title="Click to sort by Status">
+                        <div class="th-sort-wrapper">
+                            <span>Status</span>
+                            <span class="material-symbols-outlined sort-icon" id="sort-icon-status">unfold_more</span>
+                        </div>
+                    </th>
+                    <th class="sortable-th" onclick="sortLogsTable('date')" title="Click to sort by Date/Time">
+                        <div class="th-sort-wrapper">
+                            <span>Sent / Created At</span>
+                            <span class="material-symbols-outlined sort-icon active-sort" id="sort-icon-date">arrow_downward</span>
+                        </div>
+                    </th>
+                    <th style="text-align: right; width: 90px;">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="logsTableBody">
                 {% for log in recent_logs %}
-                <tr>
-                    <td>#{{ log.emailLogID }}</td>
-                    <td>{{ log.recipientsRaw }}</td>
-                    <td>{{ log.subject }}</td>
-                    <td><span class="badge badge-primary">{{ log.emailType }}</span></td>
+                <tr class="log-row" 
+                    data-id="{{ log.emailLogID }}" 
+                    data-recip="{{ log.recipientsRaw|lower }}" 
+                    data-subj="{{ log.subject|lower }}" 
+                    data-type="{{ log.emailType|lower }}" 
+                    data-status="{{ log.status|lower }}"
+                    data-sender="{% if log.creator %}{{ log.creator.fullName|lower }} {{ log.creator.email|lower }}{% else %}system background daemon{% endif %}"
+                    data-source="{% if 'remind' in log.emailType|lower or 'overdue' in log.emailType|lower or 'feedback' in log.emailType|lower or 'survey' in log.emailType|lower %}reminders{% elif 'broadcast' in log.emailType|lower or 'compose' in log.emailType|lower or 'manual' in log.emailType|lower %}broadcast{% else %}automations{% endif %}"
+                    data-date="{{ (log.sentAt or log.createdAt).timestamp() }}">
+                    <td><strong>#{{ log.emailLogID }}</strong></td>
+                    <td>
+                        <div style="font-weight: 600; color: var(--primary); word-break: break-all;">
+                            {{ log.recipientsRaw }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ log.subject }}">
+                            {{ log.subject }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge badge-primary">{{ log.emailType }}</span>
+                        {% if log.templateKey %}
+                        <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 2px;">
+                            <code>{{ log.templateKey }}</code>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% if is_admin %}
+                    <td>
+                        {% if log.creator %}
+                        <div style="font-size: 13px; font-weight: 600; color: var(--on-surface);">
+                            {{ log.creator.fullName }}
+                        </div>
+                        <div style="font-size: 11px; color: var(--on-surface-variant);">
+                            {{ log.creator.email }}
+                        </div>
+                        {% else %}
+                        <span class="badge badge-warning" style="background: #e0f2fe; color: #0369a1;">System Daemon</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
                     <td>
                         {% if log.status == 'Sent' %}
                         <span class="badge badge-success">Sent</span>
@@ -137,13 +245,17 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if log.sentAt %}
-                        {{ log.sentAt.strftime('%b %d, %H:%M') }}
-                        {% else %}
-                        {{ log.createdAt.strftime('%b %d, %H:%M') }}
-                        {% endif %}
+                        <div style="font-size: 13px;">
+                            {% if log.sentAt %}
+                            {{ log.sentAt.strftime('%b %d, %Y') }}
+                            <div style="font-size: 11px; color: var(--on-surface-variant);">{{ log.sentAt.strftime('%H:%M:%S') }}</div>
+                            {% else %}
+                            {{ log.createdAt.strftime('%b %d, %Y') }}
+                            <div style="font-size: 11px; color: var(--on-surface-variant);">{{ log.createdAt.strftime('%H:%M:%S') }}</div>
+                            {% endif %}
+                        </div>
                     </td>
-                    <td>
+                    <td style="text-align: right;">
                         <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="viewLogDetails({{ log.emailLogID }})">
                             <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span> View
                         </button>
@@ -151,9 +263,15 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">No email log records found.</td>
+                    <td colspan="{% if is_admin %}8{% else %}7{% endif %}" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">No email log records found.</td>
                 </tr>
                 {% endfor %}
+                <tr id="noLogsMatchRow" style="display: none;">
+                    <td colspan="{% if is_admin %}8{% else %}7{% endif %}" style="text-align: center; padding: 36px; color: var(--on-surface-variant);">
+                        <span class="material-symbols-outlined" style="font-size: 36px; color: var(--secondary); display: block; margin-bottom: 6px;">search_off</span>
+                        No email transmission logs match your search and filter criteria.
+                    </td>
+                </tr>
             </tbody>
         </table>
 
@@ -161,7 +279,7 @@
         {% if total_logs > 0 %}
         <div class="pagination-container">
             <div class="pagination-info">
-                Showing <strong>{{ offset + 1 }}</strong> to <strong>{{ [offset + per_page, total_logs]|min }}</strong> of <strong>{{ total_logs }}</strong> entries
+                Showing <strong>{{ offset + 1 }}</strong> to <strong>{{ [offset + per_page, total_logs]|min }}</strong> of <strong>{{ total_logs }}</strong> total recorded entries
             </div>
             <div class="pagination-controls">
                 <a href="?page={{ page - 1 }}&per_page={{ per_page }}" class="page-btn {% if page <= 1 %}disabled{% endif %}" title="Previous Page">
@@ -202,6 +320,106 @@
 </div>
 
 <script>
+let currentStatusFilter = 'all';
+let currentSourceFilter = 'all';
+let currentSortKey = 'date';
+let currentSortAsc = false;
+
+function sortLogsTable(key) {
+    if (currentSortKey === key) {
+        currentSortAsc = !currentSortAsc;
+    } else {
+        currentSortKey = key;
+        currentSortAsc = true;
+    }
+
+    // Reset all sort icons
+    document.querySelectorAll('.sort-icon').forEach(icon => {
+        icon.innerText = 'unfold_more';
+        icon.classList.remove('active-sort');
+    });
+
+    const activeIcon = document.getElementById(`sort-icon-${key}`);
+    if (activeIcon) {
+        activeIcon.innerText = currentSortAsc ? 'arrow_upward' : 'arrow_downward';
+        activeIcon.classList.add('active-sort');
+    }
+
+    const tbody = document.getElementById('logsTableBody');
+    const rows = Array.from(tbody.querySelectorAll('tr.log-row'));
+    const noMatchRow = document.getElementById('noLogsMatchRow');
+
+    rows.sort((a, b) => {
+        let valA = a.getAttribute(`data-${key}`) || '';
+        let valB = b.getAttribute(`data-${key}`) || '';
+
+        if (key === 'id' || key === 'date') {
+            valA = parseFloat(valA) || 0;
+            valB = parseFloat(valB) || 0;
+            return currentSortAsc ? valA - valB : valB - valA;
+        } else {
+            return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+    });
+
+    // Re-append in sorted order
+    rows.forEach(row => tbody.appendChild(row));
+    if (noMatchRow) tbody.appendChild(noMatchRow);
+}
+
+function setStatusFilter(status, btnElement) {
+    currentStatusFilter = status;
+    document.querySelectorAll('[data-filter-type="status"]').forEach(b => b.classList.remove('active'));
+    if (btnElement) btnElement.classList.add('active');
+    filterLogsTable();
+}
+
+function setSourceFilter(source, btnElement) {
+    currentSourceFilter = source;
+    document.querySelectorAll('[data-filter-type="source"]').forEach(b => b.classList.remove('active'));
+    if (btnElement) btnElement.classList.add('active');
+    filterLogsTable();
+}
+
+function filterLogsTable() {
+    const q = (document.getElementById('logSearchInput').value || '').trim().toLowerCase();
+    const rows = document.querySelectorAll('#logsTableBody tr.log-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const recip = row.getAttribute('data-recip') || '';
+        const subj = row.getAttribute('data-subj') || '';
+        const type = row.getAttribute('data-type') || '';
+        const status = row.getAttribute('data-status') || '';
+        const sender = row.getAttribute('data-sender') || '';
+        const source = row.getAttribute('data-source') || '';
+
+        // Status filter check
+        const matchStatus = (currentStatusFilter === 'all' || status === currentStatusFilter);
+        
+        // Source filter check
+        const matchSource = (currentSourceFilter === 'all' || source === currentSourceFilter);
+
+        // Search text check
+        const matchSearch = (!q || recip.includes(q) || subj.includes(q) || type.includes(q) || status.includes(q) || sender.includes(q));
+
+        if (matchStatus && matchSource && matchSearch) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const countEl = document.getElementById('visibleLogsCount');
+    if (countEl) countEl.innerText = visibleCount;
+
+    const noMatchRow = document.getElementById('noLogsMatchRow');
+    if (noMatchRow) {
+        noMatchRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+}
+
 function viewLogDetails(logId) {
     fetch(`/control-panel/email-hub/logs/view/${logId}`)
         .then(res => res.json())
@@ -218,9 +436,9 @@ function viewLogDetails(logId) {
                 }
 
                 modalBody.innerHTML = `
-                    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px 16px; font-size: 13px; background: var(--surface-container-low); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--outline-variant); margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: 110px 1fr; gap: 8px 16px; font-size: 13px; background: var(--surface-container-low); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--outline-variant); margin-bottom: 16px;">
                         <strong>Log ID:</strong> <span>#${data.emailLogID}</span>
-                        <strong>Recipient:</strong> <span style="word-break: break-all;">${data.recipients}</span>
+                        <strong>Recipient:</strong> <span style="word-break: break-all; font-weight: 600; color: var(--primary);">${data.recipients}</span>
                         <strong>Subject:</strong> <span>${data.subject}</span>
                         <strong>Type:</strong> <span>${data.emailType}</span>
                         <strong>Template:</strong> <span><code>${data.templateKey || 'None'}</code></span>
@@ -229,7 +447,7 @@ function viewLogDetails(logId) {
                         <strong>Status:</strong> <div>${statusBadge}</div>
                     </div>
                     <div>
-                        <strong style="font-size: 13px; color: var(--on-surface);">Email Body:</strong>
+                        <strong style="font-size: 13px; color: var(--on-surface);">Rendered Transmission Body:</strong>
                         <div style="border: 1px solid var(--outline-variant); border-radius: 8px; padding: 14px; margin-top: 8px; background: #f8fafc; color: #1a202c; max-height: 380px; overflow-y: auto; overflow-x: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);" class="custom-scrollbar">
                             ${data.body}
                         </div>

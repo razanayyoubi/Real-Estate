@@ -45,14 +45,14 @@
         </a>
     </div>
 
-    <!-- Search Bar & Filters -->
+    <!-- Search Bar & Top Stats -->
     <div style="margin-bottom: 24px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
         <div class="search-input-wrapper" style="flex: 1; max-width: 480px;">
             <span class="material-symbols-outlined search-input-icon">search</span>
             <input type="text" id="templateSearch" class="form-control search-input-field" placeholder="Search templates by key, name, subject, category..." oninput="filterTemplates()">
         </div>
         <div style="font-size: 13px; color: var(--on-surface-variant);" id="templatesCounter">
-            Showing <strong id="visibleTemplateCount">{{ templates|length }}</strong> of <strong>{{ templates|length }}</strong> templates
+            Showing <strong id="visibleTemplateCount">0</strong> of <strong>{{ templates|length }}</strong> templates (8 per page)
         </div>
     </div>
 
@@ -94,10 +94,20 @@
     </div>
 
     <!-- No Match State -->
-    <div id="noTemplatesMatch" style="display: none; text-align: center; padding: 48px; border: 1px dashed var(--outline-variant); border-radius: 12px; color: var(--on-surface-variant); margin-top: 16px;">
+    <div id="noTemplatesMatch" style="display: none; text-align: center; padding: 48px; border: 1px dashed var(--outline-variant); border-radius: 12px; color: var(--on-surface-variant); margin-top: 20px;">
         <span class="material-symbols-outlined" style="font-size: 48px; margin-bottom: 12px; color: var(--secondary);">search_off</span>
         <h4 style="font-family: var(--font-headline); color: var(--primary); margin-bottom: 4px;">No matching email templates</h4>
         <p>Try searching for a different keyword or template identifier.</p>
+    </div>
+
+    <!-- Offline Browser-side Pagination Controls (8 results per page) -->
+    <div class="pagination-container" id="templatesPaginationContainer" style="margin-top: 32px; border-radius: 12px; border: 1px solid var(--outline-variant); display: flex;">
+        <div class="pagination-info" id="templatesPaginationInfo">
+            Showing <strong>1</strong> to <strong>8</strong> of <strong>{{ templates|length }}</strong> templates
+        </div>
+        <div class="pagination-controls" id="templatesPaginationControls">
+            <!-- Rendered dynamically by JS -->
+        </div>
     </div>
 </div>
 
@@ -135,32 +145,110 @@ const templateData = {
     {% endfor %}
 };
 
-function filterTemplates() {
-    const query = document.getElementById('templateSearch').value.trim().toLowerCase();
-    const cards = document.querySelectorAll('.template-card');
-    let visibleCount = 0;
+// ================= OFFLINE BROWSER-SIDE PAGINATION (8 RESULTS PER PAGE) =================
+let currentPage = 1;
+const pageSize = 8;
+let matchingCards = [];
 
-    cards.forEach(card => {
+function initTemplatePagination() {
+    filterTemplates();
+}
+
+function filterTemplates() {
+    const query = (document.getElementById('templateSearch').value || '').trim().toLowerCase();
+    const allCards = Array.from(document.querySelectorAll('#templatesGrid .template-card'));
+    
+    matchingCards = allCards.filter(card => {
         const key = card.getAttribute('data-key') || '';
         const name = card.getAttribute('data-name') || '';
         const subject = card.getAttribute('data-subject') || '';
         const category = card.getAttribute('data-category') || '';
-
-        if (!query || key.includes(query) || name.includes(query) || subject.includes(query) || category.includes(query)) {
-            card.style.display = 'flex';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
+        return !query || key.includes(query) || name.includes(query) || subject.includes(query) || category.includes(query);
     });
 
-    const countEl = document.getElementById('visibleTemplateCount');
-    if (countEl) countEl.innerText = visibleCount;
+    currentPage = 1;
+    renderPaginatedTemplates();
+}
 
+function renderPaginatedTemplates() {
+    const allCards = Array.from(document.querySelectorAll('#templatesGrid .template-card'));
+    const totalMatching = matchingCards.length;
+    const totalPages = Math.max(1, Math.ceil(totalMatching / pageSize));
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalMatching);
+
+    // Hide all template cards
+    allCards.forEach(card => card.style.display = 'none');
+
+    // Display only cards in the current offset range
+    for (let i = startIndex; i < endIndex; i++) {
+        matchingCards[i].style.display = 'flex';
+    }
+
+    // Update Counter
+    const countEl = document.getElementById('visibleTemplateCount');
+    if (countEl) countEl.innerText = totalMatching;
+
+    // Empty state
     const noMatchEl = document.getElementById('noTemplatesMatch');
     if (noMatchEl) {
-        noMatchEl.style.display = (visibleCount === 0 && cards.length > 0) ? 'block' : 'none';
+        noMatchEl.style.display = (totalMatching === 0 && allCards.length > 0) ? 'block' : 'none';
     }
+
+    // Render Pagination Bar
+    renderPaginationBar(startIndex, endIndex, totalMatching, totalPages);
+}
+
+function renderPaginationBar(start, end, total, totalPages) {
+    const container = document.getElementById('templatesPaginationContainer');
+    if (!container) return;
+
+    if (total === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+
+    const infoEl = document.getElementById('templatesPaginationInfo');
+    if (infoEl) {
+        infoEl.innerHTML = `Showing <strong>${start + 1}</strong> to <strong>${end}</strong> of <strong>${total}</strong> templates (Page ${currentPage} of ${totalPages})`;
+    }
+
+    const controlsEl = document.getElementById('templatesPaginationControls');
+    if (!controlsEl) return;
+
+    let html = `
+        <button type="button" class="page-btn ${currentPage <= 1 ? 'disabled' : ''}" onclick="goToTemplatePage(${currentPage - 1})" title="Previous Page">
+            <span class="material-symbols-outlined" style="font-size: 16px;">chevron_left</span>
+        </button>
+    `;
+
+    for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+            html += `<button type="button" class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToTemplatePage(${p})">${p}</button>`;
+        } else if (p === currentPage - 3 || p === currentPage + 3) {
+            html += `<span style="padding: 0 4px; color: var(--on-surface-variant);">...</span>`;
+        }
+    }
+
+    html += `
+        <button type="button" class="page-btn ${currentPage >= totalPages ? 'disabled' : ''}" onclick="goToTemplatePage(${currentPage + 1})" title="Next Page">
+            <span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span>
+        </button>
+    `;
+
+    controlsEl.innerHTML = html;
+}
+
+function goToTemplatePage(page) {
+    currentPage = page;
+    renderPaginatedTemplates();
+    const grid = document.getElementById('templatesGrid');
+    if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function previewTemplate(key) {
@@ -176,5 +264,8 @@ function previewTemplate(key) {
 function closePreviewModal() {
     document.getElementById('previewModal').classList.remove('show');
 }
+
+// Initialise pagination on load
+document.addEventListener('DOMContentLoaded', initTemplatePagination);
 </script>
 {% endblock %}

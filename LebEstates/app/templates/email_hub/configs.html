@@ -17,7 +17,7 @@
         <div class="hub-header-main-flex">
             <div class="hub-header-details">
                 <h2 class="hub-title">Email Configurations</h2>
-                <p class="hub-subtitle">Map system notifications to specific templates, customize sender emails, and edit overrides.</p>
+                <p class="hub-subtitle">Configure automated notification triggers, background reminders, active templates, and sender routing.</p>
             </div>
             <div style="display: flex; gap: 12px; align-items: center;">
                 <button class="btn btn-outline" id="btnRunReminders" onclick="triggerBackgroundReminders()">
@@ -51,7 +51,7 @@
         </a>
     </div>
 
-    <!-- Main Config Form -->
+    <!-- Main Config Form for Batch Save -->
     <form action="/control-panel/email-hub/config/save" method="POST" id="featureConfigForm">
         <!-- Collapsible Section 1: Feature Automation Mappings -->
         <div class="collapsible-section">
@@ -60,16 +60,16 @@
                     <span class="material-symbols-outlined" style="font-size: 26px; color: var(--secondary);">settings_suggest</span>
                     <div>
                         <h3 class="hub-title" style="font-size: 18px; margin: 0;">Feature Automation Mappings</h3>
-                        <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Configure template routing for triggers generated automatically by application actions.</p>
+                        <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Action-triggered automations (Auth, Property Listings, Deal Updates, and Customer Support).</p>
                     </div>
                 </div>
                 <div class="collapsible-header-right">
                     <div class="search-input-wrapper" onclick="event.stopPropagation();">
                         <span class="material-symbols-outlined search-input-icon">search</span>
-                        <input type="text" id="featureSearch" class="form-control search-input-field" placeholder="Search features by name/key..." oninput="filterFeatures()" style="width: 240px;">
+                        <input type="text" id="featureSearch" class="form-control search-input-field" placeholder="Search features by name/key/description..." oninput="filterFeatures()" style="width: 260px;">
                     </div>
                     <button type="submit" class="btn btn-primary" onclick="event.stopPropagation();" style="padding: 8px 16px; font-size: 13px;">
-                        <span class="material-symbols-outlined" style="font-size: 16px;">save</span> Save Mappings
+                        <span class="material-symbols-outlined" style="font-size: 16px;">save</span> Save Statuses
                     </button>
                     <span class="material-symbols-outlined collapsible-toggle-icon" id="featureToggleIcon">expand_more</span>
                 </div>
@@ -80,56 +80,88 @@
                     <table class="unified-table">
                         <thead>
                             <tr class="table-header-row">
-                                <th style="width: 70px;">Enabled</th>
-                                <th>Feature Key</th>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Active Template</th>
+                                <th style="width: 70px; text-align: center;">Active</th>
+                                <th>Feature & Trigger Description</th>
+                                <th>Mapped Template</th>
                                 <th>Sender Identity</th>
-                                <th>ReplyTo Override</th>
+                                <th style="text-align: right; width: 220px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="featuresTableBody">
                             {% for feature in automation_features %}
                             <input type="hidden" name="feature_ids" value="{{ feature.featureConfigID }}">
-                            <tr class="feature-row" data-key="{{ feature.featureKey|lower }}" data-name="{{ feature.featureName|lower }}" data-category="{{ feature.category|lower }}" data-template="{{ (feature.templateKey or '')|lower }}">
-                                <td>
-                                    <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.2);">
-                                </td>
-                                <td><strong>{{ feature.featureKey }}</strong></td>
-                                <td>{{ feature.featureName }}</td>
-                                <td><span class="badge badge-primary">{{ feature.category }}</span></td>
-                                <td>
-                                    <select name="template_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
-                                        <option value="">-- Use Default / Fallback --</option>
-                                        {% for template in templates %}
-                                        <option value="{{ template.templateKey }}" {% if feature.templateKey == template.templateKey %}selected{% endif %}>
-                                            {{ template.name }} ({{ template.templateKey }})
-                                        </option>
-                                        {% endfor %}
-                                    </select>
+                            <tr class="feature-row" id="row-feature-{{ feature.featureConfigID }}" data-id="{{ feature.featureConfigID }}" data-key="{{ feature.featureKey|lower }}" data-name="{{ feature.featureName|lower }}" data-category="{{ feature.category|lower }}" data-desc="{{ (feature.description or '')|lower }}" data-template="{{ (feature.templateKey or '')|lower }}">
+                                <td style="text-align: center;">
+                                    <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" id="chk-enabled-{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.25); cursor: pointer;" title="Toggle active status">
                                 </td>
                                 <td>
-                                    <select name="sender_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
-                                        <option value="">-- System default sender --</option>
-                                        {% for sender in senders %}
-                                        <option value="{{ sender.senderIdentityID }}" {% if feature.senderIdentityID == sender.senderIdentityID %}selected{% endif %}>
-                                            {{ sender.displayName }} &lt;{{ sender.fromEmail }}&gt;
-                                        </option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="feature-cell">
+                                        <div class="feature-header-row">
+                                            <span class="feature-name-title" id="text-name-{{ feature.featureConfigID }}">{{ feature.featureName }}</span>
+                                            <code class="feature-key-pill">{{ feature.featureKey }}</code>
+                                            <span class="badge badge-primary">{{ feature.category }}</span>
+                                        </div>
+                                        <div class="feature-desc-text" id="text-desc-{{ feature.featureConfigID }}">
+                                            {{ feature.description or 'Automated notification dispatched upon system event trigger.' }}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
-                                    <input type="email" name="replyto_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;" value="{{ feature.replyToOverride or '' }}" placeholder="Optional reply-to">
+                                    <div id="badge-template-{{ feature.featureConfigID }}">
+                                        {% if feature.templateKey %}
+                                        <span class="template-pill custom" title="Active Template: {{ feature.templateKey }}">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">html</span>
+                                            {{ feature.templateKey }}
+                                        </span>
+                                        {% else %}
+                                        <span class="template-pill fallback" title="Using default system template">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">auto_fix_high</span>
+                                            Default Fallback
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="badge-sender-{{ feature.featureConfigID }}">
+                                        {% if feature.sender_identity %}
+                                        <div class="sender-pill" title="{{ feature.sender_identity.fromEmail }}">
+                                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--secondary);">badge</span>
+                                            <strong>{{ feature.sender_identity.displayName }}</strong>
+                                        </div>
+                                        {% else %}
+                                        <div class="sender-pill" style="color: var(--on-surface-variant);">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">mail</span>
+                                            System Default
+                                        </div>
+                                        {% endif %}
+                                        {% if feature.replyToOverride %}
+                                        <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 2px;">
+                                            Reply: <code>{{ feature.replyToOverride }}</code>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: flex-end;">
+                                        <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openConfigureModal({{ feature.featureConfigID }})">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">tune</span> Configure
+                                        </button>
+                                        <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 12px;" onclick="previewFeatureById({{ feature.featureConfigID }})" title="Preview mapped email template">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 12px;" onclick="openTestSendModal({{ feature.featureConfigID }}, '{{ feature.featureName|escape }}')" title="Send sample test email">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">send</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No automated direct features registered.</td>
+                                <td colspan="5" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No automated direct features registered.</td>
                             </tr>
                             {% endfor %}
                             <tr id="noFeaturesMatch" style="display: none;">
-                                <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">
+                                <td colspan="5" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">
                                     <span class="material-symbols-outlined" style="font-size: 32px; color: var(--secondary); display: block; margin-bottom: 6px;">search_off</span>
                                     No direct features match your search filter.
                                 </td>
@@ -147,19 +179,19 @@
                     <span class="material-symbols-outlined" style="font-size: 26px; color: var(--secondary);">schedule_send</span>
                     <div>
                         <h3 class="hub-title" style="font-size: 18px; margin: 0;">Reminders - Background Services</h3>
-                        <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Configure template routing and sender overrides for automated daemon background tasks (visits, meetings, and payment schedules).</p>
+                        <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Automated background daemon jobs (Visit reminders, Consultation CSAT surveys, and Rent/Payment escalations).</p>
                     </div>
                 </div>
                 <div class="collapsible-header-right">
                     <div class="search-input-wrapper" onclick="event.stopPropagation();">
                         <span class="material-symbols-outlined search-input-icon">search</span>
-                        <input type="text" id="reminderSearch" class="form-control search-input-field" placeholder="Search reminders by name/key..." oninput="filterReminders()" style="width: 240px;">
+                        <input type="text" id="reminderSearch" class="form-control search-input-field" placeholder="Search reminders by name/key/schedule..." oninput="filterReminders()" style="width: 260px;">
                     </div>
                     <button type="button" class="btn btn-outline" onclick="event.stopPropagation(); triggerBackgroundReminders();" style="padding: 8px 16px; font-size: 13px;" title="Execute all background reminders right now">
                         <span class="material-symbols-outlined" style="font-size: 16px;">sync</span> Run Now
                     </button>
                     <button type="submit" class="btn btn-primary" onclick="event.stopPropagation();" style="padding: 8px 16px; font-size: 13px;">
-                        <span class="material-symbols-outlined" style="font-size: 16px;">save</span> Save Mappings
+                        <span class="material-symbols-outlined" style="font-size: 16px;">save</span> Save Statuses
                     </button>
                     <span class="material-symbols-outlined collapsible-toggle-icon" id="reminderToggleIcon">expand_more</span>
                 </div>
@@ -170,56 +202,88 @@
                     <table class="unified-table">
                         <thead>
                             <tr class="table-header-row">
-                                <th style="width: 70px;">Enabled</th>
-                                <th>Feature Key</th>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Active Template</th>
+                                <th style="width: 70px; text-align: center;">Active</th>
+                                <th>Reminder Service & Schedule Description</th>
+                                <th>Mapped Template</th>
                                 <th>Sender Identity</th>
-                                <th>ReplyTo Override</th>
+                                <th style="text-align: right; width: 220px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="remindersTableBody">
                             {% for feature in reminder_features %}
                             <input type="hidden" name="feature_ids" value="{{ feature.featureConfigID }}">
-                            <tr class="reminder-row" data-key="{{ feature.featureKey|lower }}" data-name="{{ feature.featureName|lower }}" data-category="{{ feature.category|lower }}" data-template="{{ (feature.templateKey or '')|lower }}">
-                                <td>
-                                    <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.2);">
-                                </td>
-                                <td><strong>{{ feature.featureKey }}</strong></td>
-                                <td>{{ feature.featureName }}</td>
-                                <td><span class="badge badge-warning" style="background: #e0f2fe; color: #0369a1;">{{ feature.category }}</span></td>
-                                <td>
-                                    <select name="template_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
-                                        <option value="">-- Use Default / Fallback --</option>
-                                        {% for template in templates %}
-                                        <option value="{{ template.templateKey }}" {% if feature.templateKey == template.templateKey %}selected{% endif %}>
-                                            {{ template.name }} ({{ template.templateKey }})
-                                        </option>
-                                        {% endfor %}
-                                    </select>
+                            <tr class="reminder-row" id="row-feature-{{ feature.featureConfigID }}" data-id="{{ feature.featureConfigID }}" data-key="{{ feature.featureKey|lower }}" data-name="{{ feature.featureName|lower }}" data-category="{{ feature.category|lower }}" data-desc="{{ (feature.description or '')|lower }}" data-template="{{ (feature.templateKey or '')|lower }}">
+                                <td style="text-align: center;">
+                                    <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" id="chk-enabled-{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.25); cursor: pointer;" title="Toggle active status">
                                 </td>
                                 <td>
-                                    <select name="sender_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
-                                        <option value="">-- System default sender --</option>
-                                        {% for sender in senders %}
-                                        <option value="{{ sender.senderIdentityID }}" {% if feature.senderIdentityID == sender.senderIdentityID %}selected{% endif %}>
-                                            {{ sender.displayName }} &lt;{{ sender.fromEmail }}&gt;
-                                        </option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="feature-cell">
+                                        <div class="feature-header-row">
+                                            <span class="feature-name-title" id="text-name-{{ feature.featureConfigID }}">{{ feature.featureName }}</span>
+                                            <code class="feature-key-pill">{{ feature.featureKey }}</code>
+                                            <span class="badge badge-warning" style="background: #e0f2fe; color: #0369a1;">{{ feature.category }}</span>
+                                        </div>
+                                        <div class="feature-desc-text" id="text-desc-{{ feature.featureConfigID }}">
+                                            {{ feature.description or 'Scheduled daemon background task.' }}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
-                                    <input type="email" name="replyto_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;" value="{{ feature.replyToOverride or '' }}" placeholder="Optional reply-to">
+                                    <div id="badge-template-{{ feature.featureConfigID }}">
+                                        {% if feature.templateKey %}
+                                        <span class="template-pill custom" title="Active Template: {{ feature.templateKey }}">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">html</span>
+                                            {{ feature.templateKey }}
+                                        </span>
+                                        {% else %}
+                                        <span class="template-pill fallback" title="Using default system template">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">auto_fix_high</span>
+                                            Default Fallback
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="badge-sender-{{ feature.featureConfigID }}">
+                                        {% if feature.sender_identity %}
+                                        <div class="sender-pill" title="{{ feature.sender_identity.fromEmail }}">
+                                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--secondary);">badge</span>
+                                            <strong>{{ feature.sender_identity.displayName }}</strong>
+                                        </div>
+                                        {% else %}
+                                        <div class="sender-pill" style="color: var(--on-surface-variant);">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">mail</span>
+                                            System Default
+                                        </div>
+                                        {% endif %}
+                                        {% if feature.replyToOverride %}
+                                        <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 2px;">
+                                            Reply: <code>{{ feature.replyToOverride }}</code>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: flex-end;">
+                                        <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openConfigureModal({{ feature.featureConfigID }})">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">tune</span> Configure
+                                        </button>
+                                        <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 12px;" onclick="previewFeatureById({{ feature.featureConfigID }})" title="Preview mapped email template">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 12px;" onclick="openTestSendModal({{ feature.featureConfigID }}, '{{ feature.featureName|escape }}')" title="Send sample test email">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">send</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No background reminder features registered.</td>
+                                <td colspan="5" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No background reminder features registered.</td>
                             </tr>
                             {% endfor %}
                             <tr id="noRemindersMatch" style="display: none;">
-                                <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">
+                                <td colspan="5" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">
                                     <span class="material-symbols-outlined" style="font-size: 32px; color: var(--secondary); display: block; margin-bottom: 6px;">search_off</span>
                                     No background reminder services match your search filter.
                                 </td>
@@ -314,6 +378,199 @@
     </div>
 </div>
 
+<!-- ================= PARTIAL VIEW: FEATURE CONFIGURATION MODAL ================= -->
+<div class="modal" id="featureConfigModal">
+    <div class="modal-content" style="max-width: 660px;">
+        <div class="modal-header">
+            <div>
+                <h4 class="modal-title" id="modalFeatureTitle">Configure Feature Routing</h4>
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                    <code class="feature-key-pill" id="modalFeatureKey">FeatureKey</code>
+                    <span class="badge badge-primary" id="modalFeatureCategory">Category</span>
+                </div>
+            </div>
+            <span class="modal-close" onclick="closeConfigureModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body-scroll">
+            <!-- Feature Description Callout -->
+            <div class="feature-info-banner">
+                <div class="feature-info-title" id="modalBannerName">Feature Notification</div>
+                <div class="feature-info-desc" id="modalBannerDesc">Detailed trigger description explaining when this email is sent.</div>
+            </div>
+
+            <!-- Configuration Form -->
+            <form id="singleFeatureForm" onsubmit="event.preventDefault(); saveModalConfig();">
+                <input type="hidden" id="modalFeatureID" name="featureConfigID">
+
+                <!-- 1. Enable Toggle -->
+                <div class="form-group" style="background: var(--surface-container-low); padding: 14px 16px; border-radius: 8px; border: 1px solid var(--outline-variant); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="font-size: 14px; color: var(--on-surface); display: block;">Notification Dispatch Status</strong>
+                        <span style="font-size: 12px; color: var(--on-surface-variant);">Enable or disable automatic email sending for this feature.</span>
+                    </div>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 0;">
+                        <input type="checkbox" id="modal_enabled" name="enabled" style="transform: scale(1.3); cursor: pointer;">
+                        <strong id="modal_enabled_label" style="font-size: 13px; color: var(--secondary);">Active</strong>
+                    </label>
+                </div>
+
+                <!-- 2. Searchable Active Template Selector -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" style="margin-bottom: 0;">Active Email Template</label>
+                        <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="previewSelectedTemplate()" title="Preview currently chosen template">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span> Preview Template
+                        </button>
+                    </div>
+
+                    <input type="hidden" id="modal_template_key" name="templateKey" value="">
+                    <div class="searchable-select" id="templateSelectWrapper">
+                        <div class="searchable-select-trigger" id="templateSelectTrigger" onclick="toggleTemplateDropdown(event)">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--secondary);">html</span>
+                                <span id="templateSelectLabel" style="font-weight: 600;">-- Use Default / Fallback --</span>
+                            </div>
+                            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--on-surface-variant);">expand_more</span>
+                        </div>
+
+                        <div class="searchable-dropdown" id="templateDropdown">
+                            <div class="searchable-dropdown-header" onclick="event.stopPropagation();">
+                                <input type="text" id="templateSearchInput" class="searchable-dropdown-search" placeholder="Search 46 templates by name, key, category..." oninput="filterTemplateOptions()">
+                            </div>
+                            <div class="searchable-dropdown-list custom-scrollbar" id="templateOptionsList">
+                                <!-- Option 0: Default Fallback -->
+                                <div class="searchable-dropdown-item" onclick="selectTemplateOption('', '-- Use Default / Fallback --', 'System')">
+                                    <div>
+                                        <div style="font-weight: 600;">-- Use Default / Fallback --</div>
+                                        <div class="searchable-dropdown-item-meta">Standard built-in notification template</div>
+                                    </div>
+                                    <span class="badge badge-primary">Default</span>
+                                </div>
+                                <!-- All templates populated by Jinja / JS -->
+                                {% for t in templates %}
+                                <div class="searchable-dropdown-item template-opt-item" data-key="{{ t.templateKey|lower }}" data-name="{{ t.name|lower }}" data-cat="{{ t.category|lower }}" onclick="selectTemplateOption('{{ t.templateKey }}', '{{ t.name|escape }}', '{{ t.category|escape }}')">
+                                    <div>
+                                        <div style="font-weight: 600;">{{ t.name }}</div>
+                                        <div class="searchable-dropdown-item-meta">Key: <code>{{ t.templateKey }}</code></div>
+                                    </div>
+                                    <span class="badge badge-primary">{{ t.category }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Searchable Sender Identity Selector -->
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom: 6px;">Sender Identity Profile</label>
+                    <input type="hidden" id="modal_sender_id" name="senderIdentityID" value="">
+                    <div class="searchable-select" id="senderSelectWrapper">
+                        <div class="searchable-select-trigger" id="senderSelectTrigger" onclick="toggleSenderDropdown(event)">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--secondary);">badge</span>
+                                <span id="senderSelectLabel" style="font-weight: 600;">-- System default sender --</span>
+                            </div>
+                            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--on-surface-variant);">expand_more</span>
+                        </div>
+
+                        <div class="searchable-dropdown" id="senderDropdown">
+                            <div class="searchable-dropdown-header" onclick="event.stopPropagation();">
+                                <input type="text" id="senderSearchInput" class="searchable-dropdown-search" placeholder="Search senders by name or email..." oninput="filterSenderOptions()">
+                            </div>
+                            <div class="searchable-dropdown-list custom-scrollbar" id="senderOptionsList">
+                                <!-- Option 0: System Default -->
+                                <div class="searchable-dropdown-item" onclick="selectSenderOption('', '-- System default sender --', '')">
+                                    <div>
+                                        <div style="font-weight: 600;">-- System default sender --</div>
+                                        <div class="searchable-dropdown-item-meta">Use primary outgoing system credentials</div>
+                                    </div>
+                                    <span class="badge badge-primary">System</span>
+                                </div>
+                                <!-- All senders -->
+                                {% for s in senders %}
+                                <div class="searchable-dropdown-item sender-opt-item" data-name="{{ s.displayName|lower }}" data-email="{{ s.fromEmail|lower }}" onclick="selectSenderOption('{{ s.senderIdentityID }}', '{{ s.displayName|escape }}', '{{ s.fromEmail|escape }}')">
+                                    <div>
+                                        <div style="font-weight: 600;">{{ s.displayName }}</div>
+                                        <div class="searchable-dropdown-item-meta">{{ s.fromEmail }}</div>
+                                    </div>
+                                    <span class="badge badge-success">{{ s.verifiedStatus }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Reply-To Override -->
+                <div class="form-group">
+                    <label class="form-label" for="modal_replyto">Reply-To Address Override (Optional)</label>
+                    <input type="email" id="modal_replyto" name="replyToOverride" class="form-control" placeholder="e.g. concierge@lebestates.com or specific advisor email">
+                    <span style="font-size: 11px; color: var(--on-surface-variant); display: block; margin-top: 4px;">Direct customer replies to this address rather than the sender email.</span>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn btn-outline" onclick="closeConfigureModal()">Cancel</button>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-primary" id="btnSaveModal" onclick="saveModalConfig()">
+                    <span class="material-symbols-outlined">save</span> Save Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= TEMPLATE PREVIEW MODAL ================= -->
+<div class="modal" id="previewModal">
+    <div class="modal-content" style="max-width: 680px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="previewTitle">Template Preview</h4>
+            <span class="modal-close" onclick="closePreviewModal()">&times;</span>
+        </div>
+        <div class="modal-body-scroll">
+            <div style="margin-bottom: 14px; font-size: 13px; background: var(--surface-container-low); padding: 10px 16px; border-radius: 8px; border: 1px solid var(--outline-variant);">
+                <strong>Subject:</strong> <span id="previewSubj" style="color: var(--primary); font-weight: 600;"></span>
+            </div>
+            <strong style="font-size: 13px; color: var(--on-surface);">Template Body Preview:</strong>
+            <div id="previewBody" style="border: 1px solid var(--outline-variant); border-radius: 8px; padding: 14px; margin-top: 8px; background: #f8fafc; max-height: 420px; overflow-y: auto; overflow-x: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);" class="custom-scrollbar">
+                <!-- Rendered Template HTML -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closePreviewModal()">Close Preview</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= SAMPLE TEST SEND MODAL ================= -->
+<div class="modal" id="testSendModal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h4 class="modal-title" id="testSendTitle">Send Sample Test Email</h4>
+            <span class="modal-close" onclick="closeTestSendModal()">&times;</span>
+        </div>
+        <div class="modal-body-scroll">
+            <p style="font-size: 13px; color: var(--on-surface-variant); margin-top: 0;">
+                Test dispatch for <strong id="testSendFeatureName" style="color: var(--primary);">Feature</strong>. A sample rendered template with placeholder test details will be dispatched immediately via your configured mail routing.
+            </p>
+            <input type="hidden" id="testSendFeatureID">
+            <div class="form-group">
+                <label class="form-label" for="testTargetEmail">Recipient Email Address</label>
+                <input type="email" id="testTargetEmail" class="form-control" required placeholder="e.g. your-email@gmail.com" value="{{ session.get('email', '') }}">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeTestSendModal()">Cancel</button>
+            <button class="btn btn-secondary" id="btnExecuteTestSend" onclick="executeTestSend()">
+                <span class="material-symbols-outlined">send</span> Dispatch Test
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Add Sender Modal -->
 <div class="modal" id="senderModal">
     <div class="modal-content">
@@ -391,6 +648,36 @@
 </div>
 
 <script>
+// JSON map of templates for instant client-side preview
+const templatesMap = {
+    {% for template in templates %}
+    "{{ template.templateKey }}": {
+        "name": "{{ template.name|escape }}",
+        "subject": "{{ template.subject|escape }}",
+        "category": "{{ template.category|escape }}",
+        "body": `{{ template.body|safe }}`
+    },
+    {% endfor %}
+};
+
+// Map of feature config IDs to feature records
+const featuresData = {
+    {% for feature in features %}
+    {{ feature.featureConfigID }}: {
+        id: {{ feature.featureConfigID }},
+        key: "{{ feature.featureKey }}",
+        name: "{{ feature.featureName|escape }}",
+        category: "{{ feature.category|escape }}",
+        desc: "{{ (feature.description or '')|escape }}",
+        templateKey: "{{ feature.templateKey or '' }}",
+        senderID: "{{ feature.senderIdentityID or '' }}",
+        replyTo: "{{ feature.replyToOverride or '' }}",
+        enabled: {{ 'true' if feature.enabled else 'false' }}
+    },
+    {% endfor %}
+};
+
+// Section toggles
 function toggleSection(bodyId, iconId, headerId) {
     const body = document.getElementById(bodyId);
     const header = document.getElementById(headerId);
@@ -400,6 +687,7 @@ function toggleSection(bodyId, iconId, headerId) {
     }
 }
 
+// Search filters
 function filterFeatures() {
     const query = document.getElementById('featureSearch').value.trim().toLowerCase();
     const rows = document.querySelectorAll('#featuresTableBody tr.feature-row');
@@ -409,9 +697,10 @@ function filterFeatures() {
         const key = row.getAttribute('data-key') || '';
         const name = row.getAttribute('data-name') || '';
         const category = row.getAttribute('data-category') || '';
+        const desc = row.getAttribute('data-desc') || '';
         const template = row.getAttribute('data-template') || '';
 
-        if (!query || key.includes(query) || name.includes(query) || category.includes(query) || template.includes(query)) {
+        if (!query || key.includes(query) || name.includes(query) || category.includes(query) || desc.includes(query) || template.includes(query)) {
             row.style.display = '';
             visibleCount++;
         } else {
@@ -434,9 +723,10 @@ function filterReminders() {
         const key = row.getAttribute('data-key') || '';
         const name = row.getAttribute('data-name') || '';
         const category = row.getAttribute('data-category') || '';
+        const desc = row.getAttribute('data-desc') || '';
         const template = row.getAttribute('data-template') || '';
 
-        if (!query || key.includes(query) || name.includes(query) || category.includes(query) || template.includes(query)) {
+        if (!query || key.includes(query) || name.includes(query) || category.includes(query) || desc.includes(query) || template.includes(query)) {
             row.style.display = '';
             visibleCount++;
         } else {
@@ -450,6 +740,291 @@ function filterReminders() {
     }
 }
 
+// ================= SEARCHABLE DROPDOWNS LOGIC =================
+function toggleTemplateDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('templateDropdown');
+    const isOpening = !dropdown.classList.contains('open');
+    closeAllDropdowns();
+    if (isOpening) {
+        dropdown.classList.add('open');
+        const input = document.getElementById('templateSearchInput');
+        input.value = '';
+        filterTemplateOptions();
+        setTimeout(() => input.focus(), 50);
+    }
+}
+
+function filterTemplateOptions() {
+    const q = document.getElementById('templateSearchInput').value.trim().toLowerCase();
+    const items = document.querySelectorAll('#templateOptionsList .template-opt-item');
+    items.forEach(item => {
+        const key = item.getAttribute('data-key') || '';
+        const name = item.getAttribute('data-name') || '';
+        const cat = item.getAttribute('data-cat') || '';
+        if (!q || key.includes(q) || name.includes(q) || cat.includes(q)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function selectTemplateOption(key, name, category) {
+    document.getElementById('modal_template_key').value = key;
+    document.getElementById('templateSelectLabel').innerText = key ? `${name} (${key})` : '-- Use Default / Fallback --';
+    closeAllDropdowns();
+}
+
+function toggleSenderDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('senderDropdown');
+    const isOpening = !dropdown.classList.contains('open');
+    closeAllDropdowns();
+    if (isOpening) {
+        dropdown.classList.add('open');
+        const input = document.getElementById('senderSearchInput');
+        input.value = '';
+        filterSenderOptions();
+        setTimeout(() => input.focus(), 50);
+    }
+}
+
+function filterSenderOptions() {
+    const q = document.getElementById('senderSearchInput').value.trim().toLowerCase();
+    const items = document.querySelectorAll('#senderOptionsList .sender-opt-item');
+    items.forEach(item => {
+        const name = item.getAttribute('data-name') || '';
+        const email = item.getAttribute('data-email') || '';
+        if (!q || name.includes(q) || email.includes(q)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function selectSenderOption(id, name, email) {
+    document.getElementById('modal_sender_id').value = id;
+    document.getElementById('senderSelectLabel').innerText = id ? `${name} <${email}>` : '-- System default sender --';
+    closeAllDropdowns();
+}
+
+function closeAllDropdowns() {
+    document.querySelectorAll('.searchable-dropdown').forEach(d => d.classList.remove('open'));
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.searchable-select')) {
+        closeAllDropdowns();
+    }
+});
+
+// ================= FEATURE CONFIGURE MODAL =================
+function openConfigureModal(featureId) {
+    closeAllDropdowns();
+    fetch(`/control-panel/email-hub/config/feature/get/${featureId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('modalFeatureID').value = data.featureConfigID;
+                document.getElementById('modalFeatureTitle').innerText = `Configure: ${data.featureName}`;
+                document.getElementById('modalFeatureKey').innerText = data.featureKey;
+                document.getElementById('modalFeatureCategory').innerText = data.category;
+                document.getElementById('modalBannerName').innerText = data.featureName;
+                document.getElementById('modalBannerDesc').innerText = data.description || 'Automated notification dispatched upon system event trigger.';
+                
+                document.getElementById('modal_enabled').checked = !!data.enabled;
+                document.getElementById('modal_template_key').value = data.templateKey || '';
+                document.getElementById('templateSelectLabel').innerText = data.templateName || '-- Use Default / Fallback --';
+
+                document.getElementById('modal_sender_id').value = data.senderIdentityID || '';
+                document.getElementById('senderSelectLabel').innerText = data.senderDisplayName || '-- System default sender --';
+                
+                document.getElementById('modal_replyto').value = data.replyToOverride || '';
+                
+                document.getElementById('featureConfigModal').classList.add('show');
+            } else {
+                alert('Error loading configuration: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Network error loading feature details: ' + err);
+        });
+}
+
+function closeConfigureModal() {
+    closeAllDropdowns();
+    document.getElementById('featureConfigModal').classList.remove('show');
+}
+
+function saveModalConfig() {
+    const fid = document.getElementById('modalFeatureID').value;
+    const btn = document.getElementById('btnSaveModal');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined">sync</span> Saving...';
+    }
+
+    const payload = {
+        enabled: document.getElementById('modal_enabled').checked,
+        templateKey: document.getElementById('modal_template_key').value,
+        senderIdentityID: document.getElementById('modal_sender_id').value,
+        replyToOverride: document.getElementById('modal_replyto').value
+    };
+
+    fetch(`/control-panel/email-hub/config/feature/update/${fid}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">save</span> Save Configuration';
+        }
+        if (data.success) {
+            const f = data.feature;
+            // Update table row values in real-time
+            const chk = document.getElementById(`chk-enabled-${fid}`);
+            if (chk) chk.checked = !!f.enabled;
+
+            const tplBadge = document.getElementById(`badge-template-${fid}`);
+            if (tplBadge) {
+                if (f.templateKey) {
+                    tplBadge.innerHTML = `<span class="template-pill custom" title="Active Template: ${f.templateKey}"><span class="material-symbols-outlined" style="font-size: 15px;">html</span> ${f.templateKey}</span>`;
+                } else {
+                    tplBadge.innerHTML = `<span class="template-pill fallback" title="Using default system template"><span class="material-symbols-outlined" style="font-size: 15px;">auto_fix_high</span> Default Fallback</span>`;
+                }
+            }
+
+            const senderBadge = document.getElementById(`badge-sender-${fid}`);
+            if (senderBadge) {
+                let senderHtml = '';
+                if (f.senderIdentityID) {
+                    senderHtml = `<div class="sender-pill"><span class="material-symbols-outlined" style="font-size: 16px; color: var(--secondary);">badge</span> <strong>${f.senderDisplayName}</strong></div>`;
+                } else {
+                    senderHtml = `<div class="sender-pill" style="color: var(--on-surface-variant);"><span class="material-symbols-outlined" style="font-size: 16px;">mail</span> System Default</div>`;
+                }
+                if (f.replyToOverride) {
+                    senderHtml += `<div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 2px;">Reply: <code>${f.replyToOverride}</code></div>`;
+                }
+                senderBadge.innerHTML = senderHtml;
+            }
+
+            // Update row dataset
+            const row = document.getElementById(`row-feature-${fid}`);
+            if (row) {
+                row.setAttribute('data-template', (f.templateKey || '').toLowerCase());
+            }
+
+            // Update in-memory data
+            if (featuresData[fid]) {
+                featuresData[fid].templateKey = f.templateKey || '';
+                featuresData[fid].enabled = !!f.enabled;
+                featuresData[fid].replyTo = f.replyToOverride || '';
+            }
+
+            closeConfigureModal();
+            alert(data.message || 'Configuration saved successfully!');
+        } else {
+            alert('Failed to save configuration: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">save</span> Save Configuration';
+        }
+        alert('Network error saving configuration: ' + err);
+    });
+}
+
+// ================= PREVIEWS =================
+function previewSelectedTemplate() {
+    const key = document.getElementById('modal_template_key').value;
+    if (!key) {
+        alert('This feature is using the default system fallback template. Please select a specific template key to preview custom design.');
+        return;
+    }
+    previewTemplate(key);
+}
+
+function previewFeatureById(featureId) {
+    const feat = featuresData[featureId];
+    if (feat && feat.templateKey) {
+        previewTemplate(feat.templateKey);
+    } else {
+        alert('This feature uses the default system fallback template.');
+    }
+}
+
+function previewTemplate(key) {
+    const data = templatesMap[key];
+    if (data) {
+        document.getElementById('previewTitle').innerText = `Preview: ${data.name} (${key})`;
+        document.getElementById('previewSubj').innerText = data.subject;
+        document.getElementById('previewBody').innerHTML = data.body;
+        document.getElementById('previewModal').classList.add('show');
+    } else {
+        alert(`Template '${key}' not found in active templates registry.`);
+    }
+}
+
+function closePreviewModal() {
+    document.getElementById('previewModal').classList.remove('show');
+}
+
+// ================= TEST SENDS =================
+function openTestSendModal(featureId, featureName) {
+    document.getElementById('testSendFeatureID').value = featureId;
+    document.getElementById('testSendFeatureName').innerText = featureName;
+    document.getElementById('testSendModal').classList.add('show');
+}
+
+function closeTestSendModal() {
+    document.getElementById('testSendModal').classList.remove('show');
+}
+
+function executeTestSend() {
+    const fid = document.getElementById('testSendFeatureID').value;
+    const targetEmail = document.getElementById('testTargetEmail').value.trim();
+    if (!targetEmail) {
+        alert('Please enter a valid recipient email address.');
+        return;
+    }
+
+    const btn = document.getElementById('btnExecuteTestSend');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined">sync</span> Dispatching...';
+
+    fetch(`/control-panel/email-hub/config/feature/test-send/${fid}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_email: targetEmail })
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">send</span> Dispatch Test';
+        if (data.success) {
+            closeTestSendModal();
+            alert(data.message);
+        } else {
+            alert('Test dispatch error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">send</span> Dispatch Test';
+        alert('Network error during test dispatch: ' + err);
+    });
+}
+
+// ================= SENDER MODALS =================
 function openSenderModal() {
     document.getElementById('senderModal').classList.add('show');
 }
@@ -528,4 +1103,3 @@ function triggerBackgroundReminders() {
 }
 </script>
 {% endblock %}
-

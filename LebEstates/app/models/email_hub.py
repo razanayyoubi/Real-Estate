@@ -36,6 +36,7 @@ class EmailFeatureConfig(db.Model):
     senderIdentityID = db.Column(db.Integer, db.ForeignKey('sender_identity.senderIdentityID'), nullable=True)
     templateKey = db.Column(db.String(100), nullable=True) # loosely coupled templateKey
     replyToOverride = db.Column(db.String(100), nullable=True)
+    description = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
     updatedAt = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     updatedByUserID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=True)
