@@ -312,10 +312,13 @@ textarea.form-control {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 8, 30, 0.6);
+    backdrop-filter: blur(4px);
     z-index: 1000;
     align-items: center;
     justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
 }
 .modal.show {
     display: flex;
@@ -324,33 +327,87 @@ textarea.form-control {
     background-color: var(--surface-container-lowest);
     border-radius: 12px;
     width: 100%;
-    max-width: 600px;
-    padding: 32px;
+    max-width: 680px;
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 32px;
     border: 1px solid var(--outline-variant);
-    box-shadow: 0 8px 32px rgba(0, 8, 30, 0.15);
+    box-shadow: 0 16px 48px rgba(0, 8, 30, 0.2);
+    box-sizing: border-box;
+    overflow: hidden;
 }
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
 }
 .modal-title {
     font-family: var(--font-headline);
     font-size: 20px;
     font-weight: 800;
     color: var(--primary);
+    margin: 0;
 }
 .modal-close {
     cursor: pointer;
     font-size: 24px;
     color: var(--on-surface-variant);
+    line-height: 1;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.modal-close:hover {
+    color: var(--error);
+    transform: scale(1.1);
+}
+.modal-body-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    padding-right: 4px;
+    min-height: 0;
 }
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 20px;
+    flex-shrink: 0;
+}
+
+/* Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar,
+.modal-body-scroll::-webkit-scrollbar,
+#modalBody::-webkit-scrollbar,
+#previewBody::-webkit-scrollbar,
+.preview-window::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+.custom-scrollbar::-webkit-scrollbar-track,
+.modal-body-scroll::-webkit-scrollbar-track,
+#modalBody::-webkit-scrollbar-track,
+#previewBody::-webkit-scrollbar-track,
+.preview-window::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.modal-body-scroll::-webkit-scrollbar-thumb,
+#modalBody::-webkit-scrollbar-thumb,
+#previewBody::-webkit-scrollbar-thumb,
+.preview-window::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.modal-body-scroll::-webkit-scrollbar-thumb:hover,
+#modalBody::-webkit-scrollbar-thumb:hover,
+#previewBody::-webkit-scrollbar-thumb:hover,
+.preview-window::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 /* Template Cards Grid */
@@ -407,3 +464,129 @@ textarea.form-control {
     border-top: 1px solid var(--outline-variant);
     padding-top: 12px;
 }
+
+/* Accordion / Collapsible Sections */
+.collapsible-section {
+    background-color: var(--surface-container-lowest);
+    border: 1px solid var(--outline-variant);
+    border-radius: 12px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background-color: var(--surface-container-low);
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--outline-variant);
+    transition: background-color 0.2s ease;
+}
+.collapsible-header:hover {
+    background-color: var(--surface-container);
+}
+.collapsible-header.collapsed {
+    border-bottom: none;
+}
+.collapsible-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.collapsible-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.collapsible-toggle-icon {
+    font-size: 24px;
+    color: var(--on-surface-variant);
+    transition: transform 0.3s ease;
+}
+.collapsible-header.collapsed .collapsible-toggle-icon {
+    transform: rotate(-90deg);
+}
+.collapsible-body {
+    display: block;
+    transition: all 0.3s ease;
+}
+.collapsible-body.collapsed {
+    display: none;
+}
+
+/* Pagination Bar */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: var(--surface-container-low);
+    border-top: 1px solid var(--outline-variant);
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.pagination-info {
+    font-size: 13px;
+    color: var(--on-surface-variant);
+}
+.pagination-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--on-surface);
+    background-color: var(--surface-container-lowest);
+    border: 1px solid var(--outline-variant);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.page-btn:hover:not(.disabled):not(.active) {
+    background-color: var(--surface-container);
+    border-color: var(--secondary);
+    color: var(--secondary);
+}
+.page-btn.active {
+    background-color: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
+}
+.page-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Search input with icon */
+.search-input-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.search-input-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--on-surface-variant);
+    font-size: 18px;
+    pointer-events: none;
+}
+.search-input-field {
+    padding-left: 36px !important;
+    padding-right: 12px !important;
+    font-size: 13px !important;
+    height: 38px;
+}
+

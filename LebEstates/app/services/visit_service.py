@@ -291,8 +291,11 @@ class VisitService:
                             placeholders={
                                 'CustomerName': cust_user.fullName,
                                 'ConsultantName': emp_name,
+                                'AgentName': emp_name,
                                 'ConsultantPhone': emp_phone or 'N/A',
+                                'AgentPhone': emp_phone or 'N/A',
                                 'ConsultantEmail': emp_email or 'N/A',
+                                'AgentEmail': emp_email or 'N/A',
                                 'PropertyTitle': prop_title,
                                 'VisitDate': str(visit.visitDate),
                                 'VisitTime': time_str

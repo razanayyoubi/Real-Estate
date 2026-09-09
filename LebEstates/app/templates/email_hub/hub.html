@@ -16,14 +16,22 @@
         </div>
         <div class="hub-header-main-flex">
             <div class="hub-header-details">
-                <h2 class="hub-title">Email Hub</h2>
-                <p class="hub-subtitle">Manage system automations, templates, custom lists, and monitor deliverability rates.</p>
+                <h2 class="hub-title">Email Hub {% if not is_admin %}<span style="font-size: 18px; color: var(--secondary); font-weight: 600;">(My Outbox)</span>{% endif %}</h2>
+                <p class="hub-subtitle">
+                    {% if is_admin %}
+                    Manage system automations, templates, custom lists, and monitor deliverability rates.
+                    {% else %}
+                    View your outgoing email logs, track delivery status, and compose messages.
+                    {% endif %}
+                </p>
             </div>
             <div style="display: flex; gap: 12px; align-items: center;">
+                {% if is_admin %}
                 <button class="btn btn-outline" id="btnRunReminders" onclick="triggerBackgroundReminders()">
                     <span class="material-symbols-outlined">schedule_send</span>
                     Run Reminders Cycle
                 </button>
+                {% endif %}
                 <a href="/control-panel/email-hub/compose" class="btn btn-secondary">
                     <span class="material-symbols-outlined">send</span>
                     Compose Email
@@ -40,6 +48,7 @@
         <a href="/control-panel/email-hub/compose" class="hub-nav-tab">
             <span class="material-symbols-outlined">edit_note</span> Compose
         </a>
+        {% if is_admin %}
         <a href="/control-panel/email-hub/config" class="hub-nav-tab">
             <span class="material-symbols-outlined">settings_suggest</span> Configurations
         </a>
@@ -49,6 +58,7 @@
         <a href="/control-panel/email-hub/distribution-lists" class="hub-nav-tab">
             <span class="material-symbols-outlined">contact_mail</span> Distribution Lists
         </a>
+        {% endif %}
     </div>
 
     <!-- Stats Grid -->
@@ -93,7 +103,7 @@
 
     <!-- Recent Logs Section -->
     <div class="hub-header" style="margin-bottom: 16px;">
-        <h3 class="hub-title" style="font-size: 20px;">Recent Sending Logs</h3>
+        <h3 class="hub-title" style="font-size: 20px;">{% if is_admin %}Recent Sending Logs{% else %}My Outgoing Email History{% endif %}</h3>
         <p class="hub-subtitle">Review status details and error messaging for the latest outgoing transmissions.</p>
     </div>
 
@@ -141,22 +151,48 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">No recent email log records found.</td>
+                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">No email log records found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- Pagination Controls -->
+        {% if total_logs > 0 %}
+        <div class="pagination-container">
+            <div class="pagination-info">
+                Showing <strong>{{ offset + 1 }}</strong> to <strong>{{ [offset + per_page, total_logs]|min }}</strong> of <strong>{{ total_logs }}</strong> entries
+            </div>
+            <div class="pagination-controls">
+                <a href="?page={{ page - 1 }}&per_page={{ per_page }}" class="page-btn {% if page <= 1 %}disabled{% endif %}" title="Previous Page">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">chevron_left</span>
+                </a>
+                
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                        <a href="?page={{ p }}&per_page={{ per_page }}" class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+                    {% elif p == page - 3 or p == page + 3 %}
+                        <span style="padding: 0 4px; color: var(--on-surface-variant);">...</span>
+                    {% endif %}
+                {% endfor %}
+
+                <a href="?page={{ page + 1 }}&per_page={{ per_page }}" class="page-btn {% if page >= total_pages %}disabled{% endif %}" title="Next Page">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <!-- View Log Modal -->
 <div class="modal" id="logModal">
-    <div class="modal-content" style="max-width: 700px;">
+    <div class="modal-content" style="max-width: 680px;">
         <div class="modal-header">
             <h4 class="modal-title">Email Transmission Details</h4>
             <span class="modal-close" onclick="closeModal()">&times;</span>
         </div>
-        <div id="modalBody">
+        <div id="modalBody" class="modal-body-scroll">
             <!-- Populated via JS -->
         </div>
         <div class="modal-footer">
@@ -176,25 +212,25 @@ function viewLogDetails(logId) {
                 if (data.status === 'Sent') {
                     statusBadge = '<span class="badge badge-success">Sent</span>';
                 } else if (data.status === 'Failed') {
-                    statusBadge = `<span class="badge badge-danger">Failed</span><p style="color: var(--error); margin-top: 8px;"><strong>Error:</strong> ${data.lastError || 'Unknown error'}</p>`;
+                    statusBadge = `<span class="badge badge-danger">Failed</span><p style="color: var(--error); margin-top: 6px; font-size: 12px;"><strong>Error:</strong> ${data.lastError || 'Unknown error'}</p>`;
                 } else {
                     statusBadge = '<span class="badge badge-warning">Pending</span>';
                 }
 
                 modalBody.innerHTML = `
-                    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 12px; font-size: 14px;">
+                    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px 16px; font-size: 13px; background: var(--surface-container-low); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--outline-variant); margin-bottom: 16px;">
                         <strong>Log ID:</strong> <span>#${data.emailLogID}</span>
-                        <strong>Recipient:</strong> <span>${data.recipients}</span>
+                        <strong>Recipient:</strong> <span style="word-break: break-all;">${data.recipients}</span>
                         <strong>Subject:</strong> <span>${data.subject}</span>
                         <strong>Type:</strong> <span>${data.emailType}</span>
-                        <strong>Template:</strong> <span>${data.templateKey || 'None'}</span>
+                        <strong>Template:</strong> <span><code>${data.templateKey || 'None'}</code></span>
                         <strong>Date:</strong> <span>${data.sentAt || data.createdAt}</span>
                         <strong>Attempts:</strong> <span>${data.attempts}</span>
                         <strong>Status:</strong> <div>${statusBadge}</div>
                     </div>
-                    <div style="margin-top: 20px;">
-                        <strong>Email Body:</strong>
-                        <div style="border: 1px solid var(--outline-variant); border-radius: 6px; padding: 12px; margin-top: 8px; background: #ffffff; color: #333333; max-height: 300px; overflow-y: auto;">
+                    <div>
+                        <strong style="font-size: 13px; color: var(--on-surface);">Email Body:</strong>
+                        <div style="border: 1px solid var(--outline-variant); border-radius: 8px; padding: 14px; margin-top: 8px; background: #f8fafc; color: #1a202c; max-height: 380px; overflow-y: auto; overflow-x: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);" class="custom-scrollbar">
                             ${data.body}
                         </div>
                     </div>

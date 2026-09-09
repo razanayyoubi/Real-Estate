@@ -535,6 +535,7 @@ class PropertyService:
                         'CustomerName': creator_user.fullName,
                         'PropertyTitle': prop.title,
                         'Reason': 'Listing did not meet quality verification or documentation standards.',
+                        'RejectionReason': 'Listing did not meet quality verification or documentation standards.',
                         'SupportUrl': support_url
                     },
                     fallback_subject=f"Update regarding your listing: {prop.title}",

@@ -10,13 +10,25 @@ from app.services.distribution_list_service import DistributionListService
 
 email_hub_bp = Blueprint('email_hub', __name__, url_prefix='/control-panel/email-hub')
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('auth.login_page'))
+        role = session.get('role_name', '').lower()
+        if role != 'admin':
+            flash("Access Denied: Only administrators have permission to access this area.", "danger")
+            return redirect(url_for('email_hub.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def admin_or_employee_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('auth.login_page'))
         role = session.get('role_name', '').lower()
-        if role not in ['admin', 'employee']:
+        if role not in ['admin', 'employee', 'accountant']:
             abort(403)
         return f(*args, **kwargs)
     return decorated_function
@@ -24,24 +36,45 @@ def admin_or_employee_required(f):
 @email_hub_bp.route('')
 @admin_or_employee_required
 def dashboard():
-    # 1. Sent Today
+    user_id = session.get('user_id')
+    role = session.get('role_name', '').lower()
+    is_admin = (role == 'admin')
+
+    # Pagination parameters for logs
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    if page < 1:
+        page = 1
+    if per_page < 1:
+        per_page = 10
+    offset = (page - 1) * per_page
+
+    # Base query for logs: Admin sees all logs, employee sees only their own
+    logs_query = EmailLog.query
+    if not is_admin:
+        logs_query = logs_query.filter(EmailLog.createdByUserID == user_id)
+
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    sent_today = EmailLog.query.filter(EmailLog.status == 'Sent', EmailLog.createdAt >= today_start).count()
+    yesterday = datetime.utcnow() - timedelta(hours=24)
+
+    # 1. Sent Today
+    sent_today = logs_query.filter(EmailLog.status == 'Sent', EmailLog.createdAt >= today_start).count()
 
     # 2. Delivery Rate
-    total_attempts = EmailLog.query.count()
-    total_sent = EmailLog.query.filter(EmailLog.status == 'Sent').count()
+    total_attempts = logs_query.count()
+    total_sent = logs_query.filter(EmailLog.status == 'Sent').count()
     delivery_rate = round((total_sent / total_attempts * 100), 1) if total_attempts > 0 else 0.0
 
     # 3. Active Features
     active_features = EmailFeatureConfig.query.filter_by(enabled=True).count()
 
     # 4. Failures in last 24 hours
-    yesterday = datetime.utcnow() - timedelta(hours=24)
-    pending_errors = EmailLog.query.filter(EmailLog.status == 'Failed', EmailLog.createdAt >= yesterday).count()
+    pending_errors = logs_query.filter(EmailLog.status == 'Failed', EmailLog.createdAt >= yesterday).count()
 
-    # Fetch recent logs
-    recent_logs = EmailLog.query.order_by(EmailLog.createdAt.desc()).limit(10).all()
+    # Total count and paginated logs
+    total_logs = logs_query.count()
+    recent_logs = logs_query.order_by(EmailLog.createdAt.desc()).offset(offset).limit(per_page).all()
+    total_pages = max(1, (total_logs + per_page - 1) // per_page)
 
     return render_template(
         'email_hub/hub.html',
@@ -49,12 +82,18 @@ def dashboard():
         delivery_rate=delivery_rate,
         active_features=active_features,
         pending_errors=pending_errors,
-        recent_logs=recent_logs
+        recent_logs=recent_logs,
+        page=page,
+        per_page=per_page,
+        offset=offset,
+        total_logs=total_logs,
+        total_pages=total_pages,
+        is_admin=is_admin
     )
 
 # --- CONFIGURATION CENTER ---
 @email_hub_bp.route('/config', methods=['GET'])
-@admin_or_employee_required
+@admin_required
 def config():
     features = EmailFeatureConfig.query.all()
     senders = SenderIdentity.query.all()
@@ -65,11 +104,12 @@ def config():
         features=features,
         senders=senders,
         templates=templates,
-        dist_lists=dist_lists
+        dist_lists=dist_lists,
+        is_admin=True
     )
 
 @email_hub_bp.route('/config/save', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def save_configs():
     try:
         # Get list of feature IDs from form to process updates
@@ -101,7 +141,7 @@ def save_configs():
     return redirect(url_for('email_hub.config'))
 
 @email_hub_bp.route('/sender/create', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def create_sender():
     display_name = request.form.get('display_name')
     from_email = request.form.get('from_email')
@@ -141,7 +181,7 @@ def create_sender():
     return redirect(url_for('email_hub.config'))
 
 @email_hub_bp.route('/sender/toggle/<int:id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def toggle_sender(id):
     sender = SenderIdentity.query.get_or_404(id)
     sender.isActive = not sender.isActive
@@ -156,7 +196,7 @@ def toggle_sender(id):
     return jsonify({'success': True, 'isActive': sender.isActive})
 
 @email_hub_bp.route('/sender/delete/<int:id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def delete_sender(id):
     sender = SenderIdentity.query.get_or_404(id)
     try:
@@ -175,13 +215,11 @@ def delete_sender(id):
     return redirect(url_for('email_hub.config'))
 
 @email_hub_bp.route('/sender/default/<int:id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def default_sender(id):
     sender = SenderIdentity.query.get_or_404(id)
     try:
-        # Set all other senders isDefault to False
         SenderIdentity.query.update({SenderIdentity.isDefault: False})
-        # Set selected sender isDefault to True
         sender.isDefault = True
 
         AuditLog.log_action(
@@ -197,17 +235,102 @@ def default_sender(id):
         flash(f'Error setting default sender: {str(e)}', 'danger')
     return redirect(url_for('email_hub.config'))
 
+@email_hub_bp.route('/sender/get/<int:id>', methods=['GET'])
+@admin_required
+def get_sender(id):
+    sender = SenderIdentity.query.get_or_404(id)
+    return jsonify({
+        'success': True,
+        'senderIdentityID': sender.senderIdentityID,
+        'displayName': sender.displayName,
+        'fromEmail': sender.fromEmail,
+        'replyToEmail': sender.replyToEmail or '',
+        'verifiedStatus': sender.verifiedStatus or 'Verified',
+        'isDefault': bool(sender.isDefault),
+        'isActive': bool(sender.isActive)
+    })
+
+@email_hub_bp.route('/sender/edit/<int:id>', methods=['POST'])
+@admin_required
+def edit_sender(id):
+    sender = SenderIdentity.query.get_or_404(id)
+    
+    if request.is_json:
+        data = request.get_json() or {}
+        display_name = data.get('display_name', '').strip()
+        from_email = data.get('from_email', '').strip()
+        reply_to = data.get('reply_to_email', '').strip()
+        verified_status = data.get('verified_status', 'Verified').strip()
+        is_default = bool(data.get('is_default', False))
+        is_active = bool(data.get('is_active', True))
+    else:
+        display_name = request.form.get('display_name', '').strip()
+        from_email = request.form.get('from_email', '').strip()
+        reply_to = request.form.get('reply_to_email', '').strip()
+        verified_status = request.form.get('verified_status', 'Verified').strip()
+        is_default = 'is_default' in request.form
+        is_active = 'is_active' in request.form
+
+    if not display_name or not from_email:
+        if request.is_json:
+            return jsonify({'success': False, 'error': 'Display Name and From Email are required.'}), 400
+        flash('Display Name and From Email are required.', 'danger')
+        return redirect(url_for('email_hub.config'))
+
+    # Check for duplicate email on another sender
+    existing = SenderIdentity.query.filter(
+        SenderIdentity.fromEmail == from_email,
+        SenderIdentity.senderIdentityID != id
+    ).first()
+    if existing:
+        if request.is_json:
+            return jsonify({'success': False, 'error': f'Sender email "{from_email}" is already in use by another profile.'}), 400
+        flash(f'Sender email "{from_email}" is already used by another sender profile.', 'danger')
+        return redirect(url_for('email_hub.config'))
+
+    try:
+        if is_default:
+            SenderIdentity.query.update({SenderIdentity.isDefault: False})
+            sender.isDefault = True
+        else:
+            sender.isDefault = is_default
+
+        sender.displayName = display_name
+        sender.fromEmail = from_email
+        sender.replyToEmail = reply_to or None
+        sender.isActive = is_active
+        sender.verifiedStatus = verified_status
+
+        AuditLog.log_action(
+            action='EDIT',
+            table_name='sender_identities',
+            record_id=id,
+            description=f"Updated sender identity #{id} '{display_name}' <{from_email}>"
+        )
+        db.session.commit()
+
+        if request.is_json:
+            return jsonify({'success': True, 'message': 'Sender identity updated successfully!'})
+        flash(f'Sender identity "{display_name}" updated successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        if request.is_json:
+            return jsonify({'success': False, 'error': str(e)}), 500
+        flash(f'Error updating sender identity: {str(e)}', 'danger')
+
+    return redirect(url_for('email_hub.config'))
+
 
 
 # --- TEMPLATES MANAGEMENT ---
 @email_hub_bp.route('/templates')
-@admin_or_employee_required
+@admin_required
 def templates_list():
     templates = EmailTemplate.query.all()
-    return render_template('email_hub/templates.html', templates=templates)
+    return render_template('email_hub/templates.html', templates=templates, is_admin=True)
 
 @email_hub_bp.route('/templates/create', methods=['GET', 'POST'])
-@admin_or_employee_required
+@admin_required
 def create_template():
     if request.method == 'POST':
         key = request.form.get('templateKey', '').strip().replace(' ', '_').upper()
@@ -218,12 +341,12 @@ def create_template():
 
         if not key or not name or not subject or not body:
             flash('All template fields are required.', 'danger')
-            return render_template('email_hub/template_form.html', template=None)
+            return render_template('email_hub/template_form.html', template=None, is_admin=True)
 
         existing = EmailTemplate.query.filter_by(templateKey=key).first()
         if existing:
             flash(f'Template with key {key} already exists.', 'danger')
-            return render_template('email_hub/template_form.html', template=None)
+            return render_template('email_hub/template_form.html', template=None, is_admin=True)
 
         try:
             new_tpl = EmailTemplate(
@@ -251,10 +374,10 @@ def create_template():
             db.session.rollback()
             flash(f'Error creating template: {str(e)}', 'danger')
 
-    return render_template('email_hub/template_form.html', template=None)
+    return render_template('email_hub/template_form.html', template=None, is_admin=True)
 
 @email_hub_bp.route('/templates/edit/<string:key>', methods=['GET', 'POST'])
-@admin_or_employee_required
+@admin_required
 def edit_template(key):
     template = EmailTemplate.query.filter_by(templateKey=key).first_or_404()
     if request.method == 'POST':
@@ -266,7 +389,7 @@ def edit_template(key):
 
         if not name or not subject or not body:
             flash('Name, Subject, and Body are required.', 'danger')
-            return render_template('email_hub/template_form.html', template=template)
+            return render_template('email_hub/template_form.html', template=template, is_admin=True)
 
         try:
             template.name = name
@@ -290,10 +413,10 @@ def edit_template(key):
             db.session.rollback()
             flash(f'Error updating template: {str(e)}', 'danger')
 
-    return render_template('email_hub/template_form.html', template=template)
+    return render_template('email_hub/template_form.html', template=template, is_admin=True)
 
 @email_hub_bp.route('/templates/delete/<string:key>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def delete_template(key):
     template = EmailTemplate.query.filter_by(templateKey=key).first_or_404()
     try:
@@ -314,13 +437,13 @@ def delete_template(key):
 
 # --- DISTRIBUTION LISTS ---
 @email_hub_bp.route('/distribution-lists')
-@admin_or_employee_required
+@admin_required
 def distribution_lists():
     lists = DistributionList.query.all()
-    return render_template('email_hub/distribution_lists.html', lists=lists)
+    return render_template('email_hub/distribution_lists.html', lists=lists, is_admin=True)
 
 @email_hub_bp.route('/distribution-lists/create', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def create_distribution_list():
     name = request.form.get('name')
     desc = request.form.get('description')
@@ -332,9 +455,8 @@ def create_distribution_list():
     try:
         new_list = DistributionList(name=name, description=desc, isActive=True)
         db.session.add(new_list)
-        db.session.flush() # Populate ID
+        db.session.flush()
 
-        # Create blank rule for this list
         new_rule = DistributionListRule(
             distributionListID=new_list.distributionListID,
             includeEmployees=False,
@@ -359,7 +481,7 @@ def create_distribution_list():
     return redirect(url_for('email_hub.distribution_lists'))
 
 @email_hub_bp.route('/distribution-lists/edit-rules/<int:id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def edit_list_rules(id):
     dl_list = DistributionList.query.get_or_404(id)
     rule = DistributionListRule.query.filter_by(distributionListID=id).first()
@@ -390,7 +512,7 @@ def edit_list_rules(id):
     return redirect(url_for('email_hub.distribution_lists'))
 
 @email_hub_bp.route('/distribution-lists/delete/<int:id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def delete_distribution_list(id):
     dl = DistributionList.query.get_or_404(id)
     try:
@@ -409,7 +531,7 @@ def delete_distribution_list(id):
     return redirect(url_for('email_hub.distribution_lists'))
 
 @email_hub_bp.route('/distribution-lists/member/add/<int:list_id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def add_list_member(list_id):
     email = request.form.get('email', '').strip()
     label = request.form.get('label', '').strip()
@@ -444,7 +566,7 @@ def add_list_member(list_id):
     return redirect(url_for('email_hub.distribution_lists'))
 
 @email_hub_bp.route('/distribution-lists/member/delete/<int:member_id>', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def delete_list_member(member_id):
     member = DistributionListMember.query.get_or_404(member_id)
     try:
@@ -473,6 +595,8 @@ def resolve_list_emails(id):
 @email_hub_bp.route('/compose')
 @admin_or_employee_required
 def compose():
+    role = session.get('role_name', '').lower()
+    is_admin = (role == 'admin')
     drafts = EmailDraft.query.filter_by(createdByUserID=session.get('user_id')).order_by(EmailDraft.lastUpdated.desc()).all()
     templates = EmailTemplate.query.filter_by(isActive=True).all()
     dist_lists = DistributionList.query.all()
@@ -480,7 +604,8 @@ def compose():
         'email_hub/compose.html',
         drafts=drafts,
         templates=templates,
-        dist_lists=dist_lists
+        dist_lists=dist_lists,
+        is_admin=is_admin
     )
 
 @email_hub_bp.route('/send', methods=['POST'])
@@ -544,7 +669,7 @@ def save_draft():
     subject = data.get('subject')
     body = data.get('body')
     recipients_raw = data.get('recipients_raw')
-    list_ids = data.get('distribution_lists', []) # string format: "1,2"
+    list_ids = data.get('distribution_lists', [])
 
     list_ids_str = ",".join(str(lid) for lid in list_ids) if list_ids else ""
 
@@ -625,6 +750,10 @@ def delete_draft(id):
 @admin_or_employee_required
 def view_log(id):
     log = EmailLog.query.get_or_404(id)
+    role = session.get('role_name', '').lower()
+    if role != 'admin' and log.createdByUserID != session.get('user_id'):
+        return jsonify({'success': False, 'error': 'Access Denied: You can only view logs for emails you sent.'}), 403
+
     return jsonify({
         'success': True,
         'emailLogID': log.emailLogID,
@@ -641,7 +770,7 @@ def view_log(id):
     })
 
 @email_hub_bp.route('/reminders/run-now', methods=['POST'])
-@admin_or_employee_required
+@admin_required
 def run_reminders_now():
     from app.services.reminder_service import ReminderService
     try:
@@ -654,4 +783,5 @@ def run_reminders_now():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 

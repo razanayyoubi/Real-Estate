@@ -45,10 +45,21 @@
         </a>
     </div>
 
+    <!-- Search Bar & Filters -->
+    <div style="margin-bottom: 24px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+        <div class="search-input-wrapper" style="flex: 1; max-width: 480px;">
+            <span class="material-symbols-outlined search-input-icon">search</span>
+            <input type="text" id="templateSearch" class="form-control search-input-field" placeholder="Search templates by key, name, subject, category..." oninput="filterTemplates()">
+        </div>
+        <div style="font-size: 13px; color: var(--on-surface-variant);" id="templatesCounter">
+            Showing <strong id="visibleTemplateCount">{{ templates|length }}</strong> of <strong>{{ templates|length }}</strong> templates
+        </div>
+    </div>
+
     <!-- Template Cards Grid -->
-    <div class="templates-grid">
+    <div class="templates-grid" id="templatesGrid">
         {% for template in templates %}
-        <div class="template-card">
+        <div class="template-card" data-key="{{ template.templateKey|lower }}" data-name="{{ template.name|lower }}" data-subject="{{ template.subject|lower }}" data-category="{{ template.category|lower }}">
             <div>
                 <div class="template-card-header">
                     <span class="template-card-key">{{ template.templateKey }}</span>
@@ -59,6 +70,7 @@
                     {% endif %}
                 </div>
                 <h4 class="template-card-title">{{ template.name }}</h4>
+                <div style="font-size: 11px; color: var(--secondary); font-weight: 700; text-transform: uppercase; margin-top: 2px;">{{ template.category }}</div>
                 <p class="template-card-subj"><strong>Subject:</strong> {{ template.subject }}</p>
                 <div style="font-size: 11px; color: var(--on-surface-variant); margin-top: 8px;">
                     Last Updated: {{ template.updatedAt.strftime('%Y-%m-%d') if template.updatedAt else 'N/A' }}
@@ -80,21 +92,30 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- No Match State -->
+    <div id="noTemplatesMatch" style="display: none; text-align: center; padding: 48px; border: 1px dashed var(--outline-variant); border-radius: 12px; color: var(--on-surface-variant); margin-top: 16px;">
+        <span class="material-symbols-outlined" style="font-size: 48px; margin-bottom: 12px; color: var(--secondary);">search_off</span>
+        <h4 style="font-family: var(--font-headline); color: var(--primary); margin-bottom: 4px;">No matching email templates</h4>
+        <p>Try searching for a different keyword or template identifier.</p>
+    </div>
 </div>
 
 <!-- Preview Modal -->
 <div class="modal" id="previewModal">
-    <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-content" style="max-width: 680px;">
         <div class="modal-header">
             <h4 class="modal-title" id="previewTitle">Template Preview</h4>
             <span class="modal-close" onclick="closePreviewModal()">&times;</span>
         </div>
-        <div style="margin-bottom: 12px; font-size: 14px; color: var(--on-surface);">
-            <strong>Subject:</strong> <span id="previewSubj"></span>
-        </div>
-        <strong>HTML Render:</strong>
-        <div id="previewBody" style="border: 1px solid var(--outline-variant); border-radius: 8px; padding: 20px; margin-top: 8px; background: #ffffff; min-height: 250px; overflow-y: auto;">
-            <!-- Render HTML -->
+        <div class="modal-body-scroll">
+            <div style="margin-bottom: 14px; font-size: 13px; background: var(--surface-container-low); padding: 10px 16px; border-radius: 8px; border: 1px solid var(--outline-variant);">
+                <strong>Subject:</strong> <span id="previewSubj" style="color: var(--primary); font-weight: 600;"></span>
+            </div>
+            <strong style="font-size: 13px; color: var(--on-surface);">Template Body Preview:</strong>
+            <div id="previewBody" style="border: 1px solid var(--outline-variant); border-radius: 8px; padding: 14px; margin-top: 8px; background: #f8fafc; max-height: 420px; overflow-y: auto; overflow-x: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);" class="custom-scrollbar">
+                <!-- Render HTML -->
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closePreviewModal()">Close Preview</button>
@@ -113,6 +134,34 @@ const templateData = {
     },
     {% endfor %}
 };
+
+function filterTemplates() {
+    const query = document.getElementById('templateSearch').value.trim().toLowerCase();
+    const cards = document.querySelectorAll('.template-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const key = card.getAttribute('data-key') || '';
+        const name = card.getAttribute('data-name') || '';
+        const subject = card.getAttribute('data-subject') || '';
+        const category = card.getAttribute('data-category') || '';
+
+        if (!query || key.includes(query) || name.includes(query) || subject.includes(query) || category.includes(query)) {
+            card.style.display = 'flex';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const countEl = document.getElementById('visibleTemplateCount');
+    if (countEl) countEl.innerText = visibleCount;
+
+    const noMatchEl = document.getElementById('noTemplatesMatch');
+    if (noMatchEl) {
+        noMatchEl.style.display = (visibleCount === 0 && cards.length > 0) ? 'block' : 'none';
+    }
+}
 
 function previewTemplate(key) {
     const data = templateData[key];

@@ -451,9 +451,13 @@ def close_session(session_id):
                     default_template_key='SUPP-CLOSED-V1',
                     placeholders={
                         'CustomerName': chat_session.customer.fullName,
+                        'SessionID': f"{session_id:05d}",
                         'TicketID': f"{session_id:05d}",
                         'Subject': chat_session.subject or 'General Inquiry',
+                        'ClosedDate': chat_session.closedAt.strftime('%B %d, %Y') if chat_session.closedAt else datetime.now().strftime('%B %d, %Y'),
                         'ResolutionDate': chat_session.closedAt.strftime('%B %d, %Y %I:%M %p') if chat_session.closedAt else datetime.now().strftime('%B %d, %Y'),
+                        'ClosedAt': chat_session.closedAt.strftime('%B %d, %Y %I:%M %p') if chat_session.closedAt else datetime.now().strftime('%B %d, %Y'),
+                        'FeedbackUrl': feedback_url,
                         'FeedbackLink': feedback_url,
                         'AgentName': agent_name
                     },

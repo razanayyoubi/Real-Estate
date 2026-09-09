@@ -52,136 +52,175 @@
     </div>
 
     <!-- Main Config Form -->
-    <form action="/control-panel/email-hub/config/save" method="POST">
-        <div class="hub-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h3 class="hub-title" style="font-size: 20px;">Feature Automation Mappings</h3>
-                <p class="hub-subtitle">Configure template routing for triggers generated automatically by application actions.</p>
+    <form action="/control-panel/email-hub/config/save" method="POST" id="featureConfigForm">
+        <!-- Collapsible Section 1: Feature Automation Mappings -->
+        <div class="collapsible-section">
+            <div class="collapsible-header" id="featureHeader" onclick="toggleSection('featureMappingBody', 'featureToggleIcon', 'featureHeader')">
+                <div class="collapsible-header-left">
+                    <span class="material-symbols-outlined" style="font-size: 26px; color: var(--secondary);">settings_suggest</span>
+                    <div>
+                        <h3 class="hub-title" style="font-size: 18px; margin: 0;">Feature Automation Mappings</h3>
+                        <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Configure template routing for triggers generated automatically by application actions.</p>
+                    </div>
+                </div>
+                <div class="collapsible-header-right">
+                    <div class="search-input-wrapper" onclick="event.stopPropagation();">
+                        <span class="material-symbols-outlined search-input-icon">search</span>
+                        <input type="text" id="featureSearch" class="form-control search-input-field" placeholder="Search features by name/key..." oninput="filterFeatures()" style="width: 240px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" onclick="event.stopPropagation();" style="padding: 8px 16px; font-size: 13px;">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">save</span> Save Mappings
+                    </button>
+                    <span class="material-symbols-outlined collapsible-toggle-icon" id="featureToggleIcon">expand_more</span>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">
-                <span class="material-symbols-outlined">save</span> Save Mappings
-            </button>
-        </div>
 
-        <div class="table-container unified-table-container">
-            <table class="unified-table">
-                <thead>
-                    <tr class="table-header-row">
-                        <th>Enabled</th>
-                        <th>Feature Key</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Active Template</th>
-                        <th>Sender Identity</th>
-                        <th>ReplyTo Override</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for feature in features %}
-                    <input type="hidden" name="feature_ids" value="{{ feature.featureConfigID }}">
-                    <tr>
-                        <td>
-                            <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.2);">
-                        </td>
-                        <td><strong>{{ feature.featureKey }}</strong></td>
-                        <td>{{ feature.featureName }}</td>
-                        <td><span class="badge badge-primary">{{ feature.category }}</span></td>
-                        <td>
-                            <select name="template_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
-                                <option value="">-- Use Default / Fallback --</option>
-                                {% for template in templates %}
-                                <option value="{{ template.templateKey }}" {% if feature.templateKey == template.templateKey %}selected{% endif %}>
-                                    {{ template.name }} ({{ template.templateKey }})
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td>
-                            <select name="sender_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
-                                <option value="">-- System default sender --</option>
-                                {% for sender in senders %}
-                                <option value="{{ sender.senderIdentityID }}" {% if feature.senderIdentityID == sender.senderIdentityID %}selected{% endif %}>
-                                    {{ sender.displayName }} &lt;{{ sender.fromEmail }}&gt;
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td>
-                            <input type="email" name="replyto_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;" value="{{ feature.replyToOverride or '' }}" placeholder="Optional reply-to">
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No automated features registered.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="collapsible-body" id="featureMappingBody">
+                <div class="table-container unified-table-container" style="margin-bottom: 0; border: none; border-radius: 0;">
+                    <table class="unified-table">
+                        <thead>
+                            <tr class="table-header-row">
+                                <th style="width: 70px;">Enabled</th>
+                                <th>Feature Key</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Active Template</th>
+                                <th>Sender Identity</th>
+                                <th>ReplyTo Override</th>
+                            </tr>
+                        </thead>
+                        <tbody id="featuresTableBody">
+                            {% for feature in features %}
+                            <input type="hidden" name="feature_ids" value="{{ feature.featureConfigID }}">
+                            <tr class="feature-row" data-key="{{ feature.featureKey|lower }}" data-name="{{ feature.featureName|lower }}" data-category="{{ feature.category|lower }}" data-template="{{ (feature.templateKey or '')|lower }}">
+                                <td>
+                                    <input type="checkbox" name="enabled_{{ feature.featureConfigID }}" {% if feature.enabled %}checked{% endif %} style="transform: scale(1.2);">
+                                </td>
+                                <td><strong>{{ feature.featureKey }}</strong></td>
+                                <td>{{ feature.featureName }}</td>
+                                <td><span class="badge badge-primary">{{ feature.category }}</span></td>
+                                <td>
+                                    <select name="template_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
+                                        <option value="">-- Use Default / Fallback --</option>
+                                        {% for template in templates %}
+                                        <option value="{{ template.templateKey }}" {% if feature.templateKey == template.templateKey %}selected{% endif %}>
+                                            {{ template.name }} ({{ template.templateKey }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="sender_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;">
+                                        <option value="">-- System default sender --</option>
+                                        {% for sender in senders %}
+                                        <option value="{{ sender.senderIdentityID }}" {% if feature.senderIdentityID == sender.senderIdentityID %}selected{% endif %}>
+                                            {{ sender.displayName }} &lt;{{ sender.fromEmail }}&gt;
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="email" name="replyto_{{ feature.featureConfigID }}" class="form-control" style="padding: 6px 12px; font-size: 13px;" value="{{ feature.replyToOverride or '' }}" placeholder="Optional reply-to">
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No automated features registered.</td>
+                            </tr>
+                            {% endfor %}
+                            <tr id="noFeaturesMatch" style="display: none;">
+                                <td colspan="7" style="text-align: center; padding: 32px; color: var(--on-surface-variant);">
+                                    <span class="material-symbols-outlined" style="font-size: 32px; color: var(--secondary); display: block; margin-bottom: 6px;">search_off</span>
+                                    No features match your search filter.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </form>
 
-    <!-- Senders Section -->
-    <div class="hub-header" style="margin-bottom: 16px; margin-top: 48px;">
-        <h3 class="hub-title" style="font-size: 20px;">Sender Identities</h3>
-        <p class="hub-subtitle">Manage sender profiles for outbound emails. Mailjet must verify these emails or domains.</p>
-    </div>
+    <!-- Collapsible Section 2: Sender Identities -->
+    <div class="collapsible-section">
+        <div class="collapsible-header" id="senderHeader" onclick="toggleSection('senderIdentitiesBody', 'senderToggleIcon', 'senderHeader')">
+            <div class="collapsible-header-left">
+                <span class="material-symbols-outlined" style="font-size: 26px; color: var(--secondary);">badge</span>
+                <div>
+                    <h3 class="hub-title" style="font-size: 18px; margin: 0;">Sender Identities</h3>
+                    <p class="hub-subtitle" style="margin: 0; font-size: 13px;">Manage sender profiles for outbound emails. Mailjet must verify these emails or domains.</p>
+                </div>
+            </div>
+            <div class="collapsible-header-right">
+                <button type="button" class="btn btn-secondary" onclick="event.stopPropagation(); openSenderModal();" style="padding: 8px 16px; font-size: 13px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span> Add Sender Profile
+                </button>
+                <span class="material-symbols-outlined collapsible-toggle-icon" id="senderToggleIcon">expand_more</span>
+            </div>
+        </div>
 
-    <div class="table-container unified-table-container">
-        <table class="unified-table">
-            <thead>
-                <tr class="table-header-row">
-                    <th>Display Name</th>
-                    <th>From Email</th>
-                    <th>Reply-To Email</th>
-                    <th>Status</th>
-                    <th>System Default</th>
-                    <th>Active</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sender in senders %}
-                <tr>
-                    <td><strong>{{ sender.displayName }}</strong></td>
-                    <td>{{ sender.fromEmail }}</td>
-                    <td>{{ sender.replyToEmail or 'None' }}</td>
-                    <td>
-                        <span class="badge badge-success">{{ sender.verifiedStatus }}</span>
-                    </td>
-                    <td>
-                        {% if sender.isDefault %}
-                        <span class="badge badge-success">Default</span>
+        <div class="collapsible-body" id="senderIdentitiesBody">
+            <div class="table-container unified-table-container" style="margin-bottom: 0; border: none; border-radius: 0;">
+                <table class="unified-table">
+                    <thead>
+                        <tr class="table-header-row">
+                            <th>Display Name</th>
+                            <th>From Email</th>
+                            <th>Reply-To Email</th>
+                            <th>Status</th>
+                            <th>System Default</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sender in senders %}
+                        <tr>
+                            <td><strong>{{ sender.displayName }}</strong></td>
+                            <td>{{ sender.fromEmail }}</td>
+                            <td>{{ sender.replyToEmail or 'None' }}</td>
+                            <td>
+                                <span class="badge badge-success">{{ sender.verifiedStatus }}</span>
+                            </td>
+                            <td>
+                                {% if sender.isDefault %}
+                                <span class="badge badge-success">Default</span>
+                                {% else %}
+                                <span class="badge badge-primary">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <input type="checkbox" {% if sender.isActive %}checked{% endif %} onchange="toggleSenderActive({{ sender.senderIdentityID }})" style="transform: scale(1.2);">
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="openEditSenderModal({{ sender.senderIdentityID }})">
+                                        <span class="material-symbols-outlined" style="font-size: 16px;">edit</span> Edit
+                                    </button>
+                                    {% if not sender.isDefault %}
+                                    <form action="/control-panel/email-hub/sender/default/{{ sender.senderIdentityID }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">star</span> Make Default
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <form action="/control-panel/email-hub/sender/delete/{{ sender.senderIdentityID }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this sender identity?');">
+                                        <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">delete</span> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
                         {% else %}
-                        <span class="badge badge-primary">No</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <input type="checkbox" {% if sender.isActive %}checked{% endif %} onchange="toggleSenderActive({{ sender.senderIdentityID }})" style="transform: scale(1.2);">
-                    </td>
-                    <td>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            {% if not sender.isDefault %}
-                            <form action="/control-panel/email-hub/sender/default/{{ sender.senderIdentityID }}" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">
-                                    <span class="material-symbols-outlined" style="font-size: 16px;">star</span> Make Default
-                                </button>
-                            </form>
-                            {% endif %}
-                            <form action="/control-panel/email-hub/sender/delete/{{ sender.senderIdentityID }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this sender identity?');">
-                                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">
-                                    <span class="material-symbols-outlined" style="font-size: 16px;">delete</span> Delete
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No sender profiles registered. Outbound emails will use app configurations.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 24px; color: var(--on-surface-variant);">No sender profiles registered. Outbound emails will use app configurations.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -217,13 +256,118 @@
     </div>
 </div>
 
+<!-- Edit Sender Modal -->
+<div class="modal" id="editSenderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title">Edit Sender Identity Profile</h4>
+            <span class="modal-close" onclick="closeEditSenderModal()">&times;</span>
+        </div>
+        <form id="editSenderForm" action="" method="POST">
+            <div class="form-group">
+                <label class="form-label" for="edit_display_name">Display Name</label>
+                <input type="text" id="edit_display_name" name="display_name" class="form-control" required placeholder="e.g. LebEstates Support">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="edit_from_email">From Email Address</label>
+                <input type="email" id="edit_from_email" name="from_email" class="form-control" required placeholder="e.g. support@lebestates.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="edit_reply_to_email">Reply-To Email Address</label>
+                <input type="email" id="edit_reply_to_email" name="reply_to_email" class="form-control" placeholder="e.g. contact@lebestates.com (Optional)">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="edit_verified_status">Verification Status</label>
+                <select id="edit_verified_status" name="verified_status" class="form-control">
+                    <option value="Verified">Verified</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Unknown">Unknown</option>
+                </select>
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="edit_is_active" name="is_active" style="transform: scale(1.2);">
+                <label class="form-label" for="edit_is_active" style="margin-bottom: 0;">Active Profile</label>
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="edit_is_default" name="is_default" style="transform: scale(1.2);">
+                <label class="form-label" for="edit_is_default" style="margin-bottom: 0;">Set as System Default Sender</label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeEditSenderModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+function toggleSection(bodyId, iconId, headerId) {
+    const body = document.getElementById(bodyId);
+    const header = document.getElementById(headerId);
+    if (body) {
+        body.classList.toggle('collapsed');
+        if (header) header.classList.toggle('collapsed');
+    }
+}
+
+function filterFeatures() {
+    const query = document.getElementById('featureSearch').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('#featuresTableBody tr.feature-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const key = row.getAttribute('data-key') || '';
+        const name = row.getAttribute('data-name') || '';
+        const category = row.getAttribute('data-category') || '';
+        const template = row.getAttribute('data-template') || '';
+
+        if (!query || key.includes(query) || name.includes(query) || category.includes(query) || template.includes(query)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const noMatchEl = document.getElementById('noFeaturesMatch');
+    if (noMatchEl) {
+        noMatchEl.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+}
+
 function openSenderModal() {
     document.getElementById('senderModal').classList.add('show');
 }
 function closeSenderModal() {
     document.getElementById('senderModal').classList.remove('show');
 }
+
+function openEditSenderModal(senderId) {
+    fetch(`/control-panel/email-hub/sender/get/${senderId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('edit_display_name').value = data.displayName || '';
+                document.getElementById('edit_from_email').value = data.fromEmail || '';
+                document.getElementById('edit_reply_to_email').value = data.replyToEmail || '';
+                document.getElementById('edit_verified_status').value = data.verifiedStatus || 'Verified';
+                document.getElementById('edit_is_active').checked = !!data.isActive;
+                document.getElementById('edit_is_default').checked = !!data.isDefault;
+                document.getElementById('editSenderForm').action = `/control-panel/email-hub/sender/edit/${senderId}`;
+                document.getElementById('editSenderModal').classList.add('show');
+            } else {
+                alert('Could not fetch sender details: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Error loading sender details: ' + err);
+        });
+}
+
+function closeEditSenderModal() {
+    document.getElementById('editSenderModal').classList.remove('show');
+}
+
 function toggleSenderActive(senderId) {
     fetch(`/control-panel/email-hub/sender/toggle/${senderId}`, { method: 'POST' })
         .then(res => res.json())
@@ -269,3 +413,4 @@ function triggerBackgroundReminders() {
 }
 </script>
 {% endblock %}
+

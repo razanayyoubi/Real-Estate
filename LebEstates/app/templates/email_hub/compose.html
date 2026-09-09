@@ -40,6 +40,7 @@
         <a href="/control-panel/email-hub/compose" class="hub-nav-tab active">
             <span class="material-symbols-outlined">edit_note</span> Compose
         </a>
+        {% if is_admin %}
         <a href="/control-panel/email-hub/config" class="hub-nav-tab">
             <span class="material-symbols-outlined">settings_suggest</span> Configurations
         </a>
@@ -49,6 +50,7 @@
         <a href="/control-panel/email-hub/distribution-lists" class="hub-nav-tab">
             <span class="material-symbols-outlined">contact_mail</span> Distribution Lists
         </a>
+        {% endif %}
     </div>
 
     <!-- Compose Layout -->
